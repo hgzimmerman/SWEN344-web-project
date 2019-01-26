@@ -39,6 +39,11 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             "UNIMPLEMENTED"
         });
 
+    let modify_event = warp::post2()
+        .and(json_body_filter(50))
+        .map(|_:String| {
+            "UNIMPLEMENTED"
+        });
 
     let events = path!("events")
         .and(
@@ -47,6 +52,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .or(events_today)
                 .or(events_month)
                 .or(delete_event)
+                .or(modify_event)
         );
 
     path!("calendar")

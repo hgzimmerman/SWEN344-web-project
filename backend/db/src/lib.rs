@@ -8,4 +8,9 @@ pub mod event;
 pub mod user;
 pub mod stock;
 pub mod funds;
+mod util;
 mod schema;
+
+
+
+
