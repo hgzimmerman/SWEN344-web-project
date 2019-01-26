@@ -68,3 +68,4 @@ pub struct NewStockAcquisition {
     pub price_uuid: Uuid,
     pub quantity: i32 // Can you get non-integer quantities of
 }
+
