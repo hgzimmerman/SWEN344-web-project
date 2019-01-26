@@ -8,6 +8,7 @@ edition = "2018"
 apply = "0.2.2"
 diesel = { version = "1.4.1", features = ["postgres", "uuid", "chrono", "serde_json"] }
 r2d2 = "0.8.3"
-uuid = "0.6.*"
-chrono = "0.4.*"
+uuid = {version="0.6.*", features=["serde"]}
+chrono = {version = "0.4.*", features=["serde"]}
+serde = {version="1.0.85", features=["derive"]}
 

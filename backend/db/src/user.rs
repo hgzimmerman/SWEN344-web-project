@@ -5,7 +5,7 @@ use diesel::{
     Insertable
 };
 use crate::schema::users;
-
+use serde::{Serialize, Deserialize};
 
 
 
@@ -41,7 +41,7 @@ use crate::schema::users;
 // When that second login takes place, the api or app checks if the user is the same
 
 
-#[derive(Clone, Debug, Identifiable, Queryable)]
+#[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]
 pub struct User {
@@ -50,7 +50,7 @@ pub struct User {
     oauth: String,
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct  NewUser {
     name: String,

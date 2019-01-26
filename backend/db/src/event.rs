@@ -17,8 +17,9 @@ use diesel::result::QueryResult;
 use chrono::Timelike;
 use chrono::Datelike;
 use diesel::BoolExpressionMethods;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Debug, Identifiable, Queryable)]
+#[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[belongs_to(User, foreign_key = "user_uuid")]
 #[table_name = "events"]
