@@ -5,6 +5,11 @@ use warp::path;
 
 use warp::Filter;
 use crate::util::json_body_filter;
+use db::event::Event;
+use db::event::NewEvent;
+use db::pool::PooledConn;
+use apply::Apply;
+use uuid::Uuid;
 
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
@@ -22,14 +27,21 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let events_month = warp::get2()
         .and(path!("month"))
-        .map(|| {
-           "UNIMPLEMENTED"
+        .and(state.db.clone())
+        .map(|conn: PooledConn| {
+//            Event::events_month(user_uuid, &conn)
+//                .unwrap()
+//                .apply(crate::util::json);
+            "aoeuaoeu"
         });
 
     let create_event = warp::post2()
         .and(json_body_filter(50))
-        .map(|_: String| {
-            "UNIMPLEMENTED"
+        .and(state.db.clone())
+        .map(|e: NewEvent, conn: PooledConn| {
+            Event::create_event(e, &conn)
+                .unwrap()
+                .apply(crate::util::json)
         });
 
     // TODO, do we want canceling events as well?

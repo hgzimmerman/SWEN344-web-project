@@ -30,7 +30,7 @@ pub struct Event {
     pub time_due: NaiveDateTime
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "events"]
 pub struct NewEvent {
     pub user_uuid: Uuid,

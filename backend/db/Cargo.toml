@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 apply = "0.2.2"
-diesel = { version = "1.4.1", features = ["postgres", "uuid", "chrono", "serde_json"] }
+diesel = { version = "1.4.1", features = ["postgres", "uuid", "chrono", "serde_json", "r2d2"] }
 r2d2 = "0.8.3"
 uuid = {version="0.6.*", features=["serde"]}
 chrono = {version = "0.4.*", features=["serde"]}

@@ -10,7 +10,7 @@ pub mod stock;
 pub mod funds;
 mod util;
 mod schema;
-
+pub mod pool;
 
 
 
