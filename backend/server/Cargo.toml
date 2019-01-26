@@ -1,0 +1,13 @@
+[package]
+name = "server"
+version = "0.1.0"
+authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+warp = "0.1.11"
+apply = "0.2.2"
+clap = "2.32.0"
+log = "0.4.6"
+env_logger = "0.6.0"
+serde = "1.0.85"
