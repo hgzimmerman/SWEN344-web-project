@@ -8,8 +8,7 @@ use diesel::{
 use crate::schema::{
     stocks,
     stock_prices,
-    stock_acquisitions,
-    stock_sells
+    stock_transactions
 };
 
 
@@ -50,12 +49,11 @@ pub struct NewStockPrice {
 }
 
 
-// TODO maybe, since I'm using a i32, I can reduce this and StockSells to a StockTrade type that uses a signed integer :/
 #[derive(Clone, Debug, Identifiable, Queryable)]
 #[primary_key(uuid)]
 #[belongs_to(StockPrice, foreign_key = "price_uuid")]
 #[belongs_to(user, foreign_key = "user_uuid")]
-#[table_name = "stock_acquisitions"]
+#[table_name = "stock_transactions"]
 pub struct StockAcquisition {
     pub uuid: Uuid,
     pub user_uuid: Uuid,
@@ -64,31 +62,9 @@ pub struct StockAcquisition {
 }
 
 
-#[derive(Insertable, Debug)]
-#[table_name = "stock_acquisitions"]
+#[table_name = "stock_transactions"]
 pub struct NewStockAcquisition {
     pub user_uuid: Uuid,
     pub price_uuid: Uuid,
     pub quantity: i32 // Can you get non-integer quantities of
-}
-
-#[derive(Clone, Debug, Identifiable, Queryable)]
-#[primary_key(uuid)]
-#[belongs_to(StockPrice, foreign_key = "price_uuid")]
-#[belongs_to(user, foreign_key = "user_uuid")]
-#[table_name = "stock_sells"]
-pub struct StockSell {
-    pub uuid: Uuid,
-    pub user_uuid: Uuid,
-    pub price_uuid: Uuid,
-    pub quantity: i32 // Can you get non-integer quantities of stocks.
-}
-
-
-#[derive(Insertable, Debug)]
-#[table_name = "stock_sells"]
-pub struct NewStockSell {
-    pub user_uuid: Uuid,
-    pub price_uuid: Uuid,
-    pub quantity: i32
 }

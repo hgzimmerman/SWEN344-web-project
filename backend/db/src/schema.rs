@@ -16,15 +16,6 @@ table! {
 }
 
 table! {
-    stock_acquisitions (uuid) {
-        uuid -> Uuid,
-        user_uuid -> Uuid,
-        price_uuid -> Uuid,
-        quantity -> Nullable<Int4>,
-    }
-}
-
-table! {
     stock_prices (uuid) {
         uuid -> Uuid,
         stock_uuid -> Uuid,
@@ -42,7 +33,7 @@ table! {
 }
 
 table! {
-    stock_sells (uuid) {
+    stock_transactions (uuid) {
         uuid -> Uuid,
         user_uuid -> Uuid,
         price_uuid -> Uuid,
@@ -60,18 +51,15 @@ table! {
 
 joinable!(events -> users (user_uuid));
 joinable!(funds -> users (user_uuid));
-joinable!(stock_acquisitions -> stock_prices (price_uuid));
-joinable!(stock_acquisitions -> users (user_uuid));
 joinable!(stock_prices -> stocks (stock_uuid));
-joinable!(stock_sells -> stock_prices (price_uuid));
-joinable!(stock_sells -> users (user_uuid));
+joinable!(stock_transactions -> stock_prices (price_uuid));
+joinable!(stock_transactions -> users (user_uuid));
 
 allow_tables_to_appear_in_same_query!(
     events,
     funds,
-    stock_acquisitions,
     stock_prices,
     stocks,
-    stock_sells,
+    stock_transactions,
     users,
 );

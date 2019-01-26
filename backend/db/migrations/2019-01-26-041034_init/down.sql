@@ -5,8 +5,7 @@
 
 
 
-DROP TABLE stock_sells;
-DROP TABLE stock_acquisitions;
+DROP TABLE stock_transactions;
 DROP TABLE stock_prices;
 DROP TABLE stocks;
 DROP TABLE funds;
