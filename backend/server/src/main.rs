@@ -19,11 +19,6 @@ fn main() {
         .filter_level(LevelFilter::Info)
         .init();
 
-
-
-    // GET /hello/warp => 200 OK with body "Hello, warp!"
-
-
     let localhost = [127, 0, 0, 1];
     let port = 8080;
     let addr = (localhost, port);

@@ -25,3 +25,23 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .boxed()
 
 }
+
+
+#[allow(dead_code)]
+/// A function that:
+/// * Routes the API
+/// * Handles file requests and redirections - NOT IMPLEMENTED
+/// * Initializes logging
+/// * Handles errors
+/// * Handles CORS
+pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
+    let cors = warp::cors()
+        .allow_origin("localhost")
+        .allow_methods(vec!["GET", "POST", "PUT","DELETE"]);
+
+    api(state)
+        .with(warp::log("routes"))
+        .with(cors)
+        .recover(crate::error::customize_error)
+        .boxed()
+}

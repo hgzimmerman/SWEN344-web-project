@@ -6,7 +6,12 @@ use diesel::{
 };
 use crate::schema::users;
 use serde::{Serialize, Deserialize};
-
+use diesel::pg::PgConnection;
+use diesel::result::QueryResult;
+use crate::schema;
+use diesel::query_dsl::QueryDsl;
+use diesel::RunQueryDsl;
+use diesel::ExpressionMethods;
 
 
 // Flow for user login/creation?
@@ -45,14 +50,31 @@ use serde::{Serialize, Deserialize};
 #[primary_key(uuid)]
 #[table_name = "users"]
 pub struct User {
-    uuid: Uuid,
-    name: String,
-    oauth: String,
+    pub uuid: Uuid,
+    pub name: String,
+    pub oauth: String,
 }
+
 
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct  NewUser {
-    name: String,
-    oauth: String
+    pub name: String,
+    pub oauth: String
+}
+
+impl User {
+    pub fn create_user(user: NewUser, conn: &PgConnection) -> QueryResult<User> {
+        crate::util::create_row(schema::users::table, user, conn)
+    }
+
+    pub fn get_user(uuid: Uuid, conn: &PgConnection) -> QueryResult<User> {
+        crate::util::get_row(schema::users::table, uuid, conn)
+    }
+
+    pub fn get_user_by_oauth(oauth: String, conn: &PgConnection) -> QueryResult<User> {
+        users::table
+            .filter(users::dsl::oauth.eq(oauth))
+            .first::<User>(conn)
+    }
 }

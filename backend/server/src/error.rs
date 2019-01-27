@@ -133,3 +133,14 @@ impl Error {
     }
 }
 
+impl From<diesel::result::Error> for Error {
+    fn from(error: diesel::result::Error) -> Self {
+        use diesel::result::Error as DieselError;
+        use self::Error::*;
+        match error {
+            DieselError::DatabaseError(_,_) =>  DatabaseError(None), // todo flesh this one out a bit
+            DieselError::NotFound => NotFound {type_name: "not implemented".to_string()},
+            _ => DatabaseError(None)
+        }
+    }
+}

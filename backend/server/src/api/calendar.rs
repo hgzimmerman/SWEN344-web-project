@@ -14,7 +14,8 @@ use crate::auth::user_filter;
 use chrono::NaiveDateTime;
 use serde::Serialize;
 use serde::Deserialize;
-
+use crate::util;
+use crate::error::Error;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
@@ -41,51 +42,56 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("events"))
         .and(user_filter(state))
         .and(state.db.clone())
-        .map(|user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events(user_uuid, &conn)
-                .unwrap() // TODO handle error
-                .apply(crate::util::json)
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     let events_today = warp::get2()
         .and(path!("events" / "today"))
         .and(user_filter(state))
         .and(state.db.clone())
-        .map(|user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events_today(user_uuid, &conn)
-                .unwrap() // TODO handle error
-                .apply(crate::util::json)
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     let events_month = warp::get2()
         .and(path!("events" / "month"))
         .and(user_filter(state))
         .and(state.db.clone())
-        .map(|user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events_month(user_uuid, &conn)
-                .unwrap() // TODO handle error
-                .apply(crate::util::json)
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     let create_event = warp::post2()
         .and(json_body_filter(50))
         .and(user_filter(state))
         .and(state.db.clone())
-        .map(|e: NewEventMessage, user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|e: NewEventMessage, user_uuid: Uuid, conn: PooledConn| {
             let new_event = e.to_new_event(user_uuid);
             Event::create_event(new_event, &conn)
-                .unwrap()
-                .apply(crate::util::json)
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     // TODO, do we want canceling events as well?
     let delete_event = warp::delete2()
         .and(path!(Uuid))
         .and(state.db.clone())
-        .map(| event_uuid: Uuid, conn: PooledConn| {
+        .and_then(| event_uuid: Uuid, conn: PooledConn| {
             Event::delete_event(event_uuid, &conn)
-                .unwrap()
-                .apply(crate::util::json)
+               .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     let modify_event = warp::post2()
