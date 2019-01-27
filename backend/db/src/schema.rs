@@ -44,8 +44,7 @@ table! {
 table! {
     users (uuid) {
         uuid -> Uuid,
-        name -> Varchar,
-        oauth -> Varchar,
+        client_id -> Varchar,
     }
 }
 

@@ -16,11 +16,12 @@ use frank_jwt::{
 use chrono::NaiveDateTime;
 use chrono::Duration;
 
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JwtPayload {
     /// Issue date
     pub iat: NaiveDateTime,
-    /// Subject (the thing being authenticated by this token)
+    /// Subject (the user being authenticated by this token)
     pub sub: Uuid,
     /// Expire date
     pub exp: NaiveDateTime,
@@ -87,6 +88,7 @@ impl JwtPayload {
     }
 }
 
+/// A string that acts like a key to validate JWT signatures.
 #[derive(Clone, Debug)]
 pub struct Secret(String);
 
@@ -105,7 +107,7 @@ fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Err
     let authorization_words: Vec<String> = bearer_string.split_whitespace().map(String::from).collect();
 
     if authorization_words.len() != 2 {
-        return Err(Error::MalformedToken);
+        return Err(Error::MissingToken);
     }
     if authorization_words[0] != BEARER {
         return Err(Error::MalformedToken);

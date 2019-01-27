@@ -45,22 +45,22 @@ use diesel::ExpressionMethods;
 // If it expires, they just log into facebook again.
 // When that second login takes place, the api or app checks if the user is the same
 
+// TODO this may have a name that is acquired when the user first logs in by requesting the name from the oauth provider, but it isn't strictly necessary.
+
 
 #[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]
 pub struct User {
     pub uuid: Uuid,
-    pub name: String,
-    pub oauth: String,
+    pub client_id: String,
 }
 
 
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct  NewUser {
-    pub name: String,
-    pub oauth: String
+    pub client_id: String
 }
 
 impl User {
@@ -72,9 +72,9 @@ impl User {
         crate::util::get_row(schema::users::table, uuid, conn)
     }
 
-    pub fn get_user_by_oauth(oauth: &str, conn: &PgConnection) -> QueryResult<User> {
+    pub fn get_user_by_client_id(client_id: &str, conn: &PgConnection) -> QueryResult<User> {
         users::table
-            .filter(users::dsl::oauth.eq(oauth))
+            .filter(users::dsl::client_id.eq(client_id))
             .first::<User>(conn)
     }
 }

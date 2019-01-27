@@ -1,8 +1,8 @@
 -- Your SQL goes here
 CREATE TABLE users (
     uuid UUID PRIMARY KEY NOT NULL Default gen_random_uuid(),
-    name VARCHAR NOT NULL,
-    oauth VARCHAR NOT NULL
+--     name VARCHAR NOT NULL,
+    client_id VARCHAR NOT NULL
 );
 
 CREATE TABLE events (
