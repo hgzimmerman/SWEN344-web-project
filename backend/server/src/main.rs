@@ -8,6 +8,8 @@ use log::LevelFilter;
 mod api;
 mod state;
 mod util;
+mod auth;
+mod error;
 
 use crate::api::api;
 use crate::state::State;

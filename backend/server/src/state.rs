@@ -7,18 +7,23 @@ use db::pool::{
 };
 use warp::filters::BoxedFilter;
 use db::pool::PooledConn;
+use crate::auth::secret_filter;
+use crate::auth::Secret;
 
 
 pub struct State {
     pub db: BoxedFilter<(PooledConn,)>,
+    pub secret: BoxedFilter<(Secret,)>
 }
 
 impl State {
     pub fn new() -> Self {
         let pool = init_pool(DATABASE_URL);
 
+
         State {
             db: db_filter(pool),
+            secret: secret_filter(Secret::new("yeetyeetyeetyeetyeet"))
         }
     }
 }
