@@ -32,12 +32,13 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             // take token, go to platform, get client id.
             let client_id = get_client_id(&login.oauth_token);
             // search DB for user with client id.
-            User::get_user_by_oauth(client_id, &conn)
+            User::get_user_by_oauth(&client_id, &conn)
                 .or_else(|_|{
+                    info!("Could not find user, creating new one");
                      // If user does not exist, create one.
                     let new_user = NewUser {
                         name: "I need to remove this field".to_string(),
-                        oauth: login.oauth_token
+                        oauth: client_id
                     };
                     User::create_user(new_user, &conn)
                 })

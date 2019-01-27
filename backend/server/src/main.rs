@@ -11,7 +11,8 @@ mod util;
 mod auth;
 mod error;
 
-use crate::api::api;
+use crate::api::routes;
+//use crate::api::api;
 use crate::state::State;
 
 fn main() {
@@ -24,8 +25,9 @@ fn main() {
     let addr = (localhost, port);
 
     let state = State::new();
-    let api = api(&state);
+//    let api = api(&state);
+    let routes = routes(&state);
 
-    warp::serve(api)
+    warp::serve(routes)
         .run(addr);
 }

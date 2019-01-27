@@ -47,6 +47,7 @@ The Requires Auth column indicates if the request needs the JWT attached to the 
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |
 | `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string |
+| `/api/auth/user/`                   | Get    | User               |                     | yes           | Gets the user                         |
 | `/api/calendar/event/events`        | GET    | [Event]            |                     | yes           | Gets all events for user              |
 | `/api/calendar/event/events/today`  | GET    | [Event]            |                     | yes           | Gets events today for user            |
 | `/api/calendar/event/events/month`  | GET    | [Event]            |                     | yes           | Gets events this Month for user       |

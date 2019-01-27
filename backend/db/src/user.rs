@@ -72,7 +72,7 @@ impl User {
         crate::util::get_row(schema::users::table, uuid, conn)
     }
 
-    pub fn get_user_by_oauth(oauth: String, conn: &PgConnection) -> QueryResult<User> {
+    pub fn get_user_by_oauth(oauth: &str, conn: &PgConnection) -> QueryResult<User> {
         users::table
             .filter(users::dsl::oauth.eq(oauth))
             .first::<User>(conn)

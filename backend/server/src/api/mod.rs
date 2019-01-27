@@ -36,7 +36,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// * Handles CORS
 pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
     let cors = warp::cors()
-        .allow_origin("localhost")
+        .allow_origin("http://localhost")
         .allow_methods(vec!["GET", "POST", "PUT","DELETE"]);
 
     api(state)
