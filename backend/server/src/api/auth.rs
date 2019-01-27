@@ -42,7 +42,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                     User::create_user(new_user, &conn)
                 })
                 .map(|user| JwtPayload::new(user.uuid))
-                .map_err(Error::from)
+                .map_err(Error::from) // Need to unify error types early for the and_then() call
                 .and_then(|payload| payload.encode_jwt_string(&secret))
                 .map_err(Error::reject)
         });
