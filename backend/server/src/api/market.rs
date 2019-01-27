@@ -54,7 +54,6 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
             "UNIMPLEMENTED"
         });
 
-    // TODO consider moving this to a non-nested api node
     let funds_api = path!("funds")
         .and(
             balance

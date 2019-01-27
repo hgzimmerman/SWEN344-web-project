@@ -19,7 +19,18 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .map(|login: Login| {
             println!("Got token! {}", login.oauth_token);
             // TODO should return JWT instead of "yeet"
-            "yeet"
+
+
+            // take token, go to platform, get client id.
+
+            // search DB for user with client id.
+
+            // If user does not exist, create one.
+
+            // Get user uuid.
+
+            // issue a token with uuid in it.
+
         });
 
     path!("auth")

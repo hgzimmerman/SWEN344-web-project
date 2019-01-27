@@ -39,6 +39,10 @@ impl JwtPayload {
         }
     }
 
+    pub fn uuid(self) -> Uuid {
+        self.sub
+    }
+
     /// Validates if the token is expired or not.
     /// It also checks if the token was issued in the future, to further complicate the attack surface of someone creating forgeries.
     pub fn validate_dates(self) -> Result<Self, Error> {
@@ -133,3 +137,23 @@ pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
         .boxed()
 }
 
+
+/// If the user has a JWT, then the user has basic user privileges.
+pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,), > {
+    warp::any()
+        .and(jwt_filter(s))
+        .map( JwtPayload::uuid)
+        .boxed()
+}
+
+
+
+/// Gets an Option<UserUuid> from the request.
+/// Returns Some(user_uuid) if the user has a valid JWT, and None otherwise.
+pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
+    user_filter(s)
+        .map(Some)
+        .or(warp::any().map(|| None))
+        .unify::<(Option<Uuid>,)>()
+        .boxed()
+}

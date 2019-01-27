@@ -1,0 +1,12 @@
+https://sequencediagram.org/
+title Authentication Flow
+
+WebApp->OauthSource: Log in
+OauthSource-->WebApp: Return Oauth Token
+WebApp->ProjectApi: Log in using Oauth Token
+ProjectApi->OauthSource: Request unique identifier from OauthSource for user.
+OauthSource-->ProjectApi: Return user id
+ProjectApi->ProjectDB: Look up User in DB using Id
+ProjectDB-->ProjectApi: Return User row.
+ProjectApi->ProjectApi: Create JWT using User UUID
+ProjectApi-->WebApp: Return JWT

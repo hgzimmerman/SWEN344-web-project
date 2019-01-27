@@ -16,7 +16,6 @@ use crate::api::auth::auth_api;
 
 pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
-
     path!("api")
         .and(
             market_api(state)
