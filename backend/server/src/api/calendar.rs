@@ -16,6 +16,7 @@ use serde::Serialize;
 use serde::Deserialize;
 use crate::util;
 use crate::error::Error;
+use db::event::EventChangeset;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
@@ -26,7 +27,7 @@ pub struct NewEventMessage {
 }
 
 impl NewEventMessage {
-    fn to_new_event(self, user_uuid: Uuid) -> NewEvent {
+    fn into_new_event(self, user_uuid: Uuid) -> NewEvent {
         NewEvent {
             user_uuid,
             title: self.title,
@@ -36,7 +37,6 @@ impl NewEventMessage {
         }
     }
 }
-
 
 
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
@@ -80,28 +80,63 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(user_filter(state))
         .and(state.db.clone())
         .and_then(|e: NewEventMessage, user_uuid: Uuid, conn: PooledConn| {
-            let new_event = e.to_new_event(user_uuid);
-            Event::create_event(new_event, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
-                .map(util::json)
+            let new_event = e.into_new_event(user_uuid);
+            // check logical ordering of start and stop times
+            if new_event.start_at > new_event.stop_at {
+                Error::BadRequest.reject_result()
+            } else {
+                Event::create_event(new_event, &conn)
+                    .map_err(Error::from)
+                    .map_err(Error::reject)
+                    .map(util::json)
+            }
+
         });
 
     // TODO, do we want canceling events as well?
     let delete_event = warp::delete2()
         .and(path!(Uuid))
+        .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(| event_uuid: Uuid, conn: PooledConn| {
-            Event::delete_event(event_uuid, &conn)
-               .map_err(Error::from)
+        .and_then(| event_uuid: Uuid, user_uuid: Uuid, conn: PooledConn| {
+            Event::get_event(event_uuid, &conn)
+                .map_err(Error::from)
+                .and_then(|event: Event| {
+                    if event.user_uuid != user_uuid {
+                        return Err(Error::BadRequest)
+                    } else {
+                        Event::delete_event(event_uuid, &conn)
+                            .map_err(Error::from)
+                    }
+                })
                 .map_err(Error::reject)
                 .map(util::json)
         });
 
+
     let modify_event = warp::post2()
         .and(json_body_filter(50))
-        .map(|_:String| {
-            "UNIMPLEMENTED"
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .and_then(| changeset: EventChangeset, user_uuid: Uuid, conn: PooledConn| {
+            // check logical ordering of start and stop times
+            if changeset.start_at > changeset.stop_at {
+                Error::BadRequest.reject_result() // TODO better error message.
+            } else {
+                // Check if the user has authority to change the event.
+                Event::get_event(changeset.uuid, &conn)
+                    .map_err(Error::from)
+                    .and_then(|event: Event| {
+                        if event.user_uuid != user_uuid {
+                            Err(Error::BadRequest)
+                        } else {
+                            Event::change_event(changeset, &conn)
+                                .map_err(Error::from)
+                        }
+                    })
+                    .map_err(Error::reject)
+                    .map(util::json)
+            }
         });
 
     let events = path!("event")

@@ -32,7 +32,7 @@ pub struct Event {
     pub stop_at: NaiveDateTime
 }
 
-#[derive(Insertable, Debug, Serialize, Deserialize)]
+#[derive(Insertable, Debug)]
 #[table_name = "events"]
 pub struct NewEvent {
     pub user_uuid: Uuid,
@@ -42,10 +42,16 @@ pub struct NewEvent {
     pub stop_at: NaiveDateTime
 }
 
+#[derive(Clone, Debug, AsChangeset, Serialize, Deserialize)]
+#[table_name = "events"]
+pub struct EventChangeset {
+    pub uuid: Uuid,
+    pub title: String,
+    pub text: String,
+    pub start_at: NaiveDateTime,
+    pub stop_at: NaiveDateTime
+}
 
-
-// TODO needed functions
-// Modify Event
 
 type All = diesel::dsl::Select<events::table, AllColumns>;
 
@@ -141,12 +147,20 @@ impl Event {
             .load::<Event>(conn)
     }
 
+    pub fn get_event(uuid: Uuid, conn: &PgConnection) -> QueryResult<Event> {
+        crate::util::get_row(schema::events::table, uuid, conn)
+    }
+
     pub fn create_event(new_event: NewEvent, conn: &PgConnection) -> QueryResult<Event> {
         crate::util::create_row(schema::events::table, new_event, conn)
     }
 
     pub fn delete_event(uuid: Uuid, conn: &PgConnection) -> QueryResult<Event> {
         crate::util::delete_row(schema::events::table, uuid, conn)
+    }
+
+    pub fn change_event(changeset: EventChangeset, conn: &PgConnection) -> QueryResult<Event> {
+        crate::util::update_row(schema::events::table, changeset, conn)
     }
 
 }

@@ -53,15 +53,15 @@ The Requires Auth column indicates if the request needs the JWT attached to the 
 | `/api/calendar/event/events/month`  | GET    | [Event]            |                     | yes           | Gets events this Month for user       |
 | `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         |
 | `/api/calendar/event/`              | POST   | Event              | NewEventMessage     | yes           | Creates event                         |
-                      
+| `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        |
+
+
 #### UNIMPLEMENTED                      
-                      
 ###### Instructions                      
 When one of these is implemented, move it to the upper table.                      
                       
 | Route                               | Method | Body Return Type   |  Body Accept Type   | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------- | ------------- |-------------------------------------- |
-| `/api/calendar/event/`              | PUT    | Event              | ModifyEventMessage  | yes           | Modifies event                        |
 | `/api/market/funds/balance`         | GET    | number             |                     | yes           | Gets the quantity of funds the user has |
 | `/api/market/funds/add`             | POST   | number (balance)   | number              | yes           | Adds funds to user account            |
 | `/api/market/funds/withdraw`        | POST   | number (balance)   | number              | yes           | Removes funds from user account       |
