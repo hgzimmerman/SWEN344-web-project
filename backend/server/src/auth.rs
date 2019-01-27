@@ -17,6 +17,7 @@ use chrono::NaiveDateTime;
 use chrono::Duration;
 
 
+/// The payload section of the JWT
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JwtPayload {
     /// Issue date

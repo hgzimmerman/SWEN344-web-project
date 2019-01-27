@@ -2,8 +2,10 @@ table! {
     events (uuid) {
         uuid -> Uuid,
         user_uuid -> Uuid,
+        title -> Varchar,
         text -> Varchar,
-        time_due -> Timestamp,
+        start_at -> Timestamp,
+        stop_at -> Timestamp,
     }
 }
 

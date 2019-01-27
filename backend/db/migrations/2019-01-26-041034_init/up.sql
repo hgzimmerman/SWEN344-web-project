@@ -8,8 +8,10 @@ CREATE TABLE users (
 CREATE TABLE events (
     uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     user_uuid UUID NOT NULL REFERENCES users(uuid) ON DELETE CASCADE,
+    title VARCHAR NOT NULL,
     text VARCHAR NOT NULL,
-    time_due TIMESTAMP NOT NULL
+    start_at TIMESTAMP NOT NULL,
+    stop_at TIMESTAMP NOT NULL
 );
 
 

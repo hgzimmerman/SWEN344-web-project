@@ -26,16 +26,20 @@ use serde::{Serialize, Deserialize};
 pub struct Event {
     pub uuid: Uuid,
     pub user_uuid: Uuid,
+    pub title: String,
     pub text: String,
-    pub time_due: NaiveDateTime
+    pub start_at: NaiveDateTime,
+    pub stop_at: NaiveDateTime
 }
 
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "events"]
 pub struct NewEvent {
     pub user_uuid: Uuid,
+    pub title: String,
     pub text: String,
-    pub time_due: NaiveDateTime
+    pub start_at: NaiveDateTime,
+    pub stop_at: NaiveDateTime
 }
 
 
@@ -48,15 +52,19 @@ type All = diesel::dsl::Select<events::table, AllColumns>;
 type AllColumns = (
     events::uuid,
     events::user_uuid,
+    events::title,
     events::text,
-    events::time_due
+    events::start_at,
+    events::stop_at
 );
 
 pub const ALL_COLUMNS: AllColumns = (
     events::uuid,
     events::user_uuid,
+    events::title,
     events::text,
-    events::time_due
+    events::start_at,
+    events::stop_at
 );
 
 pub type BoxedQuery<'a> = events::BoxedQuery<'a, Pg, SqlType>;
@@ -95,8 +103,8 @@ impl Event {
 
         Self::user_events(user_uuid)
             .filter(
-                events::time_due.gt(today_00_00)
-                    .and(events::time_due.lt(tomorrow_00_00)))
+                events::start_at.gt(today_00_00)
+                    .and(events::start_at.lt(tomorrow_00_00))) // TODO impl OR events that end before tomorrow?
             .load::<Event>(conn)
     }
 
@@ -120,16 +128,16 @@ impl Event {
 
         Self::user_events(user_uuid)
             .filter(
-                events::time_due.gt(start_of_this_month)
-                    .and(events::time_due.lt(five_weeks)))
+                events::start_at.gt(start_of_this_month)
+                    .and(events::start_at.lt(five_weeks)))
             .load::<Event>(conn)
     }
 
     pub fn events_from_n_to_n(user_uuid: Uuid, start: NaiveDateTime, end: NaiveDateTime, conn: &PgConnection) -> QueryResult<Vec<Event>> {
          Self::user_events(user_uuid)
             .filter(
-                events::time_due.gt(start)
-                    .and(events::time_due.lt(end)))
+                events::start_at.gt(start)
+                    .and(events::start_at.lt(end)))
             .load::<Event>(conn)
     }
 

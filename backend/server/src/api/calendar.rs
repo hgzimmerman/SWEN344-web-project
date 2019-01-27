@@ -19,16 +19,20 @@ use crate::error::Error;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
+    pub title: String,
     pub text: String,
-    pub time_due: NaiveDateTime
+    pub start_at: NaiveDateTime,
+    pub stop_at: NaiveDateTime
 }
 
 impl NewEventMessage {
     fn to_new_event(self, user_uuid: Uuid) -> NewEvent {
         NewEvent {
             user_uuid,
+            title: self.title,
             text: self.text,
-            time_due: self.time_due
+            start_at: self.start_at,
+            stop_at: self.stop_at
         }
     }
 }
