@@ -115,7 +115,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::MissingToken => *resp.status_mut() = StatusCode::UNAUTHORIZED,
         Error::DeserializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
         Error::SerializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::JwtDecodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
+        Error::JwtDecodeError => *resp.status_mut() = StatusCode::UNAUTHORIZED,
         Error::JwtEncodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
     }
 

@@ -13,13 +13,42 @@ use frank_jwt::{
     encode,
     Algorithm,
 };
+use chrono::NaiveDateTime;
+use chrono::Duration;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JwtPayload {
-    claim: Uuid
+    /// Issue date
+    pub iat: NaiveDateTime,
+    /// Subject (the thing being authenticated by this token)
+    pub sub: Uuid,
+    /// Expire date
+    pub exp: NaiveDateTime,
 }
 
 impl JwtPayload {
+
+    /// Creates a new token for the user that will expire in 4 weeks.
+    pub fn new(user_uuid: Uuid) -> Self {
+        let now = chrono::Utc::now().naive_utc();
+
+        JwtPayload {
+            iat: now,
+            sub: user_uuid,
+            exp: now + Duration::weeks(4) // token will expire in 4 weeks
+        }
+    }
+
+    /// Validates if the token is expired or not.
+    /// It also checks if the token was issued in the future, to further complicate the attack surface of someone creating forgeries.
+    pub fn validate_dates(self) -> Result<Self, Error> {
+        let now = chrono::Utc::now().naive_utc();
+        if self.exp < now || self.iat > now {
+            Err(Error::ExpiredToken)
+        } else {
+            Ok(self)
+        }
+    }
 
     /// Encodes the payload, producing a JWT in string form.
     pub fn encode_jwt_string(&self, secret: &Secret) -> Result<String, Error> {
@@ -38,6 +67,8 @@ impl JwtPayload {
         }
     }
 
+    /// Decodes the JWT into its payload.
+    /// If the signature doesn't match, then a decode error is thrown.
     pub fn decode_jwt_string(jwt_str: &str, secret: &Secret) -> Result<JwtPayload, Error> {
         let secret: &String = &secret.0;
         let (_header, payload) = match decode(&jwt_str.to_string(), secret, Algorithm::HS256) {
@@ -80,17 +111,25 @@ fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Err
     JwtPayload::decode_jwt_string(jwt_str, secret).map_err(|_| Error::IllegalToken)
 }
 
+/// This filter will attempt to extract the JWT bearer token from the header Authorization field.
+/// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| Error::MalformedToken.reject_result())
         .and(s.secret.clone())
-        .and_then(|bearer_string, secret| extract_jwt(bearer_string, &secret).map_err(Error::reject))
+        .and_then(|bearer_string, secret| {
+            extract_jwt(bearer_string, &secret)
+                .and_then(JwtPayload::validate_dates)
+                .map_err(Error::reject)
+        })
         .boxed()
 }
 
 /// Brings the secret into scope.
+/// The secret is used to create and verify JWTs.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any()
         .map(move || secret.clone())
         .boxed()
 }
+
