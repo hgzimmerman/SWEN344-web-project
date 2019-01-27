@@ -7,6 +7,12 @@ use crate::error::Error;
 use uuid::Uuid;
 use serde::Serialize;
 use serde::Deserialize;
+use serde_json::json;
+use frank_jwt::{
+    decode,
+    encode,
+    Algorithm,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JwtPayload {
@@ -14,11 +20,35 @@ pub struct JwtPayload {
 }
 
 impl JwtPayload {
-    pub fn decode_jwt_string(jwt_str: &str, secret: &Secret) -> Result<Self, Error> {
-        unimplemented!()
+
+    /// Encodes the payload, producing a JWT in string form.
+    pub fn encode_jwt_string(&self, secret: &Secret) -> Result<String, Error> {
+        let header = json!({});
+        use serde_json::Value;
+
+        let secret: &String = &secret.0;
+
+        let payload: Value = match serde_json::to_value(&self) {
+            Ok(x) => x,
+            Err(_) => return Err(Error::SerializeError),
+        };
+        match encode(header, secret, &payload, Algorithm::HS256) {
+            Ok(x) => return Ok(x),
+            Err(_) => return Err(Error::JwtEncodeError),
+        }
     }
-    pub fn encode_jwt_string(self, secret: &Secret) -> JwtPayload {
-        unimplemented!()
+
+    pub fn decode_jwt_string(jwt_str: &str, secret: &Secret) -> Result<JwtPayload, Error> {
+        let secret: &String = &secret.0;
+        let (_header, payload) = match decode(&jwt_str.to_string(), secret, Algorithm::HS256) {
+            Ok(x) => x,
+            Err(_) => return Err(Error::JwtDecodeError),
+        };
+        let jwt: JwtPayload = match serde_json::from_value(payload) {
+            Ok(x) => x,
+            Err(_) => return Err(Error::DeserializeError),
+        };
+        Ok(jwt)
     }
 }
 

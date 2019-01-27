@@ -36,6 +36,10 @@ pub enum Error {
     MalformedToken,
     /// The user has been banned and therefore can't perform their desired action.
     UserBanned,
+    DeserializeError,
+    SerializeError,
+    JwtDecodeError,
+    JwtEncodeError
 }
 
 impl Display for Error {
@@ -65,6 +69,10 @@ impl Display for Error {
             Error::NotFound { type_name } => {
                 format!("The resource ({})you requested could not be found", type_name)
             }
+            Error::DeserializeError => "Something could not be deserialized".to_string(),
+            Error::SerializeError => "Something could not be serialized".to_string(),
+            Error::JwtDecodeError => "JWT could not be decoded".to_string(),
+            Error::JwtEncodeError => "JWT could not be encoded".to_string(),
         };
         write!(f, "{}", description)
     }
@@ -105,6 +113,10 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::NotFound { .. } => *resp.status_mut() = StatusCode::NOT_FOUND,
         Error::InternalServerError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
         Error::MissingToken => *resp.status_mut() = StatusCode::UNAUTHORIZED,
+        Error::DeserializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
+        Error::SerializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
+        Error::JwtDecodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
+        Error::JwtEncodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
     }
 
     //        warn!("rewrote error response: {:?}", resp);
