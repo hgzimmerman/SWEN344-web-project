@@ -1,0 +1,27 @@
+{
+  "name": "swen344-web-project",
+  "version": "1.0.0",
+  "description": "Web project for swen-344",
+  "main": "webpack.config.js",
+  "scripts": {
+    "test": "test",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hgzimmerman/SWEN344-web-project.git"
+  },
+  "author": "swen-344 team",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hgzimmerman/SWEN344-web-project/issues"
+  },
+  "homepage": "https://github.com/hgzimmerman/SWEN344-web-project#readme",
+  "dependencies": {
+    "react": "^16.7.0",
+    "webpack": "^4.29.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.2.1"
+  }
+}
