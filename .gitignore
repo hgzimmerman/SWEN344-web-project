@@ -1,5 +1,6 @@
 backend/pgsql
 **/Cargo.lock
 **/target/
+/node_modules
 .idea
 db.logfile
