@@ -39,18 +39,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(json_body_filter(10))
         .and(user_filter(s))
         .and(s.db.clone())
-        .and_then(|quantity: f64, user_uuid: Uuid, conn: PooledConn| {
-            if quantity < 0.0 {
-                // No negative numbers allowed
-                Error::BadRequest.reject_result()
-            } else {
-                Funds::transact_funds(user_uuid, quantity, &conn)
-                    .map_err(Error::from)
-                    .map_err(Error::reject)
-                    .map(|funds: Funds| funds.quantity) // maps it to just a f64
-                    .map(util::json)
-            }
-        });
+        .and_then(add_funds);
 
     let withdraw_funds = path!("withdraw")
         .and(warp::post2())
@@ -108,6 +97,11 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 /// It will then check that if by withdrawing funds, the user will not have a negative balance.
 ///
 /// If those checks are OK, then the function will deduct the quantity from the users account.
+///
+/// /// # Arguments
+/// * quantity - non-negative number that represents the quantity of funds being 'withdrawn'.
+/// * user_uuid - The unique id of the user whose funds are being modified
+/// * conn - the connection to the database.
 fn withdraw_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
     if quantity < 0.0 {
         // No negative numbers allowed.
@@ -132,5 +126,24 @@ fn withdraw_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<im
             .map(util::json)
             .map_err(Error::from)
             .map_err(Error::reject)
+    }
+}
+
+/// Adds funds to the user's account.
+///
+/// # Arguments
+/// * quantity - non-negative number that represents the quantity of funds being added.
+/// * user_uuid - The unique id of the user whose funds are being modified
+/// * conn - the connection to the database.
+fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
+    if quantity < 0.0 {
+        // No negative numbers allowed
+        Error::BadRequest.reject_result()
+    } else {
+        Funds::transact_funds(user_uuid, quantity, &conn)
+            .map_err(Error::from)
+            .map_err(Error::reject)
+            .map(|funds: Funds| funds.quantity) // maps it to just a f64
+            .map(util::json)
     }
 }
