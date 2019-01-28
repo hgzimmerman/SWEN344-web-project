@@ -4,3 +4,4 @@ backend/pgsql
 /node_modules
 .idea
 db.logfile
+**/DS_Store
