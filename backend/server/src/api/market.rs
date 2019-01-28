@@ -59,7 +59,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.db.clone())
         .and_then(withdraw_funds);
 
-    // balance
+
     let balance = path!("balance")
         .and(warp::get2())
         .and(user_filter(s))
