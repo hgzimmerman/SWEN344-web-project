@@ -23,7 +23,7 @@ That may change, should the API need to make requests to the OAuth provider's se
 
 ### JWT Details
 For the purposes of the client, the JWT is a magic string.
-It never needs to be inspected or modified.
+It never _needs_ to be inspected or modified, but it can be with some base64 decoding.
 What it does need is to be attached to any request that requires authentication (which is most requests).
 This is done by attaching it to the authorization header.
 It should look something like this (where 'garbage' is a stand-in for the random characters that comprise a JWT):
@@ -47,7 +47,7 @@ The Requires Auth column indicates if the request needs the JWT attached to the 
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |
 | `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string |
-| `/api/auth/user/`                   | Get    | User               |                     | yes           | Gets the user                         |
+| `/api/auth/user/`                   | GET    | User               |                     | yes           | Gets the user                         |
 | `/api/calendar/event/events`        | GET    | [Event]            |                     | yes           | Gets all events for user              |
 | `/api/calendar/event/events/today`  | GET    | [Event]            |                     | yes           | Gets events today for user            |
 | `/api/calendar/event/events/month`  | GET    | [Event]            |                     | yes           | Gets events this Month for user       |

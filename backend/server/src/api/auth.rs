@@ -24,13 +24,14 @@ pub struct Login {
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let login = path!("login")
         .and(warp::post2())
-        .and(util::json_body_filter(1))
+        .and(util::json_body_filter(3))
         .and(state.secret.clone())
         .and(state.db.clone())
         .and_then(|login: Login, secret: Secret, conn: PooledConn| {
-            info!("Got token! {}", login.oauth_token);
+            info!("Got token! {}", login.oauth_token); // TODO remove this in production
             // take token, go to platform, get client id.
             let client_id = get_client_id(&login.oauth_token);
+            info!("Resolved OAuth token to client_id: {}", client_id);
             // search DB for user with client id.
             User::get_user_by_client_id(&client_id, &conn)
                 .or_else(|_|{

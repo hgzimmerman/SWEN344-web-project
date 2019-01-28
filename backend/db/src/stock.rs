@@ -6,11 +6,15 @@ use diesel::{
     Insertable
 };
 use crate::schema::{
+    self,
     stocks,
     stock_prices,
     stock_transactions
 };
 use serde::{Serialize, Deserialize};
+use diesel::pg::PgConnection;
+use crate::util;
+use diesel::result::QueryResult;
 
 
 #[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
@@ -70,4 +74,18 @@ pub struct NewStockAcquisition {
     pub price_uuid: Uuid,
     pub quantity: i32 // Can you get non-integer quantities of
 }
+
+
+
+impl Stock {
+    pub fn create_stock(new_stock: NewStock, conn: &PgConnection) -> QueryResult<Stock> {
+        util::create_row(schema::stocks::table, new_stock, conn)
+    }
+
+    pub fn get_stock(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Stock> {
+        util::get_row(schema::stocks::table, stock_uuid, conn)
+    }
+
+}
+
 
