@@ -34,12 +34,18 @@ Authorization: bearer garbage.garbage.garbage
 When you get the response from the login api endpoint, take the plain string and store it in `localstorage`.
 This allows it to be accessible from a global context within the app, as well as on other tabs in the same web browser.
 
+### File Serving Details
+To work with a routed SPA client in the browser, when requesting a non-`/api/*` route on the server, the server will return the requested file or the index.html if the file can't be found.
+This intensionally breaks with the expected behavior of returning a `404` response.
+This is done to allow the user to visit the site at an arbitrary path eg `http://my-app.com/login/`, have the server fail to find the file named `login` and instead return the `index.html`
+By returning the `index.html` file, the browser will then request the css and js required to run the app, the router will detect that the url still points to `http://my-app.com/login/` and route to the login page/component.
+
 ### API
 
 ###### Note
 The `/:` syntax indicates that the segment in the route is an arbitrary string that can be coerced to that type.
 
-The Requires Auth column indicates if the request needs the JWT attached to the request.
+The 'Requires Auth' column indicates if the request needs the JWT attached to the request.
 
 ####Implemented
 
@@ -68,6 +74,6 @@ When one of these is implemented, move it to the upper table.
 | `/api/market/stock/stocks`          | GET    | [StockResponse]    |                     | yes           | All the stocks the user owns          |
 | `/api/market/stock/buy`             | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Buys a quantity of a given stock      |
 | `/api/market/stock/sell`            | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Sells a quantity of a given stock     |
-
+| `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 |
 
 
