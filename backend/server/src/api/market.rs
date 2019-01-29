@@ -13,6 +13,7 @@ use crate::error::Error;
 use crate::util;
 use warp::Rejection;
 
+/// The Filter for the market API.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 
     let buy = path!("buy")
