@@ -9,6 +9,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 
+#[allow(dead_code)]
+const HOST: &str = "http://127.0.0.1:8080";
+fn format_url(path: &str) -> String {
+    format!("{}{}", HOST, path)
+}
+
+
 enum Method<T> {
     Get,
     Delete,
@@ -34,14 +41,15 @@ impl Login {
 
     #[wasm_bindgen]
     pub fn fetch(self) -> Promise {
-        fetch_string("http://127.0.0.1:8080/api/auth/login", Method::Post(self), None)
+        fetch_string(&format_url("/api/auth/login"), Method::Post(self), None)
     }
 }
+//
+//#[wasm_bindgen]
+//pub fn fetch_login(login: Login) -> Promise {
+//    generic_fetch::<String, Login>(&format_url("/api/auth/login"), Method::Post(login), None)
+//}
 
-#[wasm_bindgen]
-pub fn fetch_login(login: Login) -> Promise {
-    generic_fetch::<String, Login>("http://127.0.0.1:8080/api/auth/login", Method::Post(login), None)
-}
 
 #[wasm_bindgen]
 #[derive(Serialize, Deserialize)]
@@ -55,7 +63,7 @@ pub struct User {
 impl User {
     #[wasm_bindgen]
     pub fn fetch(auth: String) -> Promise {
-        generic_fetch::<User, ()>("http://127.0.0.1:8080/api/auth/user", Method::Get, Some(auth))
+        generic_fetch::<User, ()>(&format_url("/api/auth/user"), Method::Get, Some(auth))
     }
 }
 
@@ -72,6 +80,7 @@ where
     U: Serialize
 {
     let request_promise = request_promise(url, method, auth);
+
 
     let future = JsFuture::from(request_promise)
         .and_then(|resp_value| {
