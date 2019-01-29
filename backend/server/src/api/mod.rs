@@ -27,7 +27,6 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 }
 
 
-#[allow(dead_code)]
 /// A function that:
 /// * Routes the API
 /// * Handles file requests and redirections - NOT IMPLEMENTED
@@ -36,7 +35,9 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// * Handles CORS
 pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
     let cors = warp::cors()
-        .allow_origin("http://localhost")
+//        .allow_origin("http://localhost:8081")
+        .allow_headers(vec!["Access-Control-Allow-Origin", "content-type"])
+        .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT","DELETE"]);
 
     api(state)
