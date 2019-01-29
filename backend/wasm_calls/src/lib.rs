@@ -7,8 +7,6 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use web_sys::console::log;
-use js_sys::Array;
 
 
 enum Method<T> {
@@ -36,7 +34,7 @@ impl Login {
 
     #[wasm_bindgen]
     pub fn fetch(self) -> Promise {
-        get_string_from_request_promise(request_promise("http://127.0.0.1:8080/api/auth/login", Method::Post(self), None))
+        fetch_string("http://127.0.0.1:8080/api/auth/login", Method::Post(self), None)
     }
 }
 
@@ -46,7 +44,7 @@ pub fn fetch_login(login: Login) -> Promise {
 }
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct User {
     uuid: Uuid,
     client_id: String
@@ -63,13 +61,16 @@ impl User {
 
 
 
+
 /// This is probably inefficient as hell, but it allows me to define requests in Rust and export them to JS via WASM
+///
+/// T type is what is received
+/// U type is what is sent
 fn generic_fetch<T, U>(url: &str, method: Method<U>, auth: Option<String>) -> Promise
 where
-    T: for <'de> Deserialize<'de> + Serialize + Default,
+    T: for <'de> Deserialize<'de> + Serialize,
     U: Serialize
 {
-
     let request_promise = request_promise(url, method, auth);
 
     let future = JsFuture::from(request_promise)
@@ -85,16 +86,12 @@ where
         })
         .and_then(|json| {
             // Use serde to parse the JSON into a struct.
-            let t: T = json
-                .into_serde()
-//                .unwrap();
-                .map_err(|e| {
-                    log(&Array::from(&JsValue::from_str(&e.to_string())));
-                    e
-                })
-                .unwrap_or_else(|_| T::default());
-
-            future::ok(JsValue::from_serde(&t).unwrap())
+            let t = json
+                .into_serde::<T>();
+            match t {
+                Ok(t) => future::ok(JsValue::from_serde(&t).unwrap()),
+                Err(_) => future::err(JsValue::from_str("Could not parse json"))
+            }
         });
 
     // Convert this Rust `Future` back into a JS `Promise`.
@@ -160,7 +157,10 @@ fn request_promise<T>(url: &str, method: Method<T>, auth: Option<String>) -> Pro
     request_promise
 }
 
-fn get_string_from_request_promise(request_promise: Promise) -> Promise {
+fn fetch_string<T>(url: &str, method: Method<T>, auth: Option<String>) -> Promise
+    where T: Serialize
+{
+    let request_promise = request_promise(url, method, auth);
     let future = JsFuture::from(request_promise)
         .and_then(|resp_value| {
             // `resp_value` is a `Response` object.

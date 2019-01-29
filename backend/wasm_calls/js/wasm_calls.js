@@ -143,14 +143,6 @@ export function __widl_f_fetch_with_request_Window(arg0, arg1) {
     return addHeapObject(getObject(arg0).fetch(getObject(arg1)));
 }
 
-export function __widl_f_log_(arg0) {
-    console.log(...getObject(arg0));
-}
-
-export function __wbg_from_46cbbf9bbf37b05f(arg0) {
-    return addHeapObject(Array.from(getObject(arg0)));
-}
-
 export function __wbg_newnoargs_43c5f57b77232284(arg0, arg1) {
     let varg0 = getStringFromWasm(arg0, arg1);
     return addHeapObject(new Function(varg0));
@@ -206,7 +198,7 @@ export function __wbg_new_5dc66f71c54d38f0(arg0, arg1) {
         }
 
     };
-    cbarg0.f = wasm.__wbg_function_table.get(91);
+    cbarg0.f = wasm.__wbg_function_table.get(90);
     cbarg0.a = arg0;
     cbarg0.b = arg1;
     try {
@@ -333,9 +325,9 @@ export function __wbindgen_json_serialize(idx, ptrptr) {
     return WASM_VECTOR_LEN;
 }
 
-export function __wbindgen_closure_wrapper242(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(61);
-    const d = wasm.__wbg_function_table.get(62);
+export function __wbindgen_closure_wrapper212(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(60);
+    const d = wasm.__wbg_function_table.get(61);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
