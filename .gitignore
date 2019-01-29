@@ -1,7 +1,7 @@
 backend/pgsql
 **/Cargo.lock
 **/target/
-/node_modules
+**/node_modules
 .idea
 db.logfile
 **/DS_Store

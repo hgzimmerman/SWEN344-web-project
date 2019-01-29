@@ -24,8 +24,8 @@ fn main() {
     let port = 8080;
     let addr = (localhost, port);
 
-    let state = State::new();
-//    let api = api(&state);
+    let state = State::new(None);
+
     let routes = routes(&state);
 
     warp::serve(routes)

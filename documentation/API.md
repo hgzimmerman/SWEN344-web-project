@@ -35,9 +35,10 @@ When you get the response from the login api endpoint, take the plain string and
 This allows it to be accessible from a global context within the app, as well as on other tabs in the same web browser.
 
 ### File Serving Details
-To work with a routed SPA client in the browser, when requesting a non-`/api/*` route on the server, the server will return the requested file or the index.html if the file can't be found.
-This intensionally breaks with the expected behavior of returning a `404` response.
-This is done to allow the user to visit the site at an arbitrary path eg `http://my-app.com/login/`, have the server fail to find the file named `login` and instead return the `index.html`
+To work with a routed SPA client in the browser, when requesting a non-`/api/*` route on the server, the server will return the requested file or the `index.html` if the file can't be found.
+This intentionally breaks with the expected behavior of returning a `404` response.
+
+This is done to allow the user to visit the site at an arbitrary path (eg. `http://my-app.com/login/`), have the server fail to find the file named `login` and instead return the `index.html`
 By returning the `index.html` file, the browser will then request the css and js required to run the app, the router will detect that the url still points to `http://my-app.com/login/` and route to the login page/component.
 
 ### API
@@ -60,7 +61,9 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 | `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         |
 | `/api/calendar/event/`              | POST   | Event              | NewEventMessage     | yes           | Creates event                         |
 | `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        |
-
+| `/api/market/funds/balance`         | GET    | number             |                     | yes           | Gets the quantity of funds the user has |
+| `/api/market/funds/add`             | POST   | number (balance)   | number              | yes           | Adds funds to user account            |
+| `/api/market/funds/withdraw`        | POST   | number (balance)   | number              | yes           | Removes funds from user account       |
 
 #### UNIMPLEMENTED                      
 ###### Instructions                      
@@ -68,9 +71,6 @@ When one of these is implemented, move it to the upper table.
                       
 | Route                               | Method | Body Return Type   |  Body Accept Type   | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------- | ------------- |-------------------------------------- |
-| `/api/market/funds/balance`         | GET    | number             |                     | yes           | Gets the quantity of funds the user has |
-| `/api/market/funds/add`             | POST   | number (balance)   | number              | yes           | Adds funds to user account            |
-| `/api/market/funds/withdraw`        | POST   | number (balance)   | number              | yes           | Removes funds from user account       |
 | `/api/market/stock/stocks`          | GET    | [StockResponse]    |                     | yes           | All the stocks the user owns          |
 | `/api/market/stock/buy`             | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Buys a quantity of a given stock      |
 | `/api/market/stock/sell`            | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Sells a quantity of a given stock     |
