@@ -17,7 +17,7 @@ use crate::state::State;
 
 fn main() {
     LoggerBuilder::new()
-        .filter_level(LevelFilter::Info)
+        .filter_level(LevelFilter::Debug)
         .init();
 
     let localhost = [127, 0, 0, 1];

@@ -2,4 +2,5 @@
 members = [
     "db",
     "server",
+    "wasm_calls"
 ]
