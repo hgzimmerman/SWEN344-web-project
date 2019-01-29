@@ -46,13 +46,13 @@ function takeObject(idx) {
     return ret;
 }
 /**
-* @param {string} arg0
+* @param {Login} arg0
 * @returns {any}
 */
-export function login(arg0) {
-    const ptr0 = passStringToWasm(arg0);
-    const len0 = WASM_VECTOR_LEN;
-    return takeObject(wasm.login(ptr0, len0));
+export function fetch_login(arg0) {
+    const ptr0 = arg0.ptr;
+    arg0.ptr = 0;
+    return takeObject(wasm.fetch_login(ptr0));
 }
 
 const lTextDecoder = typeof TextDecoder === 'undefined' ? require('util').TextDecoder : TextDecoder;
@@ -124,12 +124,31 @@ export function __widl_f_json_Response(arg0, exnptr) {
     }
 }
 
+export function __widl_f_text_Response(arg0, exnptr) {
+    try {
+        return addHeapObject(getObject(arg0).text());
+    } catch (e) {
+        const view = getUint32Memory();
+        view[exnptr / 4] = 1;
+        view[exnptr / 4 + 1] = addHeapObject(e);
+
+    }
+}
+
 export function __widl_instanceof_Window(idx) {
     return getObject(idx) instanceof Window ? 1 : 0;
 }
 
 export function __widl_f_fetch_with_request_Window(arg0, arg1) {
     return addHeapObject(getObject(arg0).fetch(getObject(arg1)));
+}
+
+export function __widl_f_log_(arg0) {
+    console.log(...getObject(arg0));
+}
+
+export function __wbg_from_46cbbf9bbf37b05f(arg0) {
+    return addHeapObject(Array.from(getObject(arg0)));
 }
 
 export function __wbg_newnoargs_43c5f57b77232284(arg0, arg1) {
@@ -187,7 +206,7 @@ export function __wbg_new_5dc66f71c54d38f0(arg0, arg1) {
         }
 
     };
-    cbarg0.f = wasm.__wbg_function_table.get(64);
+    cbarg0.f = wasm.__wbg_function_table.get(91);
     cbarg0.a = arg0;
     cbarg0.b = arg1;
     try {
@@ -314,9 +333,9 @@ export function __wbindgen_json_serialize(idx, ptrptr) {
     return WASM_VECTOR_LEN;
 }
 
-export function __wbindgen_closure_wrapper155(a, b, _ignored) {
-    const f = wasm.__wbg_function_table.get(34);
-    const d = wasm.__wbg_function_table.get(35);
+export function __wbindgen_closure_wrapper242(a, b, _ignored) {
+    const f = wasm.__wbg_function_table.get(61);
+    const d = wasm.__wbg_function_table.get(62);
     const cb = function(arg0) {
         this.cnt++;
         let a = this.a;
@@ -336,6 +355,64 @@ export function __wbindgen_closure_wrapper155(a, b, _ignored) {
     let real = cb.bind(cb);
     real.original = cb;
     return addHeapObject(real);
+}
+
+function freeUser(ptr) {
+
+    wasm.__wbg_user_free(ptr);
+}
+/**
+*/
+export class User {
+
+    free() {
+        const ptr = this.ptr;
+        this.ptr = 0;
+        freeUser(ptr);
+    }
+
+    /**
+    * @param {string} arg0
+    * @returns {any}
+    */
+    static fetch(arg0) {
+        const ptr0 = passStringToWasm(arg0);
+        const len0 = WASM_VECTOR_LEN;
+        return takeObject(wasm.user_fetch(ptr0, len0));
+    }
+}
+
+function freeLogin(ptr) {
+
+    wasm.__wbg_login_free(ptr);
+}
+/**
+*/
+export class Login {
+
+    free() {
+        const ptr = this.ptr;
+        this.ptr = 0;
+        freeLogin(ptr);
+    }
+
+    /**
+    * @param {string} arg0
+    * @returns {}
+    */
+    constructor(arg0) {
+        const ptr0 = passStringToWasm(arg0);
+        const len0 = WASM_VECTOR_LEN;
+        this.ptr = wasm.login_new(ptr0, len0);
+    }
+    /**
+    * @returns {any}
+    */
+    fetch() {
+        const ptr = this.ptr;
+        this.ptr = 0;
+        return takeObject(wasm.login_fetch(ptr));
+    }
 }
 
 export function __wbindgen_throw(ptr, len) {

@@ -15,6 +15,7 @@ use frank_jwt::{
 };
 use chrono::NaiveDateTime;
 use chrono::Duration;
+use log::warn;
 
 
 /// The payload section of the JWT
@@ -99,7 +100,7 @@ impl Secret {
     }
 }
 
-const BEARER: &'static str = "bearer ";
+const BEARER: &'static str = "bearer";
 const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
 
 
@@ -108,9 +109,11 @@ fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Err
     let authorization_words: Vec<String> = bearer_string.split_whitespace().map(String::from).collect();
 
     if authorization_words.len() != 2 {
+        warn!("Missing Token");
         return Err(Error::MissingToken);
     }
     if authorization_words[0] != BEARER {
+        warn!("Bearer not present");
         return Err(Error::MalformedToken);
     }
     let jwt_str: &str = &authorization_words[1];
