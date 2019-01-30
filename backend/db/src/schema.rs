@@ -39,7 +39,7 @@ table! {
         uuid -> Uuid,
         user_uuid -> Uuid,
         price_uuid -> Uuid,
-        quantity -> Nullable<Int4>,
+        quantity -> Int4,
     }
 }
 

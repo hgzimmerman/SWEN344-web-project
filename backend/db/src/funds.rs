@@ -12,9 +12,10 @@ use crate::util;
 use diesel::query_dsl::QueryDsl;
 use diesel::RunQueryDsl;
 use diesel::ExpressionMethods;
+use crate::user::User;
 
 
-#[derive(Clone, Debug, Identifiable, Queryable)]
+#[derive(Clone, Debug, Identifiable, Queryable, Associations)]
 #[primary_key(uuid)]
 #[belongs_to(User, foreign_key = "user_uuid")]
 #[table_name = "funds"]

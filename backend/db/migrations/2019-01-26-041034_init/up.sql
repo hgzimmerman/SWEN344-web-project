@@ -39,5 +39,5 @@ CREATE TABLE stock_transactions (
     uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     user_uuid UUID NOT NULL REFERENCES users(uuid) ON DELETE CASCADE,
     price_uuid UUID NOT NULL REFERENCES stock_prices(uuid) ON DELETE CASCADE,
-    quantity INTEGER
+    quantity INTEGER NOT NULL
 );
