@@ -43,8 +43,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(util::json)
         });
 
@@ -54,11 +53,9 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.db.clone())
         .and_then(|symbol: String, user_uuid: Uuid, conn: PooledConn| {
             let stock = Stock::get_stock_by_symbol(symbol, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)?;
+                .map_err(Error::from_reject)?;
             Stock::get_user_transactions_for_stock(user_uuid,stock.uuid, &conn )
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(util::json)
         });
 
@@ -84,8 +81,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Funds::funds(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(|funds: Funds| funds.quantity) // maps it to just a f64
                 .map(util::json)
         });
@@ -153,8 +149,7 @@ fn withdraw_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<im
         Funds::transact_funds(user_uuid, negative_quantity, &conn)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
-            .map_err(Error::from)
-            .map_err(Error::reject)
+            .map_err(Error::from_reject)
     }
 }
 
@@ -170,8 +165,7 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
         Error::BadRequest.reject_result()
     } else {
         Funds::transact_funds(user_uuid, quantity, &conn)
-            .map_err(Error::from)
-            .map_err(Error::reject)
+            .map_err(Error::from_reject)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
     }
@@ -199,16 +193,14 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
                         stock_name: "VOID - This field is slated for removal".to_string()
                     };
                     Stock::create_stock(new_stock, &conn)
-                        .map_err(Error::from)
-                        .map_err(Error::reject)
+                        .map_err(Error::from_reject)
                 }
                 e => Error::from(e).reject_result()
             }
         })?;
 
     let transactions = Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
-        .map_err(Error::from)
-        .map_err(Error::reject)?;
+        .map_err(Error::from_reject)?;
     let quantity = transactions.into_iter().fold(0, |acc, t| acc + t.quantity);
 
     // Users can't sell more than they have.
@@ -223,8 +215,7 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
     // if it is a purchase, check if the user has enough funds.
     if request.quantity > 0 {
         let funds = Funds::funds(user_uuid, &conn)
-            .map_err(Error::from)
-            .map_err(Error::reject)?;
+            .map_err(Error::from_reject)?;
         if transaction_quantity > funds.quantity {
             Error::BadRequest.reject_result()?;
         }
@@ -232,8 +223,7 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
 
     // Add or remove funds for the user
     Funds::transact_funds(user_uuid, transaction_quantity, &conn)
-        .map_err(Error::from)
-        .map_err(Error::reject)?;
+        .map_err(Error::from_reject)?;
 
     let new_stock_transaction = NewStockTransaction {
         user_uuid,
@@ -245,8 +235,7 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
 
     // Record that the stock was purchased for the user
     Stock::create_transaction(new_stock_transaction, &conn)
-        .map_err(Error::from)
-        .map_err(Error::reject)
+        .map_err(Error::from_reject)
         .map(util::json)
 
 }

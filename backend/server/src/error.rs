@@ -12,6 +12,7 @@ use warp::{
     reply::Reply,
 };
 use serde::Serialize;
+use apply::Apply;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Error {
@@ -130,6 +131,10 @@ impl Error {
 
     pub fn reject(self) -> Rejection {
         warp::reject::custom(self)
+    }
+
+    pub fn from_reject(error: diesel::result::Error) -> Rejection {
+        Error::from(error).apply(Self::reject)
     }
 }
 
