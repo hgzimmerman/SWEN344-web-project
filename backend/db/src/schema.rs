@@ -18,15 +18,6 @@ table! {
 }
 
 table! {
-    stock_prices (uuid) {
-        uuid -> Uuid,
-        stock_uuid -> Uuid,
-        price -> Float8,
-        record_time -> Timestamp,
-    }
-}
-
-table! {
     stocks (uuid) {
         uuid -> Uuid,
         symbol -> Varchar,
@@ -39,8 +30,9 @@ table! {
         uuid -> Uuid,
         user_uuid -> Uuid,
         stock_uuid -> Uuid,
-        price_uuid -> Uuid,
         quantity -> Int4,
+        price_of_stock_at_time_of_trading -> Float8,
+        record_time -> Timestamp,
     }
 }
 
@@ -53,15 +45,12 @@ table! {
 
 joinable!(events -> users (user_uuid));
 joinable!(funds -> users (user_uuid));
-joinable!(stock_prices -> stocks (stock_uuid));
-joinable!(stock_transactions -> stock_prices (price_uuid));
 joinable!(stock_transactions -> stocks (stock_uuid));
 joinable!(stock_transactions -> users (user_uuid));
 
 allow_tables_to_appear_in_same_query!(
     events,
     funds,
-    stock_prices,
     stocks,
     stock_transactions,
     users,

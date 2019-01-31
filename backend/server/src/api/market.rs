@@ -19,6 +19,7 @@ use db::stock::NewStock;
 use serde::Serialize;
 use serde::Deserialize;
 use db::stock::NewStockTransaction;
+use chrono::Utc;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -161,6 +162,14 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
     }
 }
 
+
+
+/// Get the stock or create it if needed.
+/// Get the current transactions for the user for this stock.
+/// Check if the transactions would cause them to own negative number of stocks.
+/// Check if the user has the funds to make the transaction. NOT IMPLEMENTED!!.
+/// Subtract the funds from the user. NOT IMPLEMENTED.
+/// Record the transaction.
 fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
@@ -188,22 +197,21 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
     let quantity = transactions.into_iter().fold(0, |acc, t| acc + t.quantity);
 
     // Users can't sell more than they have.
-    if request.quantity > quantity {
+    if -request.quantity > quantity {
         Error::BadRequest.reject_result()?; // TODO find a better rejection message
     }
 
-//    let new_stock_transaction = NewStockTransaction {
-//        user_uuid,
-//        stock_uuid: stock.uuid,
-//        price_uuid: (), // TODO remove this field
-//        quantity: request.quantity
-//    };
-//
-//    Stock::create_transaction(new_stock_transaction, &conn)
-//        .map_err(Error::from)
-//        .map_err(Error::reject)
-//        .map(util::json)
+    let new_stock_transaction = NewStockTransaction {
+        user_uuid,
+        stock_uuid: stock.uuid,
+        quantity: request.quantity,
+        price_of_stock_at_time_of_trading: 420.0, // TODO contact api to get the current price.
+        record_time: Utc::now().naive_utc()
+    };
 
-    Ok(warp::reply())
+    Stock::create_transaction(new_stock_transaction, &conn)
+        .map_err(Error::from)
+        .map_err(Error::reject)
+        .map(util::json)
 
 }
