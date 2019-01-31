@@ -48,6 +48,16 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::reject)
         });
 
+    #[cfg(test)]
+    let login_unit_test = path!("login_unit_test")
+        .and(warp::get2())
+        .and(state.secret.clone())
+        .map(|secret: Secret| {
+            let payload = JwtPayload::new(Uuid::new_v4());
+            payload.encode_jwt_string(&secret)
+        });
+
+
     // TODO maybe move this not under the auth/ route
     let user = path!("user")
         .and(user_filter(state))
@@ -69,6 +79,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 
 // TODO actually implement this
+/// This needs to contact facebook with the token, and get the unique client id.
 /// Given an oauth token, return a client id.
 fn get_client_id(oauth_token: &str) -> String {
     "YEEEET".to_string()
