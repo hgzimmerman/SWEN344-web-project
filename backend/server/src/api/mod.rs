@@ -46,3 +46,10 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .recover(crate::error::customize_error)
         .boxed()
 }
+
+
+
+#[cfg(test)]
+mod integration_test {
+    use super::*;
+}

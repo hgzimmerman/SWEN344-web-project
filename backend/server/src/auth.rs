@@ -99,7 +99,7 @@ impl Secret {
     }
 }
 
-const BEARER: &'static str = "bearer ";
+const BEARER: &'static str = "bearer";
 const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
 
 
