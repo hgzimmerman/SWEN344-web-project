@@ -31,7 +31,6 @@ pub struct StockTransactionRequest {
 /// The Filter for the market API.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 
-
     let transact = path!("transact")
         .and(warp::post2())
         .and(json_body_filter(10))
@@ -48,6 +47,21 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::reject)
                 .map(util::json)
         });
+
+    let user_transactions_for_stock = warp::get2()
+        .and(path!("transactions" / String )) // The string is a symbol
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(|symbol: String, user_uuid: Uuid, conn: PooledConn| {
+            let stock = Stock::get_stock_by_symbol(symbol, &conn)
+                .map_err(Error::from)
+                .map_err(Error::reject)?;
+            Stock::get_user_transactions_for_stock(user_uuid,stock.uuid, &conn )
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
+        });
+
 
     let add_funds = path!("add")
         .and(warp::post2())
@@ -76,11 +90,11 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
-    let net_profit = path!("profit")
-        .and(warp::get2())
-        .map(|| {
-            "UNIMPLEMENTED"
-        });
+//    let net_profit = path!("profit")
+//        .and(warp::get2())
+//        .map(|| {
+//            "UNIMPLEMENTED"
+//        });
 
     let funds_api = path!("funds")
         .and(
@@ -92,7 +106,8 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let stock_api = path!("stock")
         .and(
              owned_stocks
-                .or(transact)
+                 .or(transact)
+                 .or(user_transactions_for_stock)
         );
 
 
