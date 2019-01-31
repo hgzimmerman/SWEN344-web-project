@@ -167,8 +167,8 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
 /// Get the stock or create it if needed.
 /// Get the current transactions for the user for this stock.
 /// Check if the transactions would cause them to own negative number of stocks.
-/// Check if the user has the funds to make the transaction. NOT IMPLEMENTED!!.
-/// Subtract the funds from the user. NOT IMPLEMENTED.
+/// Check if the user has the funds to make the transaction.
+/// Subtract the funds from the user.
 /// Record the transaction.
 fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
@@ -201,14 +201,34 @@ fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn)
         Error::BadRequest.reject_result()?; // TODO find a better rejection message
     }
 
+    // TODO, this should be gotten from the stock api.
+    let current_price = 420.0;
+    let transaction_quantity = current_price * request.quantity as f64;
+
+    // if it is a purchase, check if the user has enough funds.
+    if request.quantity > 0 {
+        let funds = Funds::funds(user_uuid, &conn)
+            .map_err(Error::from)
+            .map_err(Error::reject)?;
+        if transaction_quantity > funds.quantity {
+            Error::BadRequest.reject_result()?;
+        }
+    }
+
+    // Add or remove funds for the user
+    Funds::transact_funds(user_uuid, transaction_quantity, &conn)
+        .map_err(Error::from)
+        .map_err(Error::reject)?;
+
     let new_stock_transaction = NewStockTransaction {
         user_uuid,
         stock_uuid: stock.uuid,
         quantity: request.quantity,
-        price_of_stock_at_time_of_trading: 420.0, // TODO contact api to get the current price.
+        price_of_stock_at_time_of_trading: current_price,
         record_time: Utc::now().naive_utc()
     };
 
+    // Record that the stock was purchased for the user
     Stock::create_transaction(new_stock_transaction, &conn)
         .map_err(Error::from)
         .map_err(Error::reject)
