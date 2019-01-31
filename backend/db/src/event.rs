@@ -15,11 +15,11 @@ use diesel::pg::Pg;
 use crate::schema::events::SqlType;
 use diesel::result::QueryResult;
 use chrono::Timelike;
-use chrono::Datelike;
 use diesel::BoolExpressionMethods;
 use serde::{Serialize, Deserialize};
+use crate::user::User;
 
-#[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
+#[derive(Clone, Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[belongs_to(User, foreign_key = "user_uuid")]
 #[table_name = "events"]

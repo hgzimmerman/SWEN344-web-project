@@ -23,22 +23,36 @@ use diesel::query_source::Table;
 use diesel::expression::Expression;
 use diesel::delete;
 
-#[inline(always)]
-pub fn create_row<Model, NewModel, Tab>(table: Tab, insert: NewModel, conn: &PgConnection) -> QueryResult<Model>
-where
-    NewModel: Insertable<Tab>,
-    InsertStatement<Tab, NewModel>: AsQuery,
-    Pg: HasSqlType<<InsertStatement<Tab, NewModel> as AsQuery>::SqlType>,
-    InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values>: AsQuery,
-    Model: Queryable<<InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::SqlType, Pg>,
-    Pg: HasSqlType<<InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::SqlType>,
-    <InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::Query: QueryId,
-    <InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::Query: QueryFragment<Pg>,
+//#[inline(always)]
+//pub fn create_row<Model, NewModel, Tab>(table: Tab, insert: NewModel, conn: &PgConnection) -> QueryResult<Model>
+//where
+//    NewModel: Insertable<Tab>,
+//    InsertStatement<Tab, NewModel>: AsQuery,
+//    Pg: HasSqlType<<InsertStatement<Tab, NewModel> as AsQuery>::SqlType>,
+//    InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values>: AsQuery,
+//    Model: Queryable<<InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::SqlType, Pg>,
+//    Pg: HasSqlType<<InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::SqlType>,
+//    <InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::Query: QueryId,
+//    <InsertStatement<Tab, <NewModel as Insertable<Tab>>::Values> as AsQuery>::Query: QueryFragment<Pg>,
+//{
+//    insert
+//        .insert_into(table)
+//        .get_result::<Model>(conn)
+//}
+
+pub fn create_row<Model, NewModel, Table, Values>(
+    table: Table,
+    model_to_insert: NewModel,
+    connection: &PgConnection,
+) -> QueryResult<Model>
+    where
+        NewModel: Insertable<Table, Values=Values>,
+        InsertStatement<Table, Values>: LoadQuery<PgConnection, Model>,
 {
-    insert
-        .insert_into(table)
-        .get_result::<Model>(conn)
+    model_to_insert.insert_into(table)
+        .get_result::<Model>(connection)
 }
+
 
 #[inline(always)]
 pub fn update_row<Model, Chg, Tab>(table: Tab, changeset: Chg, conn: &PgConnection) -> QueryResult<Model>

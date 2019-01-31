@@ -12,28 +12,53 @@ use db::funds::Funds;
 use crate::error::Error;
 use crate::util;
 use warp::Rejection;
+use db::stock::Stock;
+use diesel::result::QueryResult;
+use db::stock::NewStock;
+
+use serde::Serialize;
+use serde::Deserialize;
+use db::stock::NewStockTransaction;
+use chrono::Utc;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StockTransactionRequest {
+    symbol: String,
+    /// The sign bit indicates if it is a sale or a purchase;
+    quantity: i32
+}
 
 /// The Filter for the market API.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 
-    let buy = path!("buy")
+    let transact = path!("transact")
         .and(warp::post2())
         .and(json_body_filter(10))
-        .map(|s: String| {
-            "UNIMPLEMENTED"
-        });
-
-    let sell = path!("sell")
-        .and(warp::post2())
-        .and(json_body_filter(10))
-        .map(|s: String| {
-            "UNIMPLEMENTED"
-        });
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(transact);
 
     let owned_stocks = warp::get2()
-        .map(|| {
-            "UNIMPLEMENTED"
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+            Stock::get_stocks_belonging_to_user(user_uuid, &conn)
+                .map_err(Error::from_reject)
+                .map(util::json)
         });
+
+    let user_transactions_for_stock = warp::get2()
+        .and(path!("transactions" / String )) // The string is a symbol
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(|symbol: String, user_uuid: Uuid, conn: PooledConn| {
+            let stock = Stock::get_stock_by_symbol(symbol, &conn)
+                .map_err(Error::from_reject)?;
+            Stock::get_user_transactions_for_stock(user_uuid,stock.uuid, &conn )
+                .map_err(Error::from_reject)
+                .map(util::json)
+        });
+
 
     let add_funds = path!("add")
         .and(warp::post2())
@@ -56,17 +81,16 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Funds::funds(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(|funds: Funds| funds.quantity) // maps it to just a f64
                 .map(util::json)
         });
 
-    let net_profit = path!("profit")
-        .and(warp::get2())
-        .map(|| {
-            "UNIMPLEMENTED"
-        });
+//    let net_profit = path!("profit")
+//        .and(warp::get2())
+//        .map(|| {
+//            "UNIMPLEMENTED"
+//        });
 
     let funds_api = path!("funds")
         .and(
@@ -78,8 +102,8 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let stock_api = path!("stock")
         .and(
              owned_stocks
-                .or(buy)
-                .or(sell)
+                 .or(transact)
+                 .or(user_transactions_for_stock)
         );
 
 
@@ -125,8 +149,7 @@ fn withdraw_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<im
         Funds::transact_funds(user_uuid, negative_quantity, &conn)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
-            .map_err(Error::from)
-            .map_err(Error::reject)
+            .map_err(Error::from_reject)
     }
 }
 
@@ -142,9 +165,77 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
         Error::BadRequest.reject_result()
     } else {
         Funds::transact_funds(user_uuid, quantity, &conn)
-            .map_err(Error::from)
-            .map_err(Error::reject)
+            .map_err(Error::from_reject)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
     }
+}
+
+
+
+/// Get the stock or create it if needed.
+/// Get the current transactions for the user for this stock.
+/// Check if the transactions would cause them to own negative number of stocks.
+/// Check if the user has the funds to make the transaction.
+/// Subtract the funds from the user.
+/// Record the transaction.
+fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
+    let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
+
+    use diesel::result::Error as DieselError;
+
+    let stock = stock
+        .or_else( | e | {
+            match e {
+                DieselError::NotFound => {
+                    let new_stock = NewStock {
+                        symbol: request.symbol.clone(),
+                        stock_name: "VOID - This field is slated for removal".to_string()
+                    };
+                    Stock::create_stock(new_stock, &conn)
+                        .map_err(Error::from_reject)
+                }
+                e => Error::from(e).reject_result()
+            }
+        })?;
+
+    let transactions = Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
+        .map_err(Error::from_reject)?;
+    let quantity = transactions.into_iter().fold(0, |acc, t| acc + t.quantity);
+
+    // Users can't sell more than they have.
+    if -request.quantity > quantity {
+        Error::BadRequest.reject_result()?; // TODO find a better rejection message
+    }
+
+    // TODO, this should be gotten from the stock api.
+    let current_price = 420.0;
+    let transaction_quantity = current_price * request.quantity as f64;
+
+    // if it is a purchase, check if the user has enough funds.
+    if request.quantity > 0 {
+        let funds = Funds::funds(user_uuid, &conn)
+            .map_err(Error::from_reject)?;
+        if transaction_quantity > funds.quantity {
+            Error::BadRequest.reject_result()?;
+        }
+    }
+
+    // Add or remove funds for the user
+    Funds::transact_funds(user_uuid, transaction_quantity, &conn)
+        .map_err(Error::from_reject)?;
+
+    let new_stock_transaction = NewStockTransaction {
+        user_uuid,
+        stock_uuid: stock.uuid,
+        quantity: request.quantity,
+        price_of_stock_at_time_of_trading: current_price,
+        record_time: Utc::now().naive_utc()
+    };
+
+    // Record that the stock was purchased for the user
+    Stock::create_transaction(new_stock_transaction, &conn)
+        .map_err(Error::from_reject)
+        .map(util::json)
+
 }

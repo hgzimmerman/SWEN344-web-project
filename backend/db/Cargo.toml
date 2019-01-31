@@ -11,4 +11,5 @@ r2d2 = "0.8.3"
 uuid = {version="0.6.*", features=["serde"]}
 chrono = {version = "0.4.*", features=["serde"]}
 serde = {version="1.0.85", features=["derive"]}
+itertools = "0.8.0"
 

@@ -27,17 +27,11 @@ CREATE TABLE stocks (
     stock_name VARCHAR NOT NULL
 );
 
-CREATE TABLE stock_prices (
-    uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-    stock_uuid UUID NOT NULL REFERENCES stocks(uuid) ON DELETE CASCADE,
-    price FLOAT NOT NULL,
-    record_time TIMESTAMP NOT NULL -- default now???
-);
-
-
 CREATE TABLE stock_transactions (
     uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     user_uuid UUID NOT NULL REFERENCES users(uuid) ON DELETE CASCADE,
-    price_uuid UUID NOT NULL REFERENCES stock_prices(uuid) ON DELETE CASCADE,
-    quantity INTEGER
+    stock_uuid UUID NOT NULL REFERENCES stocks(uuid) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL,
+    price_of_stock_at_time_of_trading FLOAT NOT NULL,
+    record_time TIMESTAMP NOT NULL
 );

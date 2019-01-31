@@ -48,8 +48,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(util::json)
         });
 
@@ -59,8 +58,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events_today(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(util::json)
         });
 
@@ -70,8 +68,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events_month(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
+                .map_err(Error::from_reject)
                 .map(util::json)
         });
 
@@ -86,8 +83,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 Error::BadRequest.reject_result()
             } else {
                 Event::create_event(new_event, &conn)
-                    .map_err(Error::from)
-                    .map_err(Error::reject)
+                    .map_err(Error::from_reject)
                     .map(util::json)
             }
 
