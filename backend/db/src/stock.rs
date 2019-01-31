@@ -120,6 +120,12 @@ impl Stock {
             .load(conn)
     }
 
+    pub fn get_stock_by_symbol(stock_symbol: String, conn: &PgConnection) -> QueryResult<Stock> {
+        schema::stocks::table
+            .filter(schema::stocks::dsl::symbol.eq(stock_symbol))
+            .first(conn)
+    }
+
     pub fn get_stocks_and_their_current_prices(conn: &PgConnection) -> QueryResult<Vec<(Stock, Option<StockPrice>)>> {
         let stocks = Self::get_stocks(conn)?;
 
@@ -137,7 +143,7 @@ impl Stock {
             .apply(Ok)
     }
 
-    pub fn get_stock_belonging_to_users(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<UserStockResponse>> {
+    pub fn get_stocks_belonging_to_user(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<UserStockResponse>> {
 
         schema::stock_transactions::table
             .filter(schema::stock_transactions::dsl::user_uuid.eq(user_uuid))

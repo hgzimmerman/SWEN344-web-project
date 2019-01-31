@@ -12,27 +12,40 @@ use db::funds::Funds;
 use crate::error::Error;
 use crate::util;
 use warp::Rejection;
+use db::stock::Stock;
+use diesel::result::QueryResult;
+use db::stock::NewStock;
+
+use serde::Serialize;
+use serde::Deserialize;
+use db::stock::NewStockTransaction;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StockTransactionRequest {
+    symbol: String,
+    /// The sign bit indicates if it is a sale or a purchase;
+    quantity: i32
+}
 
 /// The Filter for the market API.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 
-    let buy = path!("buy")
-        .and(warp::post2())
-        .and(json_body_filter(10))
-        .map(|s: String| {
-            "UNIMPLEMENTED"
-        });
 
-    let sell = path!("sell")
+    let transact = path!("transact")
         .and(warp::post2())
         .and(json_body_filter(10))
-        .map(|s: String| {
-            "UNIMPLEMENTED"
-        });
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(transact);
 
     let owned_stocks = warp::get2()
-        .map(|| {
-            "UNIMPLEMENTED"
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+            Stock::get_stocks_belonging_to_user(user_uuid, &conn)
+                .map_err(Error::from)
+                .map_err(Error::reject)
+                .map(util::json)
         });
 
     let add_funds = path!("add")
@@ -78,8 +91,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let stock_api = path!("stock")
         .and(
              owned_stocks
-                .or(buy)
-                .or(sell)
+                .or(transact)
         );
 
 
@@ -147,4 +159,51 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
     }
+}
+
+fn transact(request: StockTransactionRequest, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
+    let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
+
+    use diesel::result::Error as DieselError;
+
+    let stock = stock
+        .or_else( | e | {
+            match e {
+                DieselError::NotFound => {
+                    let new_stock = NewStock {
+                        symbol: request.symbol.clone(),
+                        stock_name: "VOID - This field is slated for removal".to_string()
+                    };
+                    Stock::create_stock(new_stock, &conn)
+                        .map_err(Error::from)
+                        .map_err(Error::reject)
+                }
+                e => Error::from(e).reject_result()
+            }
+        })?;
+
+    let transactions = Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
+        .map_err(Error::from)
+        .map_err(Error::reject)?;
+    let quantity = transactions.into_iter().fold(0, |acc, t| acc + t.quantity);
+
+    // Users can't sell more than they have.
+    if request.quantity > quantity {
+        Error::BadRequest.reject_result()?; // TODO find a better rejection message
+    }
+
+//    let new_stock_transaction = NewStockTransaction {
+//        user_uuid,
+//        stock_uuid: stock.uuid,
+//        price_uuid: (), // TODO remove this field
+//        quantity: request.quantity
+//    };
+//
+//    Stock::create_transaction(new_stock_transaction, &conn)
+//        .map_err(Error::from)
+//        .map_err(Error::reject)
+//        .map(util::json)
+
+    Ok(warp::reply())
+
 }
