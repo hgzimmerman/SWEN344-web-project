@@ -38,6 +38,7 @@ table! {
     stock_transactions (uuid) {
         uuid -> Uuid,
         user_uuid -> Uuid,
+        stock_uuid -> Uuid,
         price_uuid -> Uuid,
         quantity -> Int4,
     }
@@ -54,6 +55,7 @@ joinable!(events -> users (user_uuid));
 joinable!(funds -> users (user_uuid));
 joinable!(stock_prices -> stocks (stock_uuid));
 joinable!(stock_transactions -> stock_prices (price_uuid));
+joinable!(stock_transactions -> stocks (stock_uuid));
 joinable!(stock_transactions -> users (user_uuid));
 
 allow_tables_to_appear_in_same_query!(

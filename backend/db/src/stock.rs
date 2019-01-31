@@ -67,11 +67,13 @@ pub struct NewStockPrice {
 #[derive(Clone, Debug, Identifiable, Queryable, Associations, Serialize, Deserialize, PartialOrd, Ord, PartialEq, Eq)]
 #[primary_key(uuid)]
 #[belongs_to(StockPrice, foreign_key = "price_uuid")]
+#[belongs_to(Stock, foreign_key = "stock_uuid")]
 #[belongs_to(User, foreign_key = "user_uuid")]
 #[table_name = "stock_transactions"]
 pub struct StockTransaction {
     pub uuid: Uuid,
     pub user_uuid: Uuid,
+    pub stock_uuid: Uuid,
     pub price_uuid: Uuid,
     pub quantity: i32 // Can you get non-integer quantities of stocks?
 }
@@ -81,6 +83,7 @@ pub struct StockTransaction {
 #[table_name = "stock_transactions"]
 pub struct NewStockTransaction {
     pub user_uuid: Uuid,
+    pub stock_uuid: Uuid,
     pub price_uuid: Uuid,
     pub quantity: i32 // Can you get non-integer quantities of
 }
@@ -98,6 +101,16 @@ impl Stock {
         util::create_row(schema::stock_transactions::dsl::stock_transactions, new_transaction, conn)
     }
 
+    // TODO, move this to the server crate so it can have a reasonable quantity.
+    pub fn create_transaction_safe(user_uuid: Uuid, new_transaction: NewStockTransaction, conn: &PgConnection) -> QueryResult<StockTransaction> {
+        let t = Self::get_user_transactions_for_stock(user_uuid, new_transaction.stock_uuid, conn)?;
+        let quantity = t.iter().fold(0, | acc, st| acc + st.quantity);
+        if new_transaction.quantity > quantity {
+            panic!() // can't have negative -> need a real error
+        } else {
+            Stock::create_transaction(new_transaction, conn)
+        }
+    }
 
     pub fn get_stock(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Stock> {
         util::get_row(schema::stocks::table, stock_uuid, conn)
@@ -153,6 +166,12 @@ impl Stock {
             .apply(Ok)
     }
 
+    pub fn get_user_transactions_for_stock(user_uuid: Uuid, stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<StockTransaction>> {
+        schema::stock_transactions::table
+            .filter(schema::stock_transactions::stock_uuid.eq(stock_uuid))
+            .load(conn)
+    }
+
     pub fn get_stock_price_history(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<StockPrice>> {
         schema::stock_prices::table
             .filter(schema::stock_prices::dsl::stock_uuid.eq(stock_uuid))
@@ -183,10 +202,15 @@ pub struct Transaction {
 
 
 impl UserStockResponse {
-    pub fn quantity(&self) -> i32 {
+    pub fn quantity_stocks_owned(&self) -> i32 {
         self.transactions
             .iter()
             .fold(0, |acc, t| acc + t.quantity)
     }
+}
 
+
+pub struct TransactRequest {
+    symbol: String,
+    quantity: i32,
 }
