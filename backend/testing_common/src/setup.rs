@@ -58,6 +58,8 @@ lazy_static! {
 /// By running your tests using this method, you guarantee that the database only contains the rows
 /// created in the fixture's `generate()` function, and the thread will block if another test using
 /// this function is currently running, preventing side effects from breaking other tests.
+///
+/// This is the general case that provides a PgConnection for consumption by single-threaded db contexts.
 pub fn setup<Fun, Fix>(mut test_function: Fun)
 where
     Fun: FnMut(&Fix, &PgConnection), // The FnMut adds support for benchers, as they are required to mutate on each iteration.
@@ -77,29 +79,7 @@ where
     test_function(&fixture, &conn);
 }
 
-//pub fn setup_client<Fun, Fix>(mut test_function: Fun)
-//where
-//    Fun: FnMut(&Fix, Client), // The FnMut adds support for `benchers`, as they are required to mutate on each iteration.
-//    Fix: Fixture,
-//{
-//    let admin_conn: MutexGuard<PgConnection> = match CONN.lock() {
-//        Ok(guard) => guard,
-//        Err(poisoned) => poisoned.into_inner(), // Don't care if the mutex is poisoned
-//    };
-//    reset_database(&admin_conn);
-//
-//    let actual_connection: PgConnection = PgConnection::establish(DATABASE_URL).expect("Database not available.");
-//    run_migrations(&actual_connection);
-//    let fixture: Fix = Fix::generate(&actual_connection);
-//
-//    let mut config = Config::default();
-//    config.db_url = DATABASE_URL.to_string(); // set the testing db url
-//    let rocket = init_rocket(config);
-//    let client = Client::new(rocket).expect("Valid rocket instance");
-//
-//    test_function(&fixture, client);
-//}
-
+/// Resets the database and the given future and provides a pool that can be used to construct a state used in warp.
 pub fn setup_warp<Fun, Fix>(mut test_function: Fun)
 where
     Fun: FnMut(&Fix, Pool),
@@ -143,7 +123,7 @@ fn drop_database(conn: &PgConnection) -> DatabaseResult<()> {
     }
 }
 
-/// Recreates the database
+/// Recreates the database.
 fn create_database(conn: &PgConnection) -> DatabaseResult<()> {
     let db_result = query_helper::create_database(DATABASE_NAME)
         .execute(conn)
@@ -171,7 +151,7 @@ table! {
     }
 }
 
-/// Convenience function used when dropping the database
+/// Convenience function used when dropping the database.
 fn pg_database_exists(conn: &PgConnection, database_name: &str) -> QueryResult<bool> {
     use self::pg_database::dsl::*;
 
