@@ -141,6 +141,7 @@ mod integration_test {
 
     mod events {
         use super::*;
+        use chrono::Datelike;
 
         #[test]
         fn create_event() {
@@ -296,8 +297,8 @@ mod integration_test {
                 let request = NewEventMessage {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
-                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                    start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap() + chrono::Duration::hours(2)
                 };
 
                 let resp = warp::test::request()
@@ -314,8 +315,8 @@ mod integration_test {
                 let request = NewEventMessage {
                     title: "Do a thing a week from now".to_string(),
                     text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
-                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1) + chrono::Duration::hours(1)
+                    start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap() + chrono::Duration::weeks(1),
+                    stop_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap() + chrono::Duration::weeks(1) + chrono::Duration::hours(1)
                 };
 
                 let resp = warp::test::request()
