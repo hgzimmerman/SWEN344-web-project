@@ -123,12 +123,7 @@ fn withdraw_funds(
         let new_quantity: f64 = Funds::funds(user_uuid, &conn)
             .map_err(Error::from)
             .and_then(|current_funds| {
-                let new_quantity = current_funds.quantity + negative_quantity;
-                if new_quantity < 0.0 {
-                    Err(Error::BadRequest)
-                } else {
-                    Ok(new_quantity)
-                }
+                calculate_new_quantity_of_funds(current_funds.quantity, negative_quantity)
             })
             .map_err(Error::reject)?;
 
@@ -139,6 +134,20 @@ fn withdraw_funds(
             .map_err(Error::from_reject)
     }
 }
+
+/// Calculates the quantity of funds after a transaction
+/// Prevents the new quantity from being negative.
+fn calculate_new_quantity_of_funds(current: f64, transaction_ammnount: f64) -> Result<f64, Error> {
+    let new_quantity = current + transaction_ammnount;
+    if new_quantity < 0.0 {
+        Err(Error::BadRequest)
+    } else {
+        Ok(new_quantity)
+    }
+}
+
+
+
 
 /// Adds funds to the user's account.
 ///
@@ -227,4 +236,23 @@ fn transact(
     Stock::create_transaction(new_stock_transaction, &conn)
         .map_err(Error::from_reject)
         .map(util::json)
+}
+
+
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    #[test]
+    fn reject_negative_balance() {
+        let q = calculate_new_quantity_of_funds(100.0, -200.0);
+        assert_eq!(q, Err(Error::BadRequest))
+    }
+
+   #[test]
+    fn approve_positive_balance() {
+       let q = calculate_new_quantity_of_funds(100.0, -50.0);
+       assert_eq!(q, Ok(50.0))
+   }
+
 }
