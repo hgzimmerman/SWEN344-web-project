@@ -157,7 +157,7 @@ fn modify_event(
 }
 
 #[cfg(test)]
-mod unit_test {
+mod test {
     use super::*;
     use crate::auth::JwtPayload;
     use crate::auth::Secret;
