@@ -210,47 +210,4 @@ mod unit_test {
             .matches(&filter));
     }
 
-    //
-    //    #[test]
-    //    fn create_event() {
-    //        let secret = Secret::new("TEST");
-    //        let state = State::new(Some(secret.clone()));
-    //        let filter = calendar_api(&state);
-    //        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
-    //
-    //
-    //        let now = chrono::Utc::now().naive_utc();
-    //        let body = NewEventMessage {
-    //            title: "event".to_string(),
-    //            text: "do thing".to_string(),
-    //            start_at: now,
-    //            stop_at: now + chrono::Duration::hours(1)
-    //        };
-    //
-    //        assert!(
-    //            warp::test::request()
-    //                .method("POST")
-    //                .path("/calendar/event")
-    //                .json(&body)
-    //                .header("Authorization", format!("bearer {}", jwt))
-    //                .matches(&filter)
-    //        );
-    //    }
-    //
-    //    #[test]
-    //    fn delete_event() {
-    //        let secret = Secret::new("TEST");
-    //        let state = State::new(Some(secret.clone()));
-    //        let filter = calendar_api(&state);
-    //        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
-    //
-    //        assert!(
-    //             warp::test::request()
-    //                .method("DELETE")
-    //                .path(&format!("/calendar/event/{}", Uuid::new_v4().to_string()))
-    //                .header("Authorization", format!("bearer {}", jwt))
-    //                .matches(&filter)
-    //        );
-    //    }
-
 }
