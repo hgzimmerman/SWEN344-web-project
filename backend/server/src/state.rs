@@ -5,6 +5,7 @@ use db::pool::PooledConn;
 use db::pool::{init_pool, Pool, DATABASE_URL};
 use warp::filters::BoxedFilter;
 use warp::Filter;
+use warp::Rejection;
 
 /// State that is passed around to all of the api handlers.
 /// It can be used to acquire connections to the database,
@@ -40,12 +41,17 @@ impl State {
         }
     }
 }
+
+/// Filter that exposes connections to the database to individual filter requests
 pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
-    warp::any()
-        .and_then(move || {
-            pool.clone()
+
+    fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
+        pool.clone()
                 .get()
                 .map_err(|_| Error::DatabaseUnavailable.reject())
-        })
+    }
+
+    warp::any()
+        .and_then(move || get_conn_from_pool(&pool))
         .boxed()
 }
