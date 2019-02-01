@@ -48,10 +48,4 @@ joinable!(funds -> users (user_uuid));
 joinable!(stock_transactions -> stocks (stock_uuid));
 joinable!(stock_transactions -> users (user_uuid));
 
-allow_tables_to_appear_in_same_query!(
-    events,
-    funds,
-    stocks,
-    stock_transactions,
-    users,
-);
+allow_tables_to_appear_in_same_query!(events, funds, stocks, stock_transactions, users,);

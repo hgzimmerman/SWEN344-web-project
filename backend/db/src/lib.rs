@@ -3,14 +3,10 @@
 #[macro_use]
 extern crate diesel;
 
-
 pub mod event;
-pub mod user;
-pub mod stock;
 pub mod funds;
-mod util;
-mod schema;
 pub mod pool;
-
-
-
+mod schema;
+pub mod stock;
+pub mod user;
+mod util;

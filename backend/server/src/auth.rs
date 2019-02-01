@@ -1,21 +1,16 @@
-use warp::Rejection;
-use warp::filters::BoxedFilter;
 use crate::state::State;
+use warp::filters::BoxedFilter;
 use warp::Filter;
+use warp::Rejection;
 
 use crate::error::Error;
-use uuid::Uuid;
-use serde::Serialize;
-use serde::Deserialize;
-use serde_json::json;
-use frank_jwt::{
-    decode,
-    encode,
-    Algorithm,
-};
-use chrono::NaiveDateTime;
 use chrono::Duration;
-
+use chrono::NaiveDateTime;
+use frank_jwt::{decode, encode, Algorithm};
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::json;
+use uuid::Uuid;
 
 /// The payload section of the JWT
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -29,7 +24,6 @@ pub struct JwtPayload {
 }
 
 impl JwtPayload {
-
     /// Creates a new token for the user that will expire in 4 weeks.
     pub fn new(user_uuid: Uuid) -> Self {
         let now = chrono::Utc::now().naive_utc();
@@ -37,7 +31,7 @@ impl JwtPayload {
         JwtPayload {
             iat: now,
             sub: user_uuid,
-            exp: now + Duration::weeks(4) // token will expire in 4 weeks
+            exp: now + Duration::weeks(4), // token will expire in 4 weeks
         }
     }
 
@@ -102,10 +96,10 @@ impl Secret {
 pub const BEARER: &'static str = "bearer";
 pub const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
 
-
 /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
 fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Error> {
-    let authorization_words: Vec<String> = bearer_string.split_whitespace().map(String::from).collect();
+    let authorization_words: Vec<String> =
+        bearer_string.split_whitespace().map(String::from).collect();
 
     if authorization_words.len() != 2 {
         return Err(Error::MissingToken);
@@ -122,7 +116,12 @@ fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Err
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
-        .or_else(|_: Rejection| Error::NotAuthorized {reason: "token required"}.reject_result())
+        .or_else(|_: Rejection| {
+            Error::NotAuthorized {
+                reason: "token required",
+            }
+            .reject_result()
+        })
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
             extract_jwt(bearer_string, &secret)
@@ -135,21 +134,13 @@ pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
 /// Brings the secret into scope.
 /// The secret is used to create and verify JWTs.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
-    warp::any()
-        .map(move || secret.clone())
-        .boxed()
+    warp::any().map(move || secret.clone()).boxed()
 }
-
 
 /// If the user has a JWT, then the user has basic user privileges.
-pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,), > {
-    warp::any()
-        .and(jwt_filter(s))
-        .map( JwtPayload::uuid)
-        .boxed()
+pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
+    warp::any().and(jwt_filter(s)).map(JwtPayload::uuid).boxed()
 }
-
-
 
 #[allow(dead_code)]
 /// Gets an Option<UserUuid> from the request.

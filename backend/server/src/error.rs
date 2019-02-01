@@ -1,18 +1,11 @@
 //use super::*;
+use apply::Apply;
+use serde::Serialize;
 use std::{
     error::Error as StdError,
-    fmt::{
-        self,
-        Display,
-    },
+    fmt::{self, Display},
 };
-use warp::{
-    http::StatusCode,
-    reject::Rejection,
-    reply::Reply,
-};
-use serde::Serialize;
-use apply::Apply;
+use warp::{http::StatusCode, reject::Rejection, reply::Reply};
 
 //use log::info;
 use log::error;
@@ -28,6 +21,7 @@ pub enum Error {
     BadRequest,
     /// The used did not have privileges to access the given method.
     /// This can also be used for users that don't have a token, but it is required.
+    // TODO the above use is out of date
     NotAuthorized {
         reason: &'static str,
     },
@@ -42,7 +36,7 @@ pub enum Error {
     DeserializeError,
     SerializeError,
     JwtDecodeError,
-    JwtEncodeError
+    JwtEncodeError,
 }
 
 impl Display for Error {
@@ -93,7 +87,9 @@ impl StdError for Error {
 ///
 /// This should be used at the top level of the exposed api.
 pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
-    let not_found = Error::NotFound {type_name: "route not found".to_string() };
+    let not_found = Error::NotFound {
+        type_name: "route not found".to_string(),
+    };
     let internal_server = Error::InternalServerError;
 
     let cause = match err.find_cause::<Error>() {
@@ -104,16 +100,14 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
             } else {
                 &internal_server
             }
-        },
+        }
     };
 
     use std::fmt::Write;
     let mut s: String = String::new();
     let _ = write!(s, "{}", cause);
 
-    let error_response = ErrorResponse {
-        message: s
-    };
+    let error_response = ErrorResponse { message: s };
     let json = warp::reply::json(&error_response);
 
     let code = match *cause {
@@ -134,7 +128,6 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     };
 
     Ok(warp::reply::with_status(json, code))
-
 }
 
 impl Error {
@@ -153,11 +146,13 @@ impl Error {
 
 impl From<diesel::result::Error> for Error {
     fn from(error: diesel::result::Error) -> Self {
-        use diesel::result::Error as DieselError;
         use self::Error::*;
+        use diesel::result::Error as DieselError;
         match error {
-            DieselError::DatabaseError(_,_) =>  DatabaseError(None), // todo flesh this one out a bit
-            DieselError::NotFound => NotFound {type_name: "not implemented".to_string()},
+            DieselError::DatabaseError(_, _) => DatabaseError(None), // todo flesh this one out a bit
+            DieselError::NotFound => NotFound {
+                type_name: "not implemented".to_string(),
+            },
             e => {
                 error!("{}", e);
                 InternalServerError
@@ -168,6 +163,5 @@ impl From<diesel::result::Error> for Error {
 
 #[derive(Serialize)]
 struct ErrorResponse {
-    message: String
+    message: String,
 }
-

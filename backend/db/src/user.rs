@@ -1,18 +1,13 @@
-use uuid::Uuid;
-use diesel::{
-    Identifiable,
-    Queryable,
-    Insertable
-};
-use crate::schema::users;
-use serde::{Serialize, Deserialize};
-use diesel::pg::PgConnection;
-use diesel::result::QueryResult;
 use crate::schema;
+use crate::schema::users;
+use diesel::pg::PgConnection;
 use diesel::query_dsl::QueryDsl;
-use diesel::RunQueryDsl;
+use diesel::result::QueryResult;
 use diesel::ExpressionMethods;
-
+use diesel::RunQueryDsl;
+use diesel::{Identifiable, Insertable, Queryable};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 // Flow for user login/creation?
 // user logs into facebook and gets a oauth access_token.
@@ -31,7 +26,6 @@ use diesel::ExpressionMethods;
 // That would be terrible.
 // Do we grant a JWT or cookie instead?
 
-
 // app      fb       api
 //  |        |         |
 //  | login->|         |
@@ -47,7 +41,6 @@ use diesel::ExpressionMethods;
 
 // TODO this may have a name that is acquired when the user first logs in by requesting the name from the oauth provider, but it isn't strictly necessary.
 
-
 #[derive(Clone, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]
@@ -56,11 +49,10 @@ pub struct User {
     pub client_id: String,
 }
 
-
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
-pub struct  NewUser {
-    pub client_id: String
+pub struct NewUser {
+    pub client_id: String,
 }
 
 impl User {
