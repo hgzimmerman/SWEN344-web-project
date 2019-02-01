@@ -82,7 +82,7 @@ pub const TEST_CLIENT_ID: &str = "test client id";
 // TODO actually implement this
 /// This needs to contact facebook with the token, and get the unique client id.
 /// Given an oauth token, return a client id.
-fn get_client_id(oauth_token: &str) -> String {
+fn get_client_id(_oauth_token: &str) -> String {
     if cfg!(test) {
         TEST_CLIENT_ID.to_string() // allow user login for testing
     } else {

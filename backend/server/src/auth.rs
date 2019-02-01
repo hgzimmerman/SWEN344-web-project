@@ -122,7 +122,7 @@ fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Err
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
-        .or_else(|_: Rejection| Error::MalformedToken.reject_result())
+        .or_else(|_: Rejection| Error::NotAuthorized {reason: "token required"}.reject_result())
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
             extract_jwt(bearer_string, &secret)
@@ -151,6 +151,7 @@ pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,), > {
 
 
 
+#[allow(dead_code)]
 /// Gets an Option<UserUuid> from the request.
 /// Returns Some(user_uuid) if the user has a valid JWT, and None otherwise.
 pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {

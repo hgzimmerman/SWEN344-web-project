@@ -38,6 +38,7 @@ impl State {
         }
     }
 
+    #[cfg(test)]
     pub fn testing_init(pool: Pool, secret: Secret) -> Self {
         State {
             db: db_filter(pool),
