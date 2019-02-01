@@ -18,6 +18,7 @@ use chrono::Timelike;
 use diesel::BoolExpressionMethods;
 use serde::{Serialize, Deserialize};
 use crate::user::User;
+use chrono::Datelike;
 
 #[derive(Clone, Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[primary_key(uuid)]
@@ -120,6 +121,8 @@ impl Event {
         // yes, this doesn't take into account the timezone of the user :/
         let start_of_this_month = chrono::Utc::now()
             .naive_utc()
+            .with_day0(0) // first day of the month
+            .unwrap()
             .with_hour(0)
             .unwrap()
             .with_minute(0)

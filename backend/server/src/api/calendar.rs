@@ -42,7 +42,7 @@ impl NewEventMessage {
 
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
-    // TODO take query parameters for month and year
+    // TODO take optional query parameters for month and year
     let get_events = warp::get2()
         .and(path!("events"))
         .and(path::end())
