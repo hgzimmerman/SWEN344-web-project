@@ -137,8 +137,12 @@ fn withdraw_funds(
 
 /// Calculates the quantity of funds after a transaction
 /// Prevents the new quantity from being negative.
-fn calculate_new_quantity_of_funds(current: f64, transaction_ammnount: f64) -> Result<f64, Error> {
-    let new_quantity = current + transaction_ammnount;
+///
+/// # Arguments
+/// * current - The current amount of funds in the account.
+/// * transaction_amount - The (possibly negative) amount of funds to be transferred.
+fn calculate_new_quantity_of_funds(current: f64, transaction_amount: f64) -> Result<f64, Error> {
+    let new_quantity = current + transaction_amount;
     if new_quantity < 0.0 {
         Err(Error::BadRequest) // TODO - More specific error
     } else {
@@ -180,6 +184,11 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
 /// Check if the user has the funds to make the transaction.
 /// Subtract the funds from the user.
 /// Record the transaction.
+///
+/// # Arguments
+/// * request - The request struct representing a transaction.
+/// * user_uuid - The unique id of the user whose funds are being modified
+/// * conn - the connection to the database.
 fn transact(
     request: StockTransactionRequest,
     user_uuid: Uuid,
