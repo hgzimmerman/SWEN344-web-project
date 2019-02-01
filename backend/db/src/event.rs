@@ -106,11 +106,10 @@ impl Event {
             .unwrap();
         let tomorrow_00_00 = today_00_00 + chrono::Duration::days(1);
 
-
         Self::user_events(user_uuid)
             .filter(
-                events::start_at.gt(today_00_00)
-                    .and(events::start_at.lt(tomorrow_00_00))) // TODO impl OR events that end before tomorrow?
+                events::dsl::start_at.gt(today_00_00)
+                    .and(events::dsl::start_at.lt(tomorrow_00_00))) // TODO impl OR events that end before tomorrow?
             .load::<Event>(conn)
     }
 

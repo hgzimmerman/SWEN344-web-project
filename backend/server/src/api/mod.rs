@@ -65,6 +65,9 @@ mod integration_test {
     use crate::auth::Secret;
     use crate::api::auth::Login;
     use db::user::User;
+    use crate::api::calendar::NewEventMessage;
+    use db::event::Event;
+    use db::event::EventChangeset;
 
     /// Convenience function for requesting the JWT.
     /// In the testing environment, the login function will always work.
@@ -136,6 +139,317 @@ mod integration_test {
         });
     }
 
+    mod events {
+        use super::*;
 
+        #[test]
+        fn create_event() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(
+                    resp.status(),
+                    200
+                );
+
+                let event: Event = deserialize(resp);
+                assert_eq!(
+                    event.title,
+                    request.title
+                )
+            });
+        }
+
+
+        #[test]
+        fn get_events() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                // create an event first.
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/calendar/event/events")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let events: Vec<Event> = deserialize(resp);
+                assert_eq!(events.len(), 1);
+                assert_eq!(&events[0].title, "Do a thing");
+                assert_eq!(&events[0].text, "");
+            });
+        }
+
+
+        #[test]
+        fn get_events_today() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                // create an event first.
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                // create another event in a week.
+                let request = NewEventMessage {
+                    title: "Do a thing a week from now".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1) + chrono::Duration::hours(1)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/calendar/event/events/today")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let events: Vec<Event> = deserialize(resp);
+                assert_eq!(events.len(), 1);
+                assert_eq!(&events[0].title, "Do a thing");
+                assert_eq!(&events[0].text, "");
+            });
+        }
+
+        #[test]
+        fn get_events_this_month() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                // create an event first.
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                // create another event in a week.
+                let request = NewEventMessage {
+                    title: "Do a thing a week from now".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1) + chrono::Duration::hours(1)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/calendar/event/events/month")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let events: Vec<Event> = deserialize(resp);
+                assert_eq!(events.len(), 2);
+                assert_eq!(&events[0].title, "Do a thing");
+                assert_eq!(&events[1].title, "Do a thing a week from now");
+            });
+        }
+
+        #[test]
+        fn modify_event() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                // create an event first.
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let event: Event = deserialize(resp);
+
+                let request = EventChangeset {
+                    uuid: event.uuid,
+                    title: "Do another thing".to_string(),
+                    text: "lol".to_string(),
+                    start_at: event.start_at,
+                    stop_at: event.stop_at
+                };
+
+                let resp = warp::test::request()
+                    .method("PUT")
+                    .path("/api/calendar/event/events")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let event: Event = deserialize(resp);
+                assert_eq!(&event.title, "Do another thing");
+                assert_eq!(&event.text, "lol");
+            });
+        }
+
+
+        #[test]
+        fn delete_event() {
+            setup_warp(|fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                // create an event first.
+                let request = NewEventMessage {
+                    title: "Do a thing".to_string(),
+                    text: "".to_string(),
+                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
+                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2)
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/calendar/event")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let event: Event = deserialize(resp);
+
+                let resp = warp::test::request()
+                    .method("DELETE")
+                    .path(&format!("/api/calendar/event/{}", event.uuid))
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let event: Event = deserialize(resp);
+                assert_eq!(&event.title, "Do a thing");
+
+                // verify it was deleted
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/calendar/event/events")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let events: Vec<Event> = deserialize(resp);
+                assert_eq!(events.len(), 0);
+            });
+        }
+    }
 
 }
