@@ -37,6 +37,13 @@ impl State {
             secret: secret_filter(secret)
         }
     }
+
+    pub fn testing_init(pool: Pool, secret: Secret) -> Self {
+        State {
+            db: db_filter(pool),
+            secret: secret_filter(secret)
+        }
+    }
 }
 pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
     warp::any()

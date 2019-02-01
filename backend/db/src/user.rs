@@ -48,7 +48,7 @@ use diesel::ExpressionMethods;
 // TODO this may have a name that is acquired when the user first logs in by requesting the name from the oauth provider, but it isn't strictly necessary.
 
 
-#[derive(Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]
 pub struct User {

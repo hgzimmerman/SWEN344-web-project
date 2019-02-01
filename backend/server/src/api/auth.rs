@@ -18,7 +18,7 @@ use crate::error::Error;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Login {
-    oauth_token: String
+    pub oauth_token: String
 }
 
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
@@ -77,10 +77,93 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .boxed()
 }
 
+pub const TEST_CLIENT_ID: &str = "test client id";
 
 // TODO actually implement this
 /// This needs to contact facebook with the token, and get the unique client id.
 /// Given an oauth token, return a client id.
 fn get_client_id(oauth_token: &str) -> String {
-    "YEEEET".to_string()
+    if cfg!(test) {
+        TEST_CLIENT_ID.to_string() // allow user login for testing
+    } else {
+        // TODO actually fetch the client id.
+        "YEEEET".to_string()
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use testing_common::fixture::Fixture;
+    use testing_common::setup::setup_warp;
+    use crate::testing_fixtures::user::UserFixture;
+    use db::pool::Pool;
+    use crate::state::State;
+
+    use crate::testing_fixtures::util::deserialize_string;
+    use crate::testing_fixtures::util::deserialize;
+    use crate::auth::BEARER;
+    use crate::auth::AUTHORIZATION_HEADER_KEY;
+
+    #[test]
+    fn login_works() {
+        setup_warp(|fixture: &UserFixture, pool: Pool| {
+            let secret = Secret::new("test");
+            let s = State::testing_init(pool, secret);
+            let filter = auth_api(&s);
+
+            let login = Login {
+                oauth_token: "Test Garbage because we don't want to have the tests depend on FB".to_string()
+            };
+            let resp = warp::test::request()
+                .method("POST")
+                .path("/auth/login")
+                .json(&login)
+                .header("content-length", "300")
+                .reply(&filter);
+
+            assert_eq!(
+                resp.status(),
+                200
+            )
+
+        });
+    }
+
+    #[test]
+    fn user_works() {
+        setup_warp(|fixture: &UserFixture, pool: Pool| {
+            let secret = Secret::new("test");
+            let s = State::testing_init(pool, secret);
+            let filter = auth_api(&s);
+
+            let login = Login {
+                oauth_token: "Test Garbage because we don't want to have the tests depend on FB".to_string()
+            };
+
+            let resp = warp::test::request()
+                .method("POST")
+                .path("/auth/login")
+                .json(&login)
+                .header("content-length", "300")
+                .reply(&filter);
+
+            let jwt = deserialize_string(resp);
+
+            let resp = warp::test::request()
+                .method("GET")
+                .path("/auth/user")
+                .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                .reply(&filter);
+
+            let user: User = deserialize(resp);
+            assert_eq!(
+                user,
+                fixture.user
+            )
+        });
+    }
+
+
 }

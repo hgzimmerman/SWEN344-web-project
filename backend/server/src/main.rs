@@ -10,6 +10,8 @@ mod state;
 mod util;
 mod auth;
 mod error;
+#[cfg(test)]
+mod testing_fixtures;
 
 use crate::api::routes;
 //use crate::api::api;

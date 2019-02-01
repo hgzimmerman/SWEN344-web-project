@@ -99,8 +99,8 @@ impl Secret {
     }
 }
 
-const BEARER: &'static str = "bearer";
-const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
+pub const BEARER: &'static str = "bearer";
+pub const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
 
 
 /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
