@@ -128,7 +128,7 @@ fn withdraw_funds(
             .map_err(Error::reject)?;
 
         // Withdraw the funds from the user's balance.
-        Funds::transact_funds(user_uuid, new_quantity, &conn)
+        Funds::set_funds(user_uuid, new_quantity, &conn)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
             .map_err(Error::from_reject)
@@ -140,7 +140,7 @@ fn withdraw_funds(
 fn calculate_new_quantity_of_funds(current: f64, transaction_ammnount: f64) -> Result<f64, Error> {
     let new_quantity = current + transaction_ammnount;
     if new_quantity < 0.0 {
-        Err(Error::BadRequest)
+        Err(Error::BadRequest) // TODO - More specific error
     } else {
         Ok(new_quantity)
     }
@@ -167,7 +167,7 @@ fn add_funds(quantity: f64, user_uuid: Uuid, conn: PooledConn) -> Result<impl Re
             })
             .map_err(Error::reject)?;
 
-        Funds::transact_funds(user_uuid, new_quantity, &conn)
+        Funds::set_funds(user_uuid, new_quantity, &conn)
             .map_err(Error::from_reject)
             .map(|funds: Funds| funds.quantity) // maps it to just a f64
             .map(util::json)
@@ -211,18 +211,22 @@ fn transact(
 
     // TODO, this should be gotten from the stock api.
     let current_price = 420.0;
-    let transaction_quantity = current_price * request.quantity as f64;
+    let transaction_value = current_price * request.quantity as f64;
 
-    // if it is a purchase, check if the user has enough funds.
-    if request.quantity > 0 {
-        let funds = Funds::funds(user_uuid, &conn).map_err(Error::from_reject)?;
-        if transaction_quantity > funds.quantity {
-            Error::BadRequest.reject_result()?;
-        }
-    }
+//    // if it is a purchase, check if the user has enough funds.
+//    if request.quantity > 0 {
+//        let funds = Funds::funds(user_uuid, &conn).map_err(Error::from_reject)?;
+//        if transaction_value > funds.quantity {
+//            Error::BadRequest.reject_result()?;
+//        }
+//    }
+    let funds = Funds::funds(user_uuid, &conn)
+        .map_err(Error::from_reject)?;
+    let new_quantity = calculate_new_quantity_of_funds(funds.quantity, transaction_value)
+        .map_err(Error::reject)?;
 
     // Add or remove funds for the user
-    Funds::transact_funds(user_uuid, transaction_quantity, &conn).map_err(Error::from_reject)?;
+    Funds::set_funds(user_uuid, new_quantity, &conn).map_err(Error::from_reject)?;
 
     let new_stock_transaction = NewStockTransaction {
         user_uuid,

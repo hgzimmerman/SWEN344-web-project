@@ -37,7 +37,7 @@ impl Funds {
 
     /// Sets the funds to whatever the quantity is.
     /// The calling methods should perform checks if this will make the balance negative.
-    pub fn transact_funds(
+    pub fn set_funds(
         user_uuid: Uuid,
         quantity: f64,
         conn: &PgConnection,
