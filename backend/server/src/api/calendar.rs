@@ -17,6 +17,7 @@ use serde::Deserialize;
 use crate::util;
 use crate::error::Error;
 use db::event::EventChangeset;
+use warp::Rejection;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
@@ -94,45 +95,13 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!(Uuid))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(| event_uuid: Uuid, user_uuid: Uuid, conn: PooledConn| {
-            Event::get_event(event_uuid, &conn)
-                .map_err(Error::from)
-                .and_then(|event: Event| {
-                    if event.user_uuid != user_uuid {
-                        return Err(Error::BadRequest)
-                    } else {
-                        Event::delete_event(event_uuid, &conn)
-                            .map_err(Error::from)
-                    }
-                })
-                .map_err(Error::reject)
-                .map(util::json)
-        });
+        .and_then(delete_event);
 
     let modify_event = warp::put2()
         .and(json_body_filter(50))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(| changeset: EventChangeset, user_uuid: Uuid, conn: PooledConn| {
-            // check logical ordering of start and stop times
-            if changeset.start_at > changeset.stop_at {
-                Error::BadRequest.reject_result() // TODO better error message.
-            } else {
-                // Check if the user has authority to change the event.
-                Event::get_event(changeset.uuid, &conn)
-                    .map_err(Error::from)
-                    .and_then(|event: Event| {
-                        if event.user_uuid != user_uuid {
-                            Err(Error::BadRequest)
-                        } else {
-                            Event::change_event(changeset, &conn)
-                                .map_err(Error::from)
-                        }
-                    })
-                    .map_err(Error::reject)
-                    .map(util::json)
-            }
-        });
+        .and_then(modify_event);
 
     let events = path!("event")
         .and(
@@ -150,6 +119,46 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         )
         .boxed()
 
+}
+
+
+
+/// Deletes the event after checking that it belongs to the user.
+fn delete_event(event_uuid: Uuid, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
+    Event::get_event(event_uuid, &conn)
+        .map_err(Error::from)
+        .and_then(|event: Event| {
+            if event.user_uuid != user_uuid {
+                return Err(Error::BadRequest)
+            } else {
+                Event::delete_event(event_uuid, &conn)
+                    .map_err(Error::from)
+            }
+        })
+        .map_err(Error::reject)
+        .map(util::json)
+}
+
+
+fn modify_event(changeset: EventChangeset, user_uuid: Uuid, conn: PooledConn) -> Result<impl Reply, Rejection> {
+    // check logical ordering of start and stop times
+    if changeset.start_at > changeset.stop_at {
+        Error::BadRequest.reject_result() // TODO better error message.
+    } else {
+        // Check if the user has authority to change the event.
+        Event::get_event(changeset.uuid, &conn)
+            .map_err(Error::from)
+            .and_then(|event: Event| {
+                if event.user_uuid != user_uuid {
+                    Err(Error::BadRequest)
+                } else {
+                    Event::change_event(changeset, &conn)
+                        .map_err(Error::from)
+                }
+            })
+            .map_err(Error::reject)
+            .map(util::json)
+    }
 }
 
 
