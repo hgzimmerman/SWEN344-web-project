@@ -46,14 +46,14 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::reject)
         });
 
-    #[cfg(test)]
-    let login_unit_test = path!("login_unit_test")
-        .and(warp::get2())
-        .and(state.secret.clone())
-        .map(|secret: Secret| {
-            let payload = JwtPayload::new(Uuid::new_v4());
-            payload.encode_jwt_string(&secret)
-        });
+//    #[cfg(test)]
+//    let login_unit_test = path!("login_unit_test")
+//        .and(warp::get2())
+//        .and(state.secret.clone())
+//        .map(|secret: Secret| {
+//            let payload = JwtPayload::new(Uuid::new_v4());
+//            payload.encode_jwt_string(&secret)
+//        });
 
     // TODO maybe move this not under the auth/ route
     let user = path!("user")
@@ -89,7 +89,6 @@ mod test {
     use crate::state::State;
     use crate::testing_fixtures::user::UserFixture;
     use db::pool::Pool;
-    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 
     use crate::auth::AUTHORIZATION_HEADER_KEY;
@@ -99,7 +98,7 @@ mod test {
 
     #[test]
     fn login_works() {
-        setup_warp(|fixture: &UserFixture, pool: Pool| {
+        setup_warp(|_fixture: &UserFixture, pool: Pool| {
             let secret = Secret::new("test");
             let s = State::testing_init(pool, secret);
             let filter = auth_api(&s);

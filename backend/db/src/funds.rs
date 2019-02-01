@@ -35,6 +35,8 @@ impl Funds {
         util::create_row(schema::funds::table, new_funds, conn)
     }
 
+    /// Sets the funds to whatever the quantity is.
+    /// The calling methods should perform checks if this will make the balance negative.
     pub fn transact_funds(
         user_uuid: Uuid,
         quantity: f64,

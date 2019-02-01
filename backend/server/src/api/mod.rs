@@ -55,7 +55,7 @@ mod integration_test {
     use crate::state::State;
     use crate::testing_fixtures::user::UserFixture;
     use db::pool::Pool;
-    use testing_common::fixture::Fixture;
+//    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 
     use crate::api::auth::Login;
@@ -90,7 +90,7 @@ mod integration_test {
 
     #[test]
     fn test_login_works() {
-        setup_warp(|fixture: &UserFixture, pool: Pool| {
+        setup_warp(|_fixture: &UserFixture, pool: Pool| {
             let secret = Secret::new("test");
             let s = State::testing_init(pool, secret);
             let filter = routes(&s);
@@ -138,7 +138,7 @@ mod integration_test {
 
         #[test]
         fn create_event() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -169,7 +169,7 @@ mod integration_test {
 
         #[test]
         fn get_events() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -211,7 +211,7 @@ mod integration_test {
 
         #[test]
         fn get_events_today() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -273,7 +273,7 @@ mod integration_test {
 
         #[test]
         fn get_events_this_month() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -338,7 +338,7 @@ mod integration_test {
 
         #[test]
         fn modify_event() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -391,7 +391,7 @@ mod integration_test {
 
         #[test]
         fn delete_event() {
-            setup_warp(|fixture: &UserFixture, pool: Pool| {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
                 let secret = Secret::new("test");
                 let s = State::testing_init(pool, secret);
                 let filter = routes(&s);
@@ -444,4 +444,124 @@ mod integration_test {
         }
     }
 
+    mod market {
+        use super::*;
+
+        #[test]
+        fn getting_balance_creates_funds() {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/funds/balance")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let balance: f64 = deserialize(resp);
+                println!("{:?}", balance);
+                assert_eq!(balance, 0.0);
+
+            });
+        }
+
+        #[test]
+        fn add_funds() {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/funds/balance")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/add")
+                    .json(&5000.0)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let balance: f64 = deserialize(resp);
+                println!("{:?}", balance);
+                assert_eq!(balance, 5000.0);
+
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/add")
+                    .json(&5000.0)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+                assert_eq!(resp.status(), 200);
+                let balance: f64 = deserialize(resp);
+                println!("{:?}", balance);
+                assert_eq!(balance, 10_000.0);
+
+            });
+        }
+
+
+        #[test]
+        fn subtract_funds_rejects_negative_balance() {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/funds/balance")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/add")
+                    .json(&5000.0)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+
+                let balance: f64 = deserialize(resp);
+                println!("{:?}", balance);
+                assert_eq!(balance, 5000.0);
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/withdraw")
+                    .json(&5000.1)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 400, "Request should be rejected, because the funds would be negative");
+            });
+        }
+    }
 }

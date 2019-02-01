@@ -161,9 +161,6 @@ mod unit_test {
     use super::*;
     use crate::auth::JwtPayload;
     use crate::auth::Secret;
-    use serde_json;
-    use std::time::Duration;
-    use warp::test::RequestBuilder;
 
     #[test]
     fn get_events() {
