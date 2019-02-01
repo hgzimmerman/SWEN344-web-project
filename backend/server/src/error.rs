@@ -120,6 +120,12 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::JwtEncodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
     }
 
+    use std::fmt::Write;
+    let mut s: String = String::new();
+    write!(s, "{}", cause);
+
+    *resp.body_mut() = s.into(); // TODO Verify that rewriting the error is ideal here
+
     //        warn!("rewrote error response: {:?}", resp);
     Ok(resp)
 }

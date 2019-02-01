@@ -14,8 +14,9 @@ use self::calendar::calendar_api;
 use crate::api::market::market_api;
 use crate::api::auth::auth_api;
 
+/// The core of the exposed routes.
+/// Anything that sits behind this filter accesses the DB in some way.
 pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
-
     path!("api")
         .and(
             market_api(state)
@@ -23,15 +24,14 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .or(auth_api(state))
         )
         .boxed()
-
 }
 
 
-/// A function that:
+/// A filter that:
 /// * Routes the API
 /// * Handles file requests and redirections - NOT IMPLEMENTED
-/// * Initializes logging
-/// * Handles errors
+/// * Initializes warp logging
+/// * converts errors
 /// * Handles CORS
 pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
     let cors = warp::cors()
@@ -88,7 +88,7 @@ mod integration_test {
     }
 
     #[test]
-    fn login_works() {
+    fn test_login_works() {
         setup_warp(|fixture: &UserFixture, pool: Pool| {
             let secret = Secret::new("test");
             let s = State::testing_init(pool, secret);
