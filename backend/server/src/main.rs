@@ -8,6 +8,7 @@ mod state;
 #[cfg(test)]
 mod testing_fixtures;
 mod util;
+mod static_files;
 
 use crate::api::routes;
 use crate::state::State;

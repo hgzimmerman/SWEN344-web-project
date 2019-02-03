@@ -12,15 +12,22 @@ use warp::Filter;
 use self::calendar::calendar_api;
 use crate::api::auth::auth_api;
 use crate::api::market::market_api;
+use crate::static_files::static_files_handler;
+use crate::static_files::FileConfig;
+
+pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
 pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    path!("api")
+    let file_config = FileConfig::default();
+
+    path(API_STRING)
         .and(
             market_api(state)
                 .or(calendar_api(state))
-                .or(auth_api(state)),
+                .or(auth_api(state))
+                .or(static_files_handler(file_config))
         )
         .boxed()
 }
