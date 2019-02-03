@@ -12,8 +12,7 @@ use diesel::{
     RunQueryDsl,
 };
 use migrations_internals as migrations;
-use db::pool::Pool;
-use db::pool;
+use pool::Pool;
 use crate::query_helper;
 //use rocket::local::Client;
 //use server::{

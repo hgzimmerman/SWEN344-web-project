@@ -1,8 +1,8 @@
 use crate::auth::secret_filter;
 use crate::auth::Secret;
 use crate::error::Error;
-use db::pool::PooledConn;
-use db::pool::{init_pool, Pool, DATABASE_URL};
+use pool::PooledConn;
+use pool::{init_pool, Pool, DATABASE_URL};
 use warp::filters::BoxedFilter;
 use warp::Filter;
 use warp::Rejection;

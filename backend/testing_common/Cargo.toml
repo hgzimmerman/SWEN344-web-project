@@ -13,7 +13,8 @@ edition = "2018"
 
 chrono = { version = "0.4", features = ["serde"] }
 uuid = {version = "0.6", features = ["serde", "v4"] }
-db = { path = "../db"}
+#db = { path = "../db"}
+pool = {path = "../pool"}
 
 
 migrations_internals = "~1.4.0"
