@@ -10,14 +10,6 @@ table! {
 }
 
 table! {
-    funds (uuid) {
-        uuid -> Uuid,
-        user_uuid -> Uuid,
-        quantity -> Float8,
-    }
-}
-
-table! {
     stocks (uuid) {
         uuid -> Uuid,
         symbol -> Varchar,
@@ -44,8 +36,12 @@ table! {
 }
 
 joinable!(events -> users (user_uuid));
-joinable!(funds -> users (user_uuid));
 joinable!(stock_transactions -> stocks (stock_uuid));
 joinable!(stock_transactions -> users (user_uuid));
 
-allow_tables_to_appear_in_same_query!(events, funds, stocks, stock_transactions, users,);
+allow_tables_to_appear_in_same_query!(
+    events,
+    stocks,
+    stock_transactions,
+    users,
+);
