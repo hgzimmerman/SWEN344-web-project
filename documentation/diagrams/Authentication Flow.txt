@@ -1,4 +1,3 @@
-https://sequencediagram.org/
 title Authentication Flow
 
 WebApp->OauthSource: Log in

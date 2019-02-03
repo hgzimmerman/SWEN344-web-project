@@ -1,18 +1,14 @@
-use super::*;
+//use super::*;
+use apply::Apply;
+use serde::Serialize;
 use std::{
     error::Error as StdError,
-    fmt::{
-        self,
-        Display,
-    },
+    fmt::{self, Display},
 };
-use warp::{
-    http::StatusCode,
-    reject::Rejection,
-    reply::Reply,
-};
-use serde::Serialize;
-use apply::Apply;
+use warp::{http::StatusCode, reject::Rejection, reply::Reply};
+
+//use log::info;
+use log::error;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Error {
@@ -24,6 +20,8 @@ pub enum Error {
     },
     BadRequest,
     /// The used did not have privileges to access the given method.
+    /// This can also be used for users that don't have a token, but it is required.
+    // TODO the above use is out of date
     NotAuthorized {
         reason: &'static str,
     },
@@ -35,12 +33,10 @@ pub enum Error {
     MissingToken,
     /// The JWT 'bearer schema' was not followed.
     MalformedToken,
-    /// The user has been banned and therefore can't perform their desired action.
-    UserBanned,
     DeserializeError,
     SerializeError,
     JwtDecodeError,
-    JwtEncodeError
+    JwtEncodeError,
 }
 
 impl Display for Error {
@@ -64,7 +60,6 @@ impl Display for Error {
             Error::NotAuthorized { reason } => {
                 format!("You are forbidden from accessing this resource. ({})", reason)
             }
-            Error::UserBanned => "Your account has been banned".to_string(),
             Error::BadRequest => "Your request is malformed".to_string(),
             Error::InternalServerError => "Internal server error encountered".to_string(),
             Error::NotFound { type_name } => {
@@ -92,36 +87,47 @@ impl StdError for Error {
 ///
 /// This should be used at the top level of the exposed api.
 pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
-    let mut resp = err.json();
-    if err.is_not_found() {
-        *resp.status_mut() = StatusCode::NOT_FOUND;
-        return Ok(resp);
-    }
+    let not_found = Error::NotFound {
+        type_name: "route not found".to_string(),
+    };
+    let internal_server = Error::InternalServerError;
 
     let cause = match err.find_cause::<Error>() {
         Some(ok) => ok,
-        None => return Ok(resp),
+        None => {
+            if err.is_not_found() {
+                &not_found
+            } else {
+                &internal_server
+            }
+        }
     };
-    match *cause {
-        Error::DatabaseUnavailable => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::DatabaseError(_) => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::IllegalToken => *resp.status_mut() = StatusCode::UNAUTHORIZED,
-        Error::ExpiredToken => *resp.status_mut() = StatusCode::UNAUTHORIZED,
-        Error::MalformedToken => *resp.status_mut() = StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
-        Error::NotAuthorized { .. } => *resp.status_mut() = StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges
-        Error::UserBanned => *resp.status_mut() = StatusCode::FORBIDDEN,
-        Error::BadRequest => *resp.status_mut() = StatusCode::BAD_REQUEST,
-        Error::NotFound { .. } => *resp.status_mut() = StatusCode::NOT_FOUND,
-        Error::InternalServerError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::MissingToken => *resp.status_mut() = StatusCode::UNAUTHORIZED,
-        Error::DeserializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::SerializeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-        Error::JwtDecodeError => *resp.status_mut() = StatusCode::UNAUTHORIZED,
-        Error::JwtEncodeError => *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR,
-    }
 
-    //        warn!("rewrote error response: {:?}", resp);
-    Ok(resp)
+    use std::fmt::Write;
+    let mut s: String = String::new();
+    let _ = write!(s, "{}", cause);
+
+    let error_response = ErrorResponse { message: s };
+    let json = warp::reply::json(&error_response);
+
+    let code = match *cause {
+        Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::IllegalToken => StatusCode::UNAUTHORIZED,
+        Error::ExpiredToken => StatusCode::UNAUTHORIZED,
+        Error::MalformedToken => StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
+        Error::NotAuthorized { .. } => StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges
+        Error::BadRequest => StatusCode::BAD_REQUEST,
+        Error::NotFound { .. } => StatusCode::NOT_FOUND,
+        Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::MissingToken => StatusCode::UNAUTHORIZED,
+        Error::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::JwtDecodeError => StatusCode::UNAUTHORIZED,
+        Error::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
+    };
+
+    Ok(warp::reply::with_status(json, code))
 }
 
 impl Error {
@@ -140,12 +146,22 @@ impl Error {
 
 impl From<diesel::result::Error> for Error {
     fn from(error: diesel::result::Error) -> Self {
-        use diesel::result::Error as DieselError;
         use self::Error::*;
+        use diesel::result::Error as DieselError;
         match error {
-            DieselError::DatabaseError(_,_) =>  DatabaseError(None), // todo flesh this one out a bit
-            DieselError::NotFound => NotFound {type_name: "not implemented".to_string()},
-            _ => DatabaseError(None)
+            DieselError::DatabaseError(_, _) => DatabaseError(None), // todo flesh this one out a bit
+            DieselError::NotFound => NotFound {
+                type_name: "not implemented".to_string(),
+            },
+            e => {
+                error!("{}", e);
+                InternalServerError
+            }
         }
     }
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    message: String,
 }

@@ -1,0 +1,9 @@
+title Stock Trading Display
+
+WebApp->ProjectApi: Request list of stocks with purchase history
+ProjectApi-->WebApp: Transaction history
+WebApp->StockApi: Request historical data for stocks in transaction history
+StockApi-->WebApp: Historical stock price data
+WebApp->WebApp: Associate the transaction history on top of historical data
+
+

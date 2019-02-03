@@ -16,6 +16,7 @@ stdenv.mkDerivation rec {
     # to set the password, run `psql` and enter `\password` and set it to the password below
     export DATABASE_URL='postgres://hzimmerman:password@localhost/web_engineering'
     export TEST_DATABASE_URL='postgres://hzimmerman:password@localhost/web_engineering_test'
+    export TEST_DATABASE_NAME='web_engineering_test'
     export DROP_DATABASE_URL='postgres://hzimmerman:password@localhost/postgres'
 
     pg_ctl init

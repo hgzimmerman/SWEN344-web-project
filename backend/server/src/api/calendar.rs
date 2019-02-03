@@ -1,29 +1,30 @@
 use crate::state::State;
 use warp::filters::BoxedFilter;
-use warp::Reply;
 use warp::path;
+use warp::Reply;
 
-use warp::Filter;
 use crate::util::json_body_filter;
 use db::event::Event;
 use db::event::NewEvent;
 use db::pool::PooledConn;
-use apply::Apply;
-use uuid::Uuid;
+use warp::Filter;
+//use apply::Apply;
 use crate::auth::user_filter;
-use chrono::NaiveDateTime;
-use serde::Serialize;
-use serde::Deserialize;
-use crate::util;
 use crate::error::Error;
+use crate::util;
+use chrono::NaiveDateTime;
 use db::event::EventChangeset;
+use serde::Deserialize;
+use serde::Serialize;
+use uuid::Uuid;
+use warp::Rejection;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
     pub title: String,
     pub text: String,
     pub start_at: NaiveDateTime,
-    pub stop_at: NaiveDateTime
+    pub stop_at: NaiveDateTime,
 }
 
 impl NewEventMessage {
@@ -33,17 +34,16 @@ impl NewEventMessage {
             title: self.title,
             text: self.text,
             start_at: self.start_at,
-            stop_at: self.stop_at
+            stop_at: self.stop_at,
         }
     }
 }
 
-
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-
-    // TODO take query parameters for month and year
+    // TODO take optional query parameters for month and year
     let get_events = warp::get2()
         .and(path!("events"))
+        .and(path::end())
         .and(user_filter(state))
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
@@ -93,166 +93,121 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!(Uuid))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(| event_uuid: Uuid, user_uuid: Uuid, conn: PooledConn| {
-            Event::get_event(event_uuid, &conn)
-                .map_err(Error::from)
-                .and_then(|event: Event| {
-                    if event.user_uuid != user_uuid {
-                        return Err(Error::BadRequest)
-                    } else {
-                        Event::delete_event(event_uuid, &conn)
-                            .map_err(Error::from)
-                    }
-                })
-                .map_err(Error::reject)
-                .map(util::json)
-        });
+        .and_then(delete_event);
 
     let modify_event = warp::put2()
         .and(json_body_filter(50))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(| changeset: EventChangeset, user_uuid: Uuid, conn: PooledConn| {
-            // check logical ordering of start and stop times
-            if changeset.start_at > changeset.stop_at {
-                Error::BadRequest.reject_result() // TODO better error message.
-            } else {
-                // Check if the user has authority to change the event.
-                Event::get_event(changeset.uuid, &conn)
-                    .map_err(Error::from)
-                    .and_then(|event: Event| {
-                        if event.user_uuid != user_uuid {
-                            Err(Error::BadRequest)
-                        } else {
-                            Event::change_event(changeset, &conn)
-                                .map_err(Error::from)
-                        }
-                    })
-                    .map_err(Error::reject)
-                    .map(util::json)
-            }
-        });
+        .and_then(modify_event);
 
-    let events = path!("event")
-        .and(
-            get_events
-                .or(create_event)
-                .or(events_today)
-                .or(events_month)
-                .or(delete_event)
-                .or(modify_event)
-        );
+    let events = path!("event").and(
+        get_events
+            .or(create_event)
+            .or(events_today)
+            .or(events_month)
+            .or(delete_event)
+            .or(modify_event)
+    );
 
-    path!("calendar")
-        .and(
-            events
-        )
-        .boxed()
-
+    path!("calendar").and(events).boxed()
 }
 
+/// Deletes the event after checking that it belongs to the user.
+fn delete_event(
+    event_uuid: Uuid,
+    user_uuid: Uuid,
+    conn: PooledConn,
+) -> Result<impl Reply, Rejection> {
+    Event::get_event(event_uuid, &conn)
+        .map_err(Error::from)
+        .and_then(|event: Event| {
+            if event.user_uuid != user_uuid {
+                Err(Error::NotAuthorized {reason: "User does not own event"})
+            } else {
+                Event::delete_event(event_uuid, &conn).map_err(Error::from)
+            }
+        })
+        .map_err(Error::reject)
+        .map(util::json)
+}
+
+fn modify_event(
+    changeset: EventChangeset,
+    user_uuid: Uuid,
+    conn: PooledConn,
+) -> Result<impl Reply, Rejection> {
+    // check logical ordering of start and stop times
+    if changeset.start_at > changeset.stop_at {
+        Error::BadRequest.reject_result() // TODO better error message.
+    } else {
+        // Check if the user has authority to change the event.
+        Event::get_event(changeset.uuid, &conn)
+            .map_err(Error::from)
+            .and_then(|event: Event| {
+                if event.user_uuid != user_uuid {
+                    Err(Error::NotAuthorized {reason: "User does not own event"})
+                } else {
+                    Event::change_event(changeset, &conn).map_err(Error::from)
+                }
+            })
+            .map_err(Error::reject)
+            .map(util::json)
+    }
+}
 
 #[cfg(test)]
-mod unit_test {
+mod test {
     use super::*;
-    use warp::test::RequestBuilder;
     use crate::auth::JwtPayload;
     use crate::auth::Secret;
-    use std::time::Duration;
-    use serde_json;
-
 
     #[test]
     fn get_events() {
         let secret = Secret::new("TEST");
         let state = State::new(Some(secret.clone()));
         let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
+        let jwt = JwtPayload::new(Uuid::new_v4())
+            .encode_jwt_string(&secret)
+            .unwrap();
 
-        assert!(
-             warp::test::request()
-                .method("GET")
-                .path("/calendar/event/events")
-                .header("Authorization", format!("bearer {}", jwt))
-                .matches(&filter)
-        );
+        assert!(warp::test::request()
+            .method("GET")
+            .path("/calendar/event/events")
+            .header("Authorization", format!("bearer {}", jwt))
+            .matches(&filter));
     }
-
 
     #[test]
     fn get_events_today() {
         let secret = Secret::new("TEST");
         let state = State::new(Some(secret.clone()));
         let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
+        let jwt = JwtPayload::new(Uuid::new_v4())
+            .encode_jwt_string(&secret)
+            .unwrap();
 
-        assert!(
-             warp::test::request()
-                .method("GET")
-                .path("/calendar/event/events/today")
-                .header("Authorization", format!("bearer {}", jwt))
-                .matches(&filter)
-        );
+        assert!(warp::test::request()
+            .method("GET")
+            .path("/calendar/event/events/today")
+            .header("Authorization", format!("bearer {}", jwt))
+            .matches(&filter));
     }
-
 
     #[test]
     fn get_events_month() {
         let secret = Secret::new("TEST");
         let state = State::new(Some(secret.clone()));
         let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
+        let jwt = JwtPayload::new(Uuid::new_v4())
+            .encode_jwt_string(&secret)
+            .unwrap();
 
-        assert!(
-             warp::test::request()
-                .method("GET")
-                .path("/calendar/event/events/month")
-                .header("Authorization", format!("bearer {}", jwt))
-                .matches(&filter)
-        );
+        assert!(warp::test::request()
+            .method("GET")
+            .path("/calendar/event/events/month")
+            .header("Authorization", format!("bearer {}", jwt))
+            .matches(&filter));
     }
-
-//
-//    #[test]
-//    fn create_event() {
-//        let secret = Secret::new("TEST");
-//        let state = State::new(Some(secret.clone()));
-//        let filter = calendar_api(&state);
-//        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
-//
-//
-//        let now = chrono::Utc::now().naive_utc();
-//        let body = NewEventMessage {
-//            title: "event".to_string(),
-//            text: "do thing".to_string(),
-//            start_at: now,
-//            stop_at: now + chrono::Duration::hours(1)
-//        };
-//
-//        assert!(
-//            warp::test::request()
-//                .method("POST")
-//                .path("/calendar/event")
-//                .json(&body)
-//                .header("Authorization", format!("bearer {}", jwt))
-//                .matches(&filter)
-//        );
-//    }
-//
-//    #[test]
-//    fn delete_event() {
-//        let secret = Secret::new("TEST");
-//        let state = State::new(Some(secret.clone()));
-//        let filter = calendar_api(&state);
-//        let jwt = JwtPayload::new(Uuid::new_v4()).encode_jwt_string(&secret).unwrap();
-//
-//        assert!(
-//             warp::test::request()
-//                .method("DELETE")
-//                .path(&format!("/calendar/event/{}", Uuid::new_v4().to_string()))
-//                .header("Authorization", format!("bearer {}", jwt))
-//                .matches(&filter)
-//        );
-//    }
 
 }

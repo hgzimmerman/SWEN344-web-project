@@ -1,0 +1,10 @@
+title Stock Trading
+
+WebApp->StockApi: Request list of stocks
+StockApi-->WebApp: List of stocks
+WebApp->ProjectApi: Purchase request for Stock symbol
+ProjectApi->StockApi: Request current price
+StockApi-->ProjectApi: Current stock price
+ProjectApi->Db: Store transaction
+Db-->ProjectApi: Transaction record
+ProjectApi-->WebApp: Transaction record

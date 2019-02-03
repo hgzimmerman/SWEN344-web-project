@@ -2,4 +2,5 @@
 members = [
     "db",
     "server",
+    "testing_common"
 ]

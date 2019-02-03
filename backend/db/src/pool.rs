@@ -1,14 +1,5 @@
-
-
-use diesel::{
-    pg::PgConnection,
-    r2d2::ConnectionManager,
-    Connection,
-};
-use r2d2::{
-    Pool as R2D2Pool,
-    PooledConnection,
-};
+use diesel::{pg::PgConnection, r2d2::ConnectionManager, Connection};
+use r2d2::{Pool as R2D2Pool, PooledConnection};
 
 pub const DATABASE_URL: &'static str = env!("DATABASE_URL");
 
@@ -23,5 +14,6 @@ pub fn init_pool(db_url: &str) -> Pool {
 }
 
 pub fn create_single_connection(db_url: &str) -> PgConnection {
-    PgConnection::establish(db_url).expect("Database not available. maybe provided url is wrong, or database is down?")
+    PgConnection::establish(db_url)
+        .expect("Database not available. maybe provided url is wrong, or database is down?")
 }

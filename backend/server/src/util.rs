@@ -1,10 +1,8 @@
-
-use warp::filters::BoxedFilter;
 use serde::Deserialize;
+use serde::Serialize;
+use warp::filters::BoxedFilter;
 use warp::Filter;
 use warp::Reply;
-use serde::Serialize;
-
 
 pub fn json_body_filter<T>(kb_limit: u64) -> BoxedFilter<(T,)>
 where
@@ -14,7 +12,6 @@ where
         .and(warp::body::json())
         .boxed()
 }
-
 
 #[allow(dead_code)]
 /// Util function that makes replying easier
@@ -34,7 +31,6 @@ where
     warp::reply::json(&source)
 }
 
-
 ///// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.
 
 //pub fn many_json<T, U>(source: Vec<T>) -> impl Reply
@@ -45,4 +41,3 @@ where
 //    let target: Vec<U> = convert_vector(source);
 //    warp::reply::json(&target)
 //}
-
