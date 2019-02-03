@@ -107,7 +107,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             .or(events_today)
             .or(events_month)
             .or(delete_event)
-            .or(modify_event),
+            .or(modify_event)
     );
 
     path!("calendar").and(events).boxed()
@@ -123,7 +123,7 @@ fn delete_event(
         .map_err(Error::from)
         .and_then(|event: Event| {
             if event.user_uuid != user_uuid {
-                return Err(Error::BadRequest);
+                Err(Error::NotAuthorized {reason: "User does not own event"})
             } else {
                 Event::delete_event(event_uuid, &conn).map_err(Error::from)
             }
@@ -146,7 +146,7 @@ fn modify_event(
             .map_err(Error::from)
             .and_then(|event: Event| {
                 if event.user_uuid != user_uuid {
-                    Err(Error::BadRequest)
+                    Err(Error::NotAuthorized {reason: "User does not own event"})
                 } else {
                     Event::change_event(changeset, &conn).map_err(Error::from)
                 }

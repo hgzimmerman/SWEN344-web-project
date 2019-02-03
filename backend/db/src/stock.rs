@@ -193,8 +193,8 @@ impl Stock {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserStockResponse {
-    stock: Stock,
-    transactions: Vec<StockTransaction>,
+    pub stock: Stock,
+    pub transactions: Vec<StockTransaction>,
 }
 
 impl UserStockResponse {

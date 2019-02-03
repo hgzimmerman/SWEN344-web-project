@@ -23,9 +23,9 @@ use serde::Serialize;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
-    symbol: String,
+    pub symbol: String,
     /// The sign bit indicates if it is a sale or a purchase;
-    quantity: i32,
+    pub quantity: i32,
 }
 
 /// The Filter for the market API.

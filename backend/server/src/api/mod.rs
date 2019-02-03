@@ -446,6 +446,10 @@ mod integration_test {
 
     mod market {
         use super::*;
+        use crate::api::market::StockTransactionRequest;
+        use db::stock::UserStockResponse;
+        use db::stock::Stock;
+        use db::stock::StockTransaction;
 
         #[test]
         fn getting_balance_creates_funds() {
@@ -561,6 +565,108 @@ mod integration_test {
                     .reply(&filter);
 
                 assert_eq!(resp.status(), 400, "Request should be rejected, because the funds would be negative");
+            });
+        }
+
+        #[test]
+        fn buy_stock() {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/funds/balance")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/add")
+                    .json(&5000.0)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+
+                assert_eq!(resp.status(), 200);
+
+                let request = StockTransactionRequest {
+                    symbol: "APPL".to_string(),
+                    quantity: 1
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/stock/transact")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200);
+            });
+        }
+
+
+        #[test]
+        fn owned_stocks() {
+            setup_warp(|_fixture: &UserFixture, pool: Pool| {
+                let secret = Secret::new("test");
+                let s = State::testing_init(pool, secret);
+                let filter = routes(&s);
+
+                let jwt = get_jwt(filter.clone());
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/funds/balance")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/funds/add")
+                    .json(&5000.0)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+
+                assert_eq!(resp.status(), 200, "could not add funds");
+
+                let request = StockTransactionRequest {
+                    symbol: "APPL".to_string(),
+                    quantity: 1
+                };
+
+                let resp = warp::test::request()
+                    .method("POST")
+                    .path("/api/market/stock/transact")
+                    .json(&request)
+                    .header("content-length", "500")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200, "could not buy stocks");
+
+
+                let resp = warp::test::request()
+                    .method("GET")
+                    .path("/api/market/stock/")
+                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                    .reply(&filter);
+
+                assert_eq!(resp.status(), 200, "Could not find stocks for user");
+                let r: Vec<UserStockResponse> = deserialize(resp);
+                assert_eq!(1, r.len());
+                assert_eq!(1, r[0].transactions.len());
+                assert_eq!(1, r[0].transactions[0].quantity)
             });
         }
     }
