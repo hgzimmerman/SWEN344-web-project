@@ -1,7 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE users (
     uuid UUID PRIMARY KEY NOT NULL Default gen_random_uuid(),
---     name VARCHAR NOT NULL,
     client_id VARCHAR NOT NULL
 );
 
@@ -14,12 +13,6 @@ CREATE TABLE events (
     stop_at TIMESTAMP NOT NULL
 );
 
-
-CREATE TABLE funds (
-    uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-    user_uuid UUID NOT NULL REFERENCES users(uuid) ON DELETE CASCADE,
-    quantity FLOAT NOT NULL
-);
 
 CREATE TABLE stocks (
     uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
