@@ -9,7 +9,7 @@ use crate::error::Error;
 use crate::util;
 use crate::util::json_body_filter;
 use db::funds::Funds;
-use db::pool::PooledConn;
+use pool::PooledConn;
 use db::stock::NewStock;
 use db::stock::Stock;
 use diesel::result::QueryResult;

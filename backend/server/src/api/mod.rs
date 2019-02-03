@@ -61,7 +61,7 @@ mod integration_test {
     use super::*;
     use crate::state::State;
     use crate::testing_fixtures::user::UserFixture;
-    use db::pool::Pool;
+    use pool::Pool;
 //    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 

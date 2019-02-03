@@ -13,3 +13,4 @@ chrono = {version = "0.4.*", features=["serde"]}
 serde = {version="1.0.85", features=["derive"]}
 itertools = "0.8.0"
 
+pool = {path="../pool"}

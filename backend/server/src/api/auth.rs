@@ -8,7 +8,7 @@ use crate::auth::JwtPayload;
 use crate::auth::Secret;
 use crate::error::Error;
 use crate::util;
-use db::pool::PooledConn;
+use pool::PooledConn;
 use db::user::NewUser;
 use db::user::User;
 use log::info;
@@ -88,7 +88,7 @@ mod test {
     use super::*;
     use crate::state::State;
     use crate::testing_fixtures::user::UserFixture;
-    use db::pool::Pool;
+    use pool::Pool;
     use testing_common::setup::setup_warp;
 
     use crate::auth::AUTHORIZATION_HEADER_KEY;

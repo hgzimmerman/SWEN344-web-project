@@ -6,7 +6,7 @@ use warp::Reply;
 use crate::util::json_body_filter;
 use db::event::Event;
 use db::event::NewEvent;
-use db::pool::PooledConn;
+use pool::PooledConn;
 use warp::Filter;
 //use apply::Apply;
 use crate::auth::user_filter;
