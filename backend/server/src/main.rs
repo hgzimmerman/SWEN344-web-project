@@ -9,6 +9,7 @@ mod state;
 mod testing_fixtures;
 mod util;
 mod static_files;
+mod adaptive;
 
 use crate::api::routes;
 use crate::state::State;
