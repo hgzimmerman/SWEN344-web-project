@@ -1,3 +1,5 @@
+//! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
+
 use hyper::{Method, Request};
 use std::io::{self, Write};
 use hyper::Client;
@@ -8,6 +10,8 @@ use apply::Apply;
 use hyper::Uri;
 use hyper::Chunk;
 
+
+/// Get the number of available servers.
 #[allow(dead_code)]
 pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
     let client = Client::new();
@@ -60,6 +64,7 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
         })
 }
 
+/// Gets the "load" on the "servers".
 #[allow(dead_code)]
 pub fn get_load() -> impl Future<Item=usize, Error=crate::error::Error>  {
     let uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
@@ -75,6 +80,19 @@ pub fn get_load() -> impl Future<Item=usize, Error=crate::error::Error>  {
              let body = String::from_utf8_lossy(&v).to_string();
              body.parse::<usize>().map_err(|_|crate::error::Error::InternalServerError)
          })
+}
+
+/// Per the assignment:
+/// Each server can handle "10" load units
+/// If the current server load exceeds what can be "served", then activate the dimmer (don't display the advertisement)
+///
+/// # Arguments
+/// load_units - The current load across the "servers"
+/// available_servers - The number (out of 4) of servers that are available.
+pub fn should_serve_adds(load_units: usize, available_servers: usize) -> bool {
+    const UNITS_PER_SERVER: usize = 10;
+    let available_capacity = available_servers * UNITS_PER_SERVER;
+    available_capacity > load_units
 }
 
 #[cfg(test)]
