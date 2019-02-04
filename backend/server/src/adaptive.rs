@@ -60,27 +60,37 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
         })
 }
 
-fn get_load() -> impl Future<Item=usize, Error=()>  {
+#[allow(dead_code)]
+pub fn get_load() -> impl Future<Item=usize, Error=crate::error::Error>  {
     let uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
     let client = Client::new();
      client
          .get(uri)
          .and_then(|res| {
-             res.into_body().concat2()
+             res.into_body().concat2() // Await the whole body
          })
-         .map_err(|_| ())
+         .map_err(|_| crate::error::Error::InternalServerError)
          .and_then(|chunk: Chunk| {
              let v = chunk.to_vec();
              let body = String::from_utf8_lossy(&v).to_string();
-             body.parse::<usize>().map_err(|_|())
+             body.parse::<usize>().map_err(|_|crate::error::Error::InternalServerError)
          })
+}
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn num_servers_up() {
+        assert!(get_num_servers_up().wait().is_ok())
+    }
+
+    #[test]
+    fn load() {
+        get_load().wait();
+    }
 }
 
 
-#[test]
-fn yeet() {
-    assert!(get_num_servers_up().wait().is_ok())
-}
 
 
