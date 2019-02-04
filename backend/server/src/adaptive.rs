@@ -6,6 +6,7 @@ use futures::future::join_all;
 //use futures::future::join4;
 use apply::Apply;
 use hyper::Uri;
+use hyper::Chunk;
 
 #[allow(dead_code)]
 pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
@@ -23,7 +24,6 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
              .and_then(|res| {
                  res.into_body().concat2()
              })
-             .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
              .map(|chunk| {
                  let v = chunk.to_vec();
                  let body = String::from_utf8_lossy(&v).to_string();
@@ -32,6 +32,7 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
                      _ => false
                  }
              })
+             .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
     };
 
     let a_1 = request_is_up(uri_1);
@@ -57,6 +58,23 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
             }
             acc
         })
+}
+
+fn get_load() -> impl Future<Item=usize, Error=()>  {
+    let uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
+    let client = Client::new();
+     client
+         .get(uri)
+         .and_then(|res| {
+             res.into_body().concat2()
+         })
+         .map_err(|_| ())
+         .and_then(|chunk: Chunk| {
+             let v = chunk.to_vec();
+             let body = String::from_utf8_lossy(&v).to_string();
+             body.parse::<usize>().map_err(|_|())
+         })
+
 }
 
 
