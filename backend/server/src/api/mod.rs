@@ -458,122 +458,6 @@ mod integration_test {
         use db::stock::Stock;
         use db::stock::StockTransaction;
 
-        #[test]
-        fn getting_balance_creates_funds() {
-            setup_warp(|_fixture: &UserFixture, pool: Pool| {
-                let secret = Secret::new("test");
-                let s = State::testing_init(pool, secret);
-                let filter = routes(&s);
-
-                let jwt = get_jwt(filter.clone());
-
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/market/funds/balance")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let balance: f64 = deserialize(resp);
-                println!("{:?}", balance);
-                assert_eq!(balance, 0.0);
-
-            });
-        }
-
-        #[test]
-        fn add_funds() {
-            setup_warp(|_fixture: &UserFixture, pool: Pool| {
-                let secret = Secret::new("test");
-                let s = State::testing_init(pool, secret);
-                let filter = routes(&s);
-
-                let jwt = get_jwt(filter.clone());
-
-
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/market/funds/balance")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/add")
-                    .json(&5000.0)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let balance: f64 = deserialize(resp);
-                println!("{:?}", balance);
-                assert_eq!(balance, 5000.0);
-
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/add")
-                    .json(&5000.0)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-                assert_eq!(resp.status(), 200);
-                let balance: f64 = deserialize(resp);
-                println!("{:?}", balance);
-                assert_eq!(balance, 10_000.0);
-
-            });
-        }
-
-
-        #[test]
-        fn subtract_funds_rejects_negative_balance() {
-            setup_warp(|_fixture: &UserFixture, pool: Pool| {
-                let secret = Secret::new("test");
-                let s = State::testing_init(pool, secret);
-                let filter = routes(&s);
-
-                let jwt = get_jwt(filter.clone());
-
-
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/market/funds/balance")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/add")
-                    .json(&5000.0)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let balance: f64 = deserialize(resp);
-                println!("{:?}", balance);
-                assert_eq!(balance, 5000.0);
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/withdraw")
-                    .json(&5000.1)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 400, "Request should be rejected, because the funds would be negative");
-            });
-        }
 
         #[test]
         fn buy_stock() {
@@ -584,23 +468,6 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/market/funds/balance")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/add")
-                    .json(&5000.0)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-
-                assert_eq!(resp.status(), 200);
 
                 let request = StockTransactionRequest {
                     symbol: "APPL".to_string(),
@@ -629,23 +496,6 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/market/funds/balance")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/market/funds/add")
-                    .json(&5000.0)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-
-                assert_eq!(resp.status(), 200, "could not add funds");
 
                 let request = StockTransactionRequest {
                     symbol: "APPL".to_string(),
