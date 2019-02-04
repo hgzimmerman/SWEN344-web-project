@@ -14,6 +14,8 @@ use diesel::{Identifiable, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use uuid::Uuid;
+use diesel::BoolExpressionMethods;
+use diesel::GroupByDsl;
 
 #[derive(
     Clone,
@@ -173,22 +175,12 @@ impl Stock {
         conn: &PgConnection,
     ) -> QueryResult<Vec<StockTransaction>> {
         schema::stock_transactions::table
-            .filter(schema::stock_transactions::stock_uuid.eq(stock_uuid))
+            .filter(
+                schema::stock_transactions::stock_uuid.eq(stock_uuid)
+                    .and(schema::stock_transactions::user_uuid.eq(user_uuid))
+            )
             .load(conn)
     }
-
-    //    pub fn get_stock_price_history(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<StockPrice>> {
-    //        schema::stock_prices::table
-    //            .filter(schema::stock_prices::dsl::stock_uuid.eq(stock_uuid))
-    //            .load::<StockPrice>(conn)
-    //    }
-    //
-    //    pub fn get_most_recent_price(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<StockPrice> {
-    //        schema::stock_prices::table
-    //            .filter(schema::stock_prices::dsl::stock_uuid.eq(stock_uuid))
-    //            .order_by(schema::stock_prices::dsl::record_time.desc()) // TODO verify that this is in order, but it should be.
-    //            .first(conn)
-    //    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

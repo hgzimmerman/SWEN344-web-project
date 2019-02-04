@@ -19,6 +19,7 @@ use chrono::Utc;
 use db::stock::NewStockTransaction;
 use serde::Deserialize;
 use serde::Serialize;
+use db::stock::UserStockResponse;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -55,7 +56,40 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
-    let stock_api = path!("stock").and(owned_stocks.or(transact).or(user_transactions_for_stock));
+
+    let portfolio_performance =  warp::get2()
+        .and(path!("performance")) // The string is a symbol
+        .and(user_filter(s))
+        .and(s.db.clone())
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+            let stocks = Stock::get_stocks_belonging_to_user(user_uuid,  &conn)
+                .map_err(Error::from_reject)?;
+
+            stocks
+                .into_iter()
+                .map(|s: UserStockResponse| {
+                    // TODO, it would be much faster to use our stock api to get all of the prices up front and then zip them.
+                    match get_current_price(&s.stock.symbol) {
+                        Ok(price) => {
+                            let net = s.transactions
+                                .into_iter()
+                                .fold(0.0, |acc, transaction| {
+                                    acc + ((price - transaction.price_of_stock_at_time_of_trading) * transaction.quantity as f64)
+                                });
+                            Ok((s.stock, net))
+                        }
+                        Err(e) => Err(e)
+                    }
+                })
+                .collect::<Result<Vec<_>, Error>>()
+                .map_err(Error::reject)
+                .map(util::json)
+
+        });
+
+
+    let stock_api = path!("stock")
+        .and(owned_stocks.or(transact).or(user_transactions_for_stock).or(portfolio_performance));
 
     path!("market").and(stock_api).boxed()
 }
@@ -104,7 +138,7 @@ fn transact(
     }
 
     // TODO, this should be gotten from the stock api.
-    let current_price = 420.0;
+    let current_price = get_current_price(&request.symbol).map_err(Error::reject)?;
 
     let new_stock_transaction = NewStockTransaction {
         user_uuid,
@@ -118,5 +152,10 @@ fn transact(
     Stock::create_transaction(new_stock_transaction, &conn)
         .map_err(Error::from_reject)
         .map(util::json)
+}
+
+
+fn get_current_price(_stock_symbol: &str) -> Result<f64, Error> {
+    Ok(420.0)
 }
 
