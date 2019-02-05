@@ -28,3 +28,11 @@ CREATE TABLE stock_transactions (
     price_of_stock_at_time_of_trading FLOAT NOT NULL,
     record_time TIMESTAMP NOT NULL
 );
+
+CREATE TABLE health (
+    uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    available_servers INTEGER NOT NULL CHECK (available_servers > 0),
+    load INTEGER NOT NULL CHECK (load > 0),
+    did_serve boolean NOT NULL,
+    time_recorded TIMESTAMP NOT NULL
+)

@@ -10,6 +10,16 @@ table! {
 }
 
 table! {
+    health (uuid) {
+        uuid -> Uuid,
+        available_servers -> Int4,
+        load -> Int4,
+        did_serve -> Bool,
+        time_recorded -> Timestamp,
+    }
+}
+
+table! {
     stocks (uuid) {
         uuid -> Uuid,
         symbol -> Varchar,
@@ -41,6 +51,7 @@ joinable!(stock_transactions -> users (user_uuid));
 
 allow_tables_to_appear_in_same_query!(
     events,
+    health,
     stocks,
     stock_transactions,
     users,

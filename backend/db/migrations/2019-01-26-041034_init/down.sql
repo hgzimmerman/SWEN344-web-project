@@ -4,10 +4,8 @@
 
 
 
-
+DROP TABLE health;
 DROP TABLE stock_transactions;
--- DROP TABLE stock_prices;
 DROP TABLE stocks;
-DROP TABLE funds;
 DROP TABLE events;
 DROP TABLE users;

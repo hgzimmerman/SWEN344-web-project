@@ -8,3 +8,4 @@ mod schema;
 pub mod stock;
 pub mod user;
 mod util;
+pub mod health;
