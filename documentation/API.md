@@ -73,6 +73,8 @@ When one of these is implemented, move it to the upper table.
                       
 | Route                               | Method | Body Return Type   |  Body Accept Type   | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------- | ------------- |-------------------------------------- |
-
+| `/api/advertisement`                | GET    | `.png`             |                     | false         | Gets the advertisement if available   |
+| `/api/health`                       | GET    | \[HealthRecord\]   |                     | false         | Gets all of the history of requests for the advertisement      |
+| `/api/health/week`                  | GET    | \[HealthRecord\]   |                     | false         | Gets the last weeks worth of the history of requests for the advertisement      |
 
 
