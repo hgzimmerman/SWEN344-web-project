@@ -27,14 +27,13 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
-                .or(static_files_handler(file_config))
         )
         .boxed()
 }
 
 /// A filter that:
 /// * Routes the API
-/// * Handles file requests and redirections - NOT IMPLEMENTED
+/// * Handles file requests and redirections
 /// * Initializes warp logging
 /// * converts errors
 /// * Handles CORS
@@ -50,10 +49,12 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]);
 
     api(state)
+        .or(static_files_handler(file_config))
         .with(warp::log("routes"))
         .with(cors)
         .recover(crate::error::customize_error)
         .boxed()
+
 }
 
 #[cfg(test)]

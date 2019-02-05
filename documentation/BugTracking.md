@@ -1,6 +1,6 @@
 ## Bug Tracking
 
-### Methodology
+#### Methodology
 Bug tracking was handled via the same interface as our feature issues.
 This was done through GitHub's Kanban-style projects board feature, accessible [here](https://github.com/hgzimmerman/SWEN344-web-project/projects/).
 
@@ -26,3 +26,4 @@ As consequence, few bug reports were lodged against it.
 #### How has the bug collection/mitigation process helped or hurt your project.
 There is an inherent time overhead to tracking bugs in an informal manner instead of just telling each other to fix them when we meet.
 Formally keeping track of them provides a means to ensure that each bug is addressed or at least known about.
+
