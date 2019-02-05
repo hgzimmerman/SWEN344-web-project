@@ -1,12 +1,9 @@
 //! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
 
-use hyper::{Method, Request};
-use std::io::{self, Write};
+//use hyper::{Method, Request};
 use hyper::Client;
 use hyper::rt::{self, Future, Stream};
-use futures::future::join_all;
-//use futures::future::join4;
-use apply::Apply;
+//use futures::future::join_all;
 use hyper::Uri;
 use hyper::Chunk;
 

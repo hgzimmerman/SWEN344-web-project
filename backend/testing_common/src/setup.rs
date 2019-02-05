@@ -14,12 +14,8 @@ use diesel::{
 use migrations_internals as migrations;
 use pool::Pool;
 use crate::query_helper;
-//use rocket::local::Client;
-//use server::{
-//    init_rocket,
-//    Config,
-//};
 use crate::fixture::Fixture;
+use pool::PoolConfig;
 
 use std::sync::{
     Mutex,
@@ -95,7 +91,7 @@ where
     let fixture: Fix = Fix::generate(&actual_connection);
 
     // Establish a pool, this will be passed in as part of the State object when simulating the api.
-    let testing_pool = pool::init_pool(DATABASE_URL);
+    let testing_pool = pool::init_pool(DATABASE_URL, PoolConfig::default());
     test_function(&fixture, testing_pool)
 }
 
