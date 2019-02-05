@@ -53,27 +53,26 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |
+| `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 |
 | `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string |
 | `/api/auth/user/`                   | GET    | User               |                     | yes           | Gets the user                         |
-| `/api/calendar/event/events`        | GET    | [Event]            |                     | yes           | Gets all events for user              |
-| `/api/calendar/event/events/today`  | GET    | [Event]            |                     | yes           | Gets events today for user            |
-| `/api/calendar/event/events/month`  | GET    | [Event]            |                     | yes           | Gets events this Month for user       |
+| `/api/calendar/event/events`        | GET    | \[Event\]          |                     | yes           | Gets all events for user              |
+| `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            |
+| `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this Month for user       |
 | `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         |
 | `/api/calendar/event/`              | POST   | Event              | NewEventMessage     | yes           | Creates event                         |
 | `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        |
-| `/api/market/funds/balance`         | GET    | number             |                     | yes           | Gets the quantity of funds the user has |
-| `/api/market/funds/add`             | POST   | number (balance)   | number              | yes           | Adds funds to user account            |
-| `/api/market/funds/withdraw`        | POST   | number (balance)   | number              | yes           | Removes funds from user account       |
+| `/api/market/stock/`                | GET    | \[StockResponse\]    |                   | yes           | All the stocks the user owns          |
+| `/api/market/stock/transact`        | POST   | StockTransaction  | StockTransactionRequest | yes        | Buys or sells a quantity of a given stock|
+| `/api/market/stock/transactions/:stockName`| GET | \[StockTransaction\] |               | yes           | Gets the transaction history for a given stock |
+| `/api/market/stock/performance`      | GET    | \[(f64, Stock)\]     |                  | yes           | Gets the performance for each stock the user has  |
 
 #### UNIMPLEMENTED                      
-###### Instructions                      
+###### Instructions
 When one of these is implemented, move it to the upper table.                      
                       
 | Route                               | Method | Body Return Type   |  Body Accept Type   | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------- | ------------- |-------------------------------------- |
-| `/api/market/stock/stocks`          | GET    | [StockResponse]    |                     | yes           | All the stocks the user owns          |
-| `/api/market/stock/buy`             | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Buys a quantity of a given stock      |
-| `/api/market/stock/sell`            | POST   | NOT_DETERMINED     | NOT_DETERMINED      | yes           | Sells a quantity of a given stock     |
-| `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 |
+
 
 
