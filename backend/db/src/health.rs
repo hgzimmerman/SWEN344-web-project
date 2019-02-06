@@ -24,10 +24,10 @@ pub struct HealthRecord {
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "health"]
 pub struct NewHealthRecord {
-    available_servers: i32,
-    load: i32,
-    did_serve: bool,
-    time_recorded: NaiveDateTime
+    pub available_servers: i32,
+    pub load: i32,
+    pub did_serve: bool,
+    pub time_recorded: NaiveDateTime
 }
 
 impl HealthRecord {
