@@ -16,18 +16,13 @@ Team 3
 11. Log in via Facebook OAuth.
 
 ### Include wireframes for at least the following pages:
-#### Main home page:
-        
+
 ![Main](../wireframes/MainPageWireframe.png){ width=350px }
 
-OR
+![Main Alternative](../wireframes/MainPageWireframe2.png){ width=350px }
 
-![Main](../wireframes/MainPageWireframe2.png){ width=350px }
-
-#### Stocks page:
 ![Stocks](../wireframes/Stock.png){ width=350px }
 
-#### Calendar:
 ![Calendar](../wireframes/Calendar.png){ width=350px }
 
 \newpage

@@ -1,6 +1,7 @@
 pub(crate) mod auth;
 mod calendar;
 mod market;
+mod advertisement;
 
 use warp::filters::BoxedFilter;
 use warp::Reply;
@@ -14,19 +15,22 @@ use crate::api::auth::auth_api;
 use crate::api::market::market_api;
 use crate::static_files::static_files_handler;
 use crate::static_files::FileConfig;
+use crate::api::advertisement::health_api;
+use crate::api::advertisement::add_api;
 
 pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
 pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    let file_config = FileConfig::default();
 
     path(API_STRING)
         .and(
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
+                .or(add_api(state))
+                .or(health_api(state))
         )
         .boxed()
 }
@@ -47,6 +51,8 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         ])
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]);
+
+    let file_config = FileConfig::default();
 
     api(state)
         .or(static_files_handler(file_config))
