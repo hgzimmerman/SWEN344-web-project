@@ -18,12 +18,18 @@
 ##### Top 5 stocks
 
 ##### Facebook/Twitter Information
+![Main](../wireframes/MainPageWireframe.png)
+
+##### OR
+
+![Main](../wireframes/MainPageWireframe2.png)
 
 #### Stocks page
+![Calendar](../wireframes/Stock.png)
 
 #### Calendar
-    
-    
+![Calendar](../wireframes/Calendar.png)
+
     
 ### At least 5 projects risks - with a 1-2 paragraph write up (for each risk) of how you plan to address these risks
 ##### Rust:
