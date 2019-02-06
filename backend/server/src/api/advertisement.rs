@@ -18,10 +18,11 @@ use warp::filters::fs::File;
 use crate::util;
 
 
+/// Api for serving the advertisement.
 pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("advertisement")
         .and(warp::get2())
-        .and(warp::fs::file("/static/add/rit_add.png")) // TODO create a real file for this.
+        .and(warp::fs::file(".static/add/rit_add.png"))
         .and(state.db.clone())
         .and_then(|file: File, conn: PooledConn| {
             serve_add(&conn)
@@ -31,6 +32,7 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .boxed()
 }
 
+/// Api for accessing health information related to serving the advertisement.
 pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let all_health = warp::get2()
@@ -50,15 +52,14 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
-    let health_api = path("health")
+    path("health")
         .and(
             all_health
                 .or(last_week_health)
-        );
-
-
-    health_api
+        )
         .boxed()
+
+
 }
 
 fn serve_add(conn: &PooledConn) -> Result<(), Error> {
@@ -86,6 +87,4 @@ fn serve_add(conn: &PooledConn) -> Result<(), Error> {
     } else {
         Err(Error::InternalServerError) // TODO better error messages.
     }
-
-
 }
