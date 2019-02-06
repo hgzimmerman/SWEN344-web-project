@@ -1,6 +1,9 @@
+# Requirements Document
+Team 3
+
 ### At least 10 use cases
 
-1. Create Facebook statuses.
+1. Create Facebook/twitter statuses.
 2. Look at Facebook/twitter statuses.
 3. Create Calendar events.
 4. See upcoming Calendar events.
