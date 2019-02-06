@@ -16,23 +16,21 @@ Team 3
 11. Log in via Facebook OAuth.
 
 ### Include wireframes for at least the following pages:
-#### Main home page with features including:
+#### Main home page:
         
-##### Top 5 stocks
+![Main](../wireframes/MainPageWireframe.png){ width=350px }
 
-##### Facebook/Twitter Information
-![Main](../wireframes/MainPageWireframe.png)
+OR
 
-##### OR
+![Main](../wireframes/MainPageWireframe2.png){ width=350px }
 
-![Main](../wireframes/MainPageWireframe2.png)
+#### Stocks page:
+![Stocks](../wireframes/Stock.png){ width=350px }
 
-#### Stocks page
-![Calendar](../wireframes/Stock.png)
+#### Calendar:
+![Calendar](../wireframes/Calendar.png){ width=350px }
 
-#### Calendar
-![Calendar](../wireframes/Calendar.png)
-
+\newpage
     
 ### At least 5 projects risks - with a 1-2 paragraph write up (for each risk) of how you plan to address these risks
 ##### Rust:
