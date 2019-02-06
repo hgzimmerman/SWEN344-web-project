@@ -1,7 +1,7 @@
 ## Bug Tracking
 
 #### Methodology
-Bug tracking was handled via the same interface as our feature issues.
+Bug tracking was handled via the same interface as our features.
 This was done through GitHub's Kanban-style projects board feature, accessible [here](https://github.com/hgzimmerman/SWEN344-web-project/projects/).
 
 As bugs were discovered, issues corresponding to the bug were entered into the project board in the `To Do` column.
