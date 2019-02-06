@@ -2,7 +2,7 @@
 
 //use hyper::{Method, Request};
 use hyper::Client;
-use hyper::rt::{self, Future, Stream};
+use hyper::rt::{Future, Stream};
 //use futures::future::join_all;
 use hyper::Uri;
 use hyper::Chunk;
