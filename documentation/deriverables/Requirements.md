@@ -41,7 +41,7 @@ This means that most server development will fall on one member, possibly bottle
 
 ##### Warp:
 
-The backend, is written in a functional web framework, has unfamiliar semantics with respect to how consumers of the api could read the code and determine what a given endpoint needs.
+The backend, written in a functional web framework, has unfamiliar semantics with respect to how consumers of the api could read the code and determine what a given endpoint needs.
 - Solution: Have a separate, up to date document with the details necessary to understand the API. Also, explore keeping the API function calls in Rust code that can be compiled to WASM and exported to the frontend, simplifying the work required by the frontend team.
 
 ##### Stock Trading API:
@@ -70,8 +70,8 @@ Also, running the integration tests on a CI suite may prove difficult because of
 1. I as a user, want to be able to log in to the app using my Twitter Account.
 2. I as a user, want to be able to view some of my stocks on the main page.
 3. I as a user, want to be able to quickly access all of the main components of the app using a navigational header.
-4. I as a user, want to be able to log off.
-5. I as a user, want to purchase and sell stocks.
+4. I as a user, want to purchase and sell stocks.
+5. I as a user, want to download download purchase and sales history.
 6. I as a user, want to see a history of my stocks and see how much money I made or lost.
 7. I as a user, want to be able to see today's calendar events on the main screen.
 8. I as an admin or curious user, want to be able to see the history of the server availability, load, and weather the "adds" were served.
