@@ -21,7 +21,7 @@ use crate::util;
 pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("advertisement")
         .and(warp::get2())
-        .and(warp::fs::file("/static/add/rit_add.png"))
+        .and(warp::fs::file("/static/add/rit_add.png")) // TODO create a real file for this.
         .and(state.db.clone())
         .and_then(|file: File, conn: PooledConn| {
             serve_add(&conn)
@@ -32,17 +32,6 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 }
 
 pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-
-//
-//    let add = path("advertisement")
-//        .and(warp::get2())
-//        .and(warp::fs::file("/static/add/rit_add.png"))
-//        .and(state.db.clone())
-//        .and_then(|file: File, conn: PooledConn| {
-//            serve_add(&conn)
-//                .map(|_| file)
-//                .map_err(|e| e.reject())
-//        });
 
     let all_health = warp::get2()
         .and(state.db.clone())
