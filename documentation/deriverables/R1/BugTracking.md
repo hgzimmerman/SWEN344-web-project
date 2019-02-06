@@ -13,6 +13,7 @@ When fixed, they would be moved to the `Done` column.
 ###### Backend
 The backend was mostly finished and tested by the time dependent work on the frontend started.
 As consequence, few bug reports were lodged against it.
+When they were, they were quickly addressed because there wasn't concurrent development.
 
 ###### Frontend
 
