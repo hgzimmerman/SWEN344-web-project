@@ -18,6 +18,6 @@ extern crate migrations_internals;
 //extern crate server;
 
 mod database_error;
+pub mod fixture;
 mod query_helper;
 pub mod setup;
-pub mod fixture;

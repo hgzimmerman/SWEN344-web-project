@@ -1,8 +1,5 @@
-use serde::Deserialize;
-use serde::Serialize;
-use warp::filters::BoxedFilter;
-use warp::Filter;
-use warp::Reply;
+use serde::{Deserialize, Serialize};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 pub fn json_body_filter<T>(kb_limit: u64) -> BoxedFilter<(T,)>
 where

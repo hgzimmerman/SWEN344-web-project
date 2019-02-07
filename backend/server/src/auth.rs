@@ -1,14 +1,10 @@
 use crate::state::State;
-use warp::filters::BoxedFilter;
-use warp::Filter;
-use warp::Rejection;
+use warp::{filters::BoxedFilter, Filter, Rejection};
 
 use crate::error::Error;
-use chrono::Duration;
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDateTime};
 use frank_jwt::{decode, encode, Algorithm};
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -62,8 +58,8 @@ impl JwtPayload {
             Err(_) => return Err(Error::SerializeError),
         };
         match encode(header, secret, &payload, Algorithm::HS256) {
-            Ok(x) => return Ok(x),
-            Err(_) => return Err(Error::JwtEncodeError),
+            Ok(x) => Ok(x),
+            Err(_) => Err(Error::JwtEncodeError),
         }
     }
 
@@ -93,8 +89,8 @@ impl Secret {
     }
 }
 
-pub const BEARER: &'static str = "bearer";
-pub const AUTHORIZATION_HEADER_KEY: &'static str = "Authorization";
+pub const BEARER: &str = "bearer";
+pub const AUTHORIZATION_HEADER_KEY: &str = "Authorization";
 
 /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
 fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Error> {

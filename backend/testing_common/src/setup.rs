@@ -1,26 +1,16 @@
-use crate::database_error::{
-    DatabaseError,
-    DatabaseResult,
+use crate::{
+    database_error::{DatabaseError, DatabaseResult},
+    fixture::Fixture,
+    query_helper,
 };
 use diesel::{
-    Connection,
-    ExpressionMethods,
-    OptionalExtension,
-    PgConnection,
-    QueryDsl,
-    QueryResult,
+    Connection, ExpressionMethods, OptionalExtension, PgConnection, QueryDsl, QueryResult,
     RunQueryDsl,
 };
 use migrations_internals as migrations;
-use pool::Pool;
-use crate::query_helper;
-use crate::fixture::Fixture;
-use pool::PoolConfig;
+use pool::{Pool, PoolConfig};
 
-use std::sync::{
-    Mutex,
-    MutexGuard,
-};
+use std::sync::{Mutex, MutexGuard};
 
 //pub const DATABASE_NAME: &'static str = "web_engineering_test";
 pub const DATABASE_NAME: &'static str = env!("TEST_DATABASE_NAME");
@@ -68,7 +58,8 @@ where
     reset_database(&admin_conn);
 
     // Create a connection to the test database.
-    let conn: PgConnection = PgConnection::establish(DATABASE_URL).expect("Database not available.");
+    let conn: PgConnection =
+        PgConnection::establish(DATABASE_URL).expect("Database not available.");
     run_migrations(&conn);
     let fixture: Fix = Fix::generate(&conn);
     test_function(&fixture, &conn);
@@ -86,7 +77,8 @@ where
     };
     reset_database(&admin_conn);
 
-    let actual_connection: PgConnection = PgConnection::establish(DATABASE_URL).expect("Database not available.");
+    let actual_connection: PgConnection =
+        PgConnection::establish(DATABASE_URL).expect("Database not available.");
     run_migrations(&actual_connection);
     let fixture: Fix = Fix::generate(&actual_connection);
 

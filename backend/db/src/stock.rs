@@ -1,21 +1,19 @@
-use crate::schema::{self, stock_transactions, stocks};
-use crate::user::User;
-use crate::util;
+use crate::{
+    schema::{self, stock_transactions, stocks},
+    user::User,
+    util,
+};
 use apply::Apply;
 use chrono::NaiveDateTime;
-use diesel::associations::GroupedBy;
-use diesel::pg::PgConnection;
-use diesel::query_dsl::QueryDsl;
-use diesel::query_dsl::RunQueryDsl;
-use diesel::result::QueryResult;
-use diesel::BelongingToDsl;
-use diesel::ExpressionMethods;
-use diesel::{Identifiable, Insertable, Queryable};
+use diesel::{
+    pg::PgConnection,
+    query_dsl::{QueryDsl, RunQueryDsl},
+    result::QueryResult,
+    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, Queryable,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use uuid::Uuid;
-use diesel::BoolExpressionMethods;
-use diesel::GroupByDsl;
 
 #[derive(
     Clone,
@@ -176,8 +174,9 @@ impl Stock {
     ) -> QueryResult<Vec<StockTransaction>> {
         schema::stock_transactions::table
             .filter(
-                schema::stock_transactions::stock_uuid.eq(stock_uuid)
-                    .and(schema::stock_transactions::user_uuid.eq(user_uuid))
+                schema::stock_transactions::stock_uuid
+                    .eq(stock_uuid)
+                    .and(schema::stock_transactions::user_uuid.eq(user_uuid)),
             )
             .load(conn)
     }

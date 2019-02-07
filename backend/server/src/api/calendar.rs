@@ -1,21 +1,15 @@
 use crate::state::State;
-use warp::filters::BoxedFilter;
-use warp::path;
-use warp::Reply;
+use warp::{filters::BoxedFilter, path, Reply};
 
 use crate::util::json_body_filter;
-use db::event::Event;
-use db::event::NewEvent;
+use db::event::{Event, NewEvent};
 use pool::PooledConn;
 use warp::Filter;
 //use apply::Apply;
-use crate::auth::user_filter;
-use crate::error::Error;
-use crate::util;
+use crate::{auth::user_filter, error::Error, util};
 use chrono::NaiveDateTime;
 use db::event::EventChangeset;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::Rejection;
 
@@ -107,7 +101,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             .or(events_today)
             .or(events_month)
             .or(delete_event)
-            .or(modify_event)
+            .or(modify_event),
     );
 
     path!("calendar").and(events).boxed()
@@ -123,7 +117,9 @@ fn delete_event(
         .map_err(Error::from)
         .and_then(|event: Event| {
             if event.user_uuid != user_uuid {
-                Err(Error::NotAuthorized {reason: "User does not own event"})
+                Err(Error::NotAuthorized {
+                    reason: "User does not own event",
+                })
             } else {
                 Event::delete_event(event_uuid, &conn).map_err(Error::from)
             }
@@ -146,7 +142,9 @@ fn modify_event(
             .map_err(Error::from)
             .and_then(|event: Event| {
                 if event.user_uuid != user_uuid {
-                    Err(Error::NotAuthorized {reason: "User does not own event"})
+                    Err(Error::NotAuthorized {
+                        reason: "User does not own event",
+                    })
                 } else {
                     Event::change_event(changeset, &conn).map_err(Error::from)
                 }
@@ -159,8 +157,7 @@ fn modify_event(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::auth::JwtPayload;
-    use crate::auth::Secret;
+    use crate::auth::{JwtPayload, Secret};
 
     #[test]
     fn get_events() {

@@ -1,13 +1,6 @@
 use crate::api::API_STRING;
 use log::info;
-use warp::{
-    self,
-    filters::BoxedFilter,
-    fs::File,
-    path::Peek,
-    reply::Reply,
-    Filter,
-};
+use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
 
 const ASSETS_DIRECTORY: &str = "../../frontend/app/static/"; // TODO Point this at the build directory for the frontend.
 
@@ -16,14 +9,14 @@ pub struct FileConfig {
     /// This is mostly to support testing.
     /// If set to Some, then the string in there will be used as the index,
     /// otherwise the app will assume that the static_dir_path/index.html is used for the index
-    index_file_path: Option<String>
+    index_file_path: Option<String>,
 }
 
 impl Default for FileConfig {
     fn default() -> Self {
         FileConfig {
             static_dir_path: ASSETS_DIRECTORY.to_string(),
-            index_file_path: None
+            index_file_path: None,
         }
     }
 }
@@ -38,7 +31,6 @@ impl FileConfig {
     }
 }
 
-
 /// Expose filters that work with static files
 pub fn static_files_handler(file_config: FileConfig) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Static Files handler");
@@ -46,7 +38,10 @@ pub fn static_files_handler(file_config: FileConfig) -> BoxedFilter<(impl Reply,
     let files = index(file_config.static_dir_path.clone())
         .or(index_static_file_redirect(file_config.index()));
 
-    warp::any().and(files).with(warp::log("static_files")).boxed()
+    warp::any()
+        .and(files)
+        .with(warp::log("static_files"))
+        .boxed()
 }
 
 /// If the path does not start with /api, return the index.html, so the app will bootstrap itself
@@ -79,8 +74,8 @@ fn index(dir_path: String) -> BoxedFilter<(impl Reply,)> {
 fn index_test() {
     // request the main file from this crate.
     let x = warp::test::request()
-            .path("/src/main.rs")
-            .reply(&index("./".to_string()));
+        .path("/src/main.rs")
+        .reply(&index("./".to_string()));
     assert_eq!(x.status(), 200);
 }
 

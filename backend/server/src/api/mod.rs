@@ -1,36 +1,35 @@
+mod advertisement;
 pub(crate) mod auth;
 mod calendar;
 mod market;
-mod advertisement;
 
-use warp::filters::BoxedFilter;
-use warp::Reply;
+use warp::{filters::BoxedFilter, Reply};
 
 use crate::state::State;
-use warp::path;
-use warp::Filter;
+use warp::{path, Filter};
 
 use self::calendar::calendar_api;
-use crate::api::auth::auth_api;
-use crate::api::market::market_api;
-use crate::static_files::static_files_handler;
-use crate::static_files::FileConfig;
-use crate::api::advertisement::health_api;
-use crate::api::advertisement::add_api;
+use crate::{
+    api::{
+        advertisement::{add_api, health_api},
+        auth::auth_api,
+        market::market_api,
+    },
+    static_files::{static_files_handler, FileConfig},
+};
 
 pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
 pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
-
     path(API_STRING)
         .and(
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
                 .or(add_api(state))
-                .or(health_api(state))
+                .or(health_api(state)),
         )
         .boxed()
 }
@@ -60,28 +59,25 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .with(cors)
         .recover(crate::error::customize_error)
         .boxed()
-
 }
 
 #[cfg(test)]
 mod integration_test {
     use super::*;
-    use crate::state::State;
-    use crate::testing_fixtures::user::UserFixture;
+    use crate::{state::State, testing_fixtures::user::UserFixture};
     use pool::Pool;
-//    use testing_common::fixture::Fixture;
+    //    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 
-    use crate::api::auth::Login;
-    use crate::api::calendar::NewEventMessage;
-    use crate::auth::Secret;
-    use crate::auth::AUTHORIZATION_HEADER_KEY;
-    use crate::auth::BEARER;
-    use crate::testing_fixtures::util::deserialize;
-    use crate::testing_fixtures::util::deserialize_string;
-    use db::event::Event;
-    use db::event::EventChangeset;
-    use db::user::User;
+    use crate::{
+        api::{auth::Login, calendar::NewEventMessage},
+        auth::{Secret, AUTHORIZATION_HEADER_KEY, BEARER},
+        testing_fixtures::util::{deserialize, deserialize_string},
+    };
+    use db::{
+        event::{Event, EventChangeset},
+        user::User,
+    };
 
     /// Convenience function for requesting the JWT.
     /// In the testing environment, the login function will always work.
@@ -461,10 +457,7 @@ mod integration_test {
     mod market {
         use super::*;
         use crate::api::market::StockTransactionRequest;
-        use db::stock::UserStockResponse;
-        use db::stock::Stock;
-        use db::stock::StockTransaction;
-
+        use db::stock::{Stock, StockTransaction, UserStockResponse};
 
         #[test]
         fn buy_stock() {
@@ -475,10 +468,9 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-
                 let request = StockTransactionRequest {
                     symbol: "APPL".to_string(),
-                    quantity: 1
+                    quantity: 1,
                 };
 
                 let resp = warp::test::request()
@@ -493,7 +485,6 @@ mod integration_test {
             });
         }
 
-
         #[test]
         fn owned_stocks() {
             setup_warp(|_fixture: &UserFixture, pool: Pool| {
@@ -503,10 +494,9 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-
                 let request = StockTransactionRequest {
                     symbol: "APPL".to_string(),
-                    quantity: 1
+                    quantity: 1,
                 };
 
                 let resp = warp::test::request()
@@ -518,7 +508,6 @@ mod integration_test {
                     .reply(&filter);
 
                 assert_eq!(resp.status(), 200, "could not buy stocks");
-
 
                 let resp = warp::test::request()
                     .method("GET")

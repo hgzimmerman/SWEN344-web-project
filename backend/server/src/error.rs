@@ -10,15 +10,25 @@ use warp::{http::StatusCode, reject::Rejection, reply::Reply};
 //use log::info;
 use log::error;
 
+/// Server-wide error variants.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Error {
+    /// The database could not be reached, or otherwise is experiencing troubles running queries.
     DatabaseUnavailable,
+    /// The database encountered an error while running a query.
     DatabaseError(Option<String>),
-    DependentConnectionFailed{url: String},
+    /// If the server needs to talk to an external API to properly serve a request,
+    /// and that server experiences an error, this is the error to represent that.
+    DependentConnectionFailed {
+        url: String,
+    },
+    /// The server encountered an unspecified error.
     InternalServerError,
+    /// The requested entity could not be located.
     NotFound {
         type_name: String,
     },
+    /// The request was bad.
     BadRequest,
     /// The used did not have privileges to access the given method.
     /// This can also be used for users that don't have a token, but it is required.
@@ -122,7 +132,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::BadRequest => StatusCode::BAD_REQUEST,
         Error::NotFound { .. } => StatusCode::NOT_FOUND,
         Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::DependentConnectionFailed { .. }=> StatusCode::INTERNAL_SERVER_ERROR,
+        Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
         Error::MissingToken => StatusCode::UNAUTHORIZED,
         Error::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
         Error::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
