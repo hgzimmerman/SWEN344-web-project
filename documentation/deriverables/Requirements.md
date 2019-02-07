@@ -71,7 +71,7 @@ Also, running the integration tests on a CI suite may prove difficult because of
 2. I as a user, want to be able to view some of my stocks on the main page.
 3. I as a user, want to be able to quickly access all of the main components of the app using a navigational header.
 4. I as a user, want to purchase and sell stocks.
-5. I as a user, want to download download purchase and sales history.
+5. I as a user, want to download purchase and sales history.
 6. I as a user, want to see a history of my stocks and see how much money I made or lost.
 7. I as a user, want to be able to see today's calendar events on the main screen.
 8. I as an admin or curious user, want to be able to see the history of the server availability, load, and weather the "adds" were served.
