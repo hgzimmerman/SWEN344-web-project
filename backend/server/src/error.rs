@@ -14,6 +14,7 @@ use log::error;
 pub enum Error {
     DatabaseUnavailable,
     DatabaseError(Option<String>),
+    DependentConnectionFailed{url: String},
     InternalServerError,
     NotFound {
         type_name: String,
@@ -62,6 +63,7 @@ impl Display for Error {
             }
             Error::BadRequest => "Your request is malformed".to_string(),
             Error::InternalServerError => "Internal server error encountered".to_string(),
+            Error::DependentConnectionFailed{url} => format!("An internal request needed to serve the request failed. URL: {}",url),
             Error::NotFound { type_name } => {
                 format!("The resource ({})you requested could not be found", type_name)
             }
@@ -120,6 +122,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::BadRequest => StatusCode::BAD_REQUEST,
         Error::NotFound { .. } => StatusCode::NOT_FOUND,
         Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::DependentConnectionFailed { .. }=> StatusCode::INTERNAL_SERVER_ERROR,
         Error::MissingToken => StatusCode::UNAUTHORIZED,
         Error::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
         Error::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,

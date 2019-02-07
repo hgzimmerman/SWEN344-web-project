@@ -6,22 +6,23 @@ use hyper::rt::{Future, Stream};
 //use futures::future::join_all;
 use hyper::Uri;
 use hyper::Chunk;
+use crate::error::Error;
 
 
 /// Get the number of available servers.
 #[allow(dead_code)]
-pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
+pub fn get_num_servers_up() -> impl Future<Item=usize, Error=Error>  {
     let client = Client::new();
 
-    let uri_1 = "http://129.21.208.2:3000/availability/1".parse().unwrap();
-    let uri_2 = "http://129.21.208.2:3000/availability/2".parse().unwrap();
-    let uri_3 = "http://129.21.208.2:3000/availability/3".parse().unwrap();
-    let uri_4 = "http://129.21.208.2:3000/availability/4".parse().unwrap();
+    let uri_1: Uri = "http://129.21.208.2:3000/availability/1".parse().unwrap();
+    let uri_2: Uri = "http://129.21.208.2:3000/availability/2".parse().unwrap();
+    let uri_3: Uri = "http://129.21.208.2:3000/availability/3".parse().unwrap();
+    let uri_4: Uri = "http://129.21.208.2:3000/availability/4".parse().unwrap();
 
 
-    let request_is_up = |uri: Uri| {
+    let request_is_up = |uri: &Uri| {
          client
-             .get(uri)
+             .get(uri.clone())
              .and_then(|res| {
                  res.into_body().concat2()
              })
@@ -36,10 +37,14 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
              .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
     };
 
-    let a_1 = request_is_up(uri_1);
-    let a_2 = request_is_up(uri_2);
-    let a_3= request_is_up(uri_3);
-    let a_4 = request_is_up(uri_4);
+    let a_1 = request_is_up(&uri_1)
+        .map_err(move |_: ()| Error::DependentConnectionFailed {url: uri_1.to_string() });
+    let a_2 = request_is_up(&uri_2)
+        .map_err(move |_: ()| Error::DependentConnectionFailed {url: uri_2.to_string() });
+    let a_3= request_is_up(&uri_3)
+        .map_err(move |_: ()| Error::DependentConnectionFailed {url: uri_3.to_string() });
+    let a_4 = request_is_up(&uri_4)
+        .map_err(move |_: ()| Error::DependentConnectionFailed {url: uri_4.to_string() });
 
 
     a_1.join4(a_2, a_3, a_4)
@@ -63,15 +68,15 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=()>  {
 
 /// Gets the "load" on the "servers".
 #[allow(dead_code)]
-pub fn get_load() -> impl Future<Item=usize, Error=crate::error::Error>  {
-    let uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
+pub fn get_load() -> impl Future<Item=usize, Error=Error>  {
+    let uri: Uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
     let client = Client::new();
      client
-         .get(uri)
+         .get(uri.clone())
          .and_then(|res| {
              res.into_body().concat2() // Await the whole body
          })
-         .map_err(|_| crate::error::Error::InternalServerError)
+         .map_err(move |_| Error::DependentConnectionFailed {url: uri.to_string()})
          .and_then(|chunk: Chunk| {
              let v = chunk.to_vec();
              let body = String::from_utf8_lossy(&v).to_string();

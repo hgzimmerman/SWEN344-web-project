@@ -22,10 +22,18 @@ use crate::util;
 pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("advertisement")
         .and(warp::get2())
+        .and_then(|| {
+            // Get the stats asynchronously as a precondition to serving the request.
+            let servers = get_num_servers_up()
+                .map_err(Error::reject);
+            let load = get_load()
+                .map_err(Error::reject);
+            servers.join(load)
+        })
         .and(warp::fs::file(".static/add/rit_add.png"))
         .and(state.db.clone())
-        .and_then(|file: File, conn: PooledConn| {
-            serve_add(&conn)
+        .and_then(|(servers, load): (usize, usize), file: File, conn: PooledConn| {
+            serve_add(servers, load, &conn)
                 .map(|_| file)
                 .map_err(|e| e.reject())
         })
@@ -62,15 +70,7 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 }
 
-fn serve_add(conn: &PooledConn) -> Result<(), Error> {
-    let available_servers = get_num_servers_up()
-        .wait()
-        .map_err(|_| Error::InternalServerError)?; // TODO better error messages.
-
-    let load = get_load()
-        .wait()
-        .map_err(|_| Error::InternalServerError)?; // TODO better error messages.
-
+fn serve_add(available_servers: usize, load: usize, conn: &PooledConn) -> Result<(), Error> {
     let should_send_advertisement = should_serve_adds(load, available_servers);
 
     let hr = NewHealthRecord {
