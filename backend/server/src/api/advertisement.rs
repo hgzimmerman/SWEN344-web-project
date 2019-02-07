@@ -16,6 +16,8 @@ use db::health::HealthRecord;
 use futures::future::Future;
 use warp::filters::fs::File;
 use crate::util;
+use crate::adaptive::NumServers;
+use crate::adaptive::Load;
 
 
 /// Api for serving the advertisement.
@@ -30,9 +32,10 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::reject);
             servers.join(load)
         })
+        .untuple_one()
         .and(warp::fs::file(".static/add/rit_add.png"))
         .and(state.db.clone())
-        .and_then(|(servers, load): (usize, usize), file: File, conn: PooledConn| {
+        .and_then(|servers: NumServers, load: Load, file: File, conn: PooledConn| {
             serve_add(servers, load, &conn)
                 .map(|_| file)
                 .map_err(|e| e.reject())
@@ -70,12 +73,12 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 }
 
-fn serve_add(available_servers: usize, load: usize, conn: &PooledConn) -> Result<(), Error> {
+fn serve_add(available_servers: NumServers, load: Load, conn: &PooledConn) -> Result<(), Error> {
     let should_send_advertisement = should_serve_adds(load, available_servers);
 
     let hr = NewHealthRecord {
-        available_servers: available_servers as i32,
-        load: load as i32,
+        available_servers: available_servers.0 as i32,
+        load: load.0 as i32,
         did_serve: should_send_advertisement,
         time_recorded: Utc::now().naive_utc()
     };
