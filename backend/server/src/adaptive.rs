@@ -8,10 +8,14 @@ use hyper::Uri;
 use hyper::Chunk;
 use crate::error::Error;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Load(pub u32);
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct NumServers(pub u32);
 
 /// Get the number of available servers.
 #[allow(dead_code)]
-pub fn get_num_servers_up() -> impl Future<Item=usize, Error=Error>  {
+pub fn get_num_servers_up() -> impl Future<Item=NumServers, Error=Error>  {
     let client = Client::new();
 
     let uri_1: Uri = "http://129.21.208.2:3000/availability/1".parse().unwrap();
@@ -62,13 +66,12 @@ pub fn get_num_servers_up() -> impl Future<Item=usize, Error=Error>  {
             if d {
                 acc += 1;
             }
-            acc
+            NumServers(acc)
         })
 }
 
 /// Gets the "load" on the "servers".
-#[allow(dead_code)]
-pub fn get_load() -> impl Future<Item=usize, Error=Error>  {
+pub fn get_load() -> impl Future<Item=Load, Error=Error>  {
     let uri: Uri = "http://129.21.208.2:3000/serverLoad".parse().unwrap();
     let client = Client::new();
      client
@@ -80,8 +83,9 @@ pub fn get_load() -> impl Future<Item=usize, Error=Error>  {
          .and_then(|chunk: Chunk| {
              let v = chunk.to_vec();
              let body = String::from_utf8_lossy(&v).to_string();
-             body.parse::<usize>().map_err(|_|crate::error::Error::InternalServerError)
+             body.parse::<u32>().map_err(|_|crate::error::Error::InternalServerError)
          })
+         .map(Load)
 }
 
 /// Per the assignment:
@@ -91,10 +95,10 @@ pub fn get_load() -> impl Future<Item=usize, Error=Error>  {
 /// # Arguments
 /// load_units - The current load across the "servers"
 /// available_servers - The number (out of 4) of servers that are available.
-pub fn should_serve_adds(load_units: usize, available_servers: usize) -> bool {
-    const UNITS_PER_SERVER: usize = 10;
-    let available_capacity = available_servers * UNITS_PER_SERVER;
-    available_capacity > load_units
+pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> bool {
+    const UNITS_PER_SERVER: u32 = 10;
+    let available_capacity = available_servers.0 * UNITS_PER_SERVER;
+    available_capacity > load_units.0
 }
 
 #[cfg(test)]
