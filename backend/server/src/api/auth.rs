@@ -1,20 +1,17 @@
 use crate::state::State;
 use serde::{Deserialize, Serialize};
-use warp::filters::BoxedFilter;
-use warp::Reply;
+use warp::{filters::BoxedFilter, Reply};
 
-use crate::auth::user_filter;
-use crate::auth::JwtPayload;
-use crate::auth::Secret;
-use crate::error::Error;
-use crate::util;
-use pool::PooledConn;
-use db::user::NewUser;
-use db::user::User;
+use crate::{
+    auth::{user_filter, JwtPayload, Secret},
+    error::Error,
+    util,
+};
+use db::user::{NewUser, User};
 use log::info;
+use pool::PooledConn;
 use uuid::Uuid;
-use warp::path;
-use warp::Filter;
+use warp::{path, Filter};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Login {
@@ -46,14 +43,14 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::reject)
         });
 
-//    #[cfg(test)]
-//    let login_unit_test = path!("login_unit_test")
-//        .and(warp::get2())
-//        .and(state.secret.clone())
-//        .map(|secret: Secret| {
-//            let payload = JwtPayload::new(Uuid::new_v4());
-//            payload.encode_jwt_string(&secret)
-//        });
+    //    #[cfg(test)]
+    //    let login_unit_test = path!("login_unit_test")
+    //        .and(warp::get2())
+    //        .and(state.secret.clone())
+    //        .map(|secret: Secret| {
+    //            let payload = JwtPayload::new(Uuid::new_v4());
+    //            payload.encode_jwt_string(&secret)
+    //        });
 
     // TODO maybe move this not under the auth/ route
     let user = path!("user")
@@ -86,15 +83,14 @@ fn get_client_id(_oauth_token: &str) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::state::State;
-    use crate::testing_fixtures::user::UserFixture;
+    use crate::{state::State, testing_fixtures::user::UserFixture};
     use pool::Pool;
     use testing_common::setup::setup_warp;
 
-    use crate::auth::AUTHORIZATION_HEADER_KEY;
-    use crate::auth::BEARER;
-    use crate::testing_fixtures::util::deserialize;
-    use crate::testing_fixtures::util::deserialize_string;
+    use crate::{
+        auth::{AUTHORIZATION_HEADER_KEY, BEARER},
+        testing_fixtures::util::{deserialize, deserialize_string},
+    };
 
     #[test]
     fn login_works() {

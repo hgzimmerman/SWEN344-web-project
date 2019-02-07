@@ -1,8 +1,8 @@
-use clap::App;
-use clap::Arg;
 use crate::auth::Secret;
 use apply::Apply;
+use clap::{App, Arg};
 
+/// Configuration options for initializing the server.
 pub struct Config {
     /// The port to start the server on.
     pub port: u16,
@@ -12,10 +12,11 @@ pub struct Config {
     pub secret: Option<Secret>,
     /// The maximum size of the connection pool.
     /// If left unspecified, it will be left to the pool's discretion (At the time of writing, it defaults to 10)
-    pub max_pool_size: Option<u32>
+    pub max_pool_size: Option<u32>,
 }
 
 impl Config {
+    /// Parse the command line options and provide a configuration object.
     pub fn parse_command_line_arguments() -> Self {
         let matches = App::new("RIT SWEN 344 Server")
             .version("0.1.0")
@@ -71,7 +72,7 @@ impl Config {
             port,
             tls_enabled,
             secret,
-            max_pool_size
+            max_pool_size,
         }
     }
 }

@@ -1,11 +1,8 @@
-use crate::schema;
-use crate::schema::users;
-use diesel::pg::PgConnection;
-use diesel::query_dsl::QueryDsl;
-use diesel::result::QueryResult;
-use diesel::ExpressionMethods;
-use diesel::RunQueryDsl;
-use diesel::{Identifiable, Insertable, Queryable};
+use crate::schema::{self, users};
+use diesel::{
+    pg::PgConnection, query_dsl::QueryDsl, result::QueryResult, ExpressionMethods, Identifiable,
+    Insertable, Queryable, RunQueryDsl,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

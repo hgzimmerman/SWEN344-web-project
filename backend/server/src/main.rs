@@ -1,21 +1,22 @@
 use env_logger::Builder as LoggerBuilder;
 use log::LevelFilter;
 
+mod adaptive;
 mod api;
 mod auth;
+mod config;
 mod error;
 mod state;
+mod static_files;
 #[cfg(test)]
 mod testing_fixtures;
 mod util;
-mod static_files;
-mod adaptive;
-mod config;
 
-use crate::api::routes;
-use crate::state::State;
-use crate::config::Config;
-use crate::state::StateConfig;
+use crate::{
+    api::routes,
+    config::Config,
+    state::{State, StateConfig},
+};
 
 fn main() {
     LoggerBuilder::new().filter_level(LevelFilter::Info).init();
@@ -27,7 +28,7 @@ fn main() {
 
     let state_config = StateConfig {
         secret: config.secret,
-        max_pool_size: config.max_pool_size
+        max_pool_size: config.max_pool_size,
     };
 
     let state = State::new(state_config);
@@ -36,6 +37,3 @@ fn main() {
 
     warp::serve(routes).run(addr);
 }
-
-
-

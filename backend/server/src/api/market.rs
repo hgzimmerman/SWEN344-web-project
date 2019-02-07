@@ -1,25 +1,20 @@
 use crate::state::State;
-use warp::filters::BoxedFilter;
-use warp::path;
-use warp::Filter;
-use warp::Reply;
+use warp::{filters::BoxedFilter, path, Filter, Reply};
 
-use crate::auth::user_filter;
-use crate::error::Error;
-use crate::util;
-use crate::util::json_body_filter;
-use pool::PooledConn;
-use db::stock::NewStock;
-use db::stock::Stock;
+use crate::{
+    auth::user_filter,
+    error::Error,
+    util::{self, json_body_filter},
+};
+use db::stock::{NewStock, Stock};
 use diesel::result::QueryResult;
+use pool::PooledConn;
 use uuid::Uuid;
 use warp::Rejection;
 
 use chrono::Utc;
-use db::stock::NewStockTransaction;
-use serde::Deserialize;
-use serde::Serialize;
-use db::stock::UserStockResponse;
+use db::stock::{NewStockTransaction, UserStockResponse};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -56,13 +51,12 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
-
-    let portfolio_performance =  warp::get2()
+    let portfolio_performance = warp::get2()
         .and(path!("performance")) // The string is a symbol
         .and(user_filter(s))
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
-            let stocks = Stock::get_stocks_belonging_to_user(user_uuid,  &conn)
+            let stocks = Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)?;
 
             stocks
@@ -71,31 +65,29 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                     // TODO, it would be much faster to use our stock api to get all of the prices up front and then zip them.
                     match get_current_price(&s.stock.symbol) {
                         Ok(price) => {
-                            let net = s.transactions
-                                .into_iter()
-                                .fold(0.0, |acc, transaction| {
-                                    acc + ((price - transaction.price_of_stock_at_time_of_trading) * transaction.quantity as f64)
-                                });
+                            let net = s.transactions.into_iter().fold(0.0, |acc, transaction| {
+                                acc + ((price - transaction.price_of_stock_at_time_of_trading)
+                                    * f64::from(transaction.quantity))
+                            });
                             Ok((s.stock, net))
                         }
-                        Err(e) => Err(e)
+                        Err(e) => Err(e),
                     }
                 })
                 .collect::<Result<Vec<_>, Error>>()
                 .map_err(Error::reject)
                 .map(util::json)
-
         });
 
-
-    let stock_api = path!("stock")
-        .and(owned_stocks.or(transact).or(user_transactions_for_stock).or(portfolio_performance));
+    let stock_api = path!("stock").and(
+        owned_stocks
+            .or(transact)
+            .or(user_transactions_for_stock)
+            .or(portfolio_performance),
+    );
 
     path!("market").and(stock_api).boxed()
 }
-
-
-
 
 /// Get the stock or create it if needed.
 /// Get the current transactions for the user for this stock.
@@ -154,8 +146,6 @@ fn transact(
         .map(util::json)
 }
 
-
 fn get_current_price(_stock_symbol: &str) -> Result<f64, Error> {
     Ok(420.0)
 }
-

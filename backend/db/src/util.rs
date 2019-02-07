@@ -1,26 +1,19 @@
-use diesel::associations::HasTable;
-use diesel::delete;
-use diesel::dsl::Find;
-use diesel::expression::Expression;
-use diesel::helper_types::Update;
-use diesel::insertable::Insertable;
-use diesel::pg::Pg;
-use diesel::pg::PgConnection;
-use diesel::query_builder::AsChangeset;
-use diesel::query_builder::AsQuery;
-use diesel::query_builder::DeleteStatement;
-use diesel::query_builder::InsertStatement;
-use diesel::query_builder::IntoUpdateTarget;
-use diesel::query_builder::QueryFragment;
-use diesel::query_builder::QueryId;
-use diesel::query_dsl::filter_dsl::FindDsl;
-use diesel::query_dsl::LoadQuery;
-use diesel::query_dsl::RunQueryDsl;
-use diesel::query_source::QuerySource;
-use diesel::query_source::Queryable;
-use diesel::query_source::Table;
-use diesel::result::QueryResult;
-use diesel::sql_types::HasSqlType;
+use diesel::{
+    associations::HasTable,
+    delete,
+    dsl::Find,
+    expression::Expression,
+    helper_types::Update,
+    insertable::Insertable,
+    pg::{Pg, PgConnection},
+    query_builder::{
+        AsChangeset, DeleteStatement, InsertStatement, IntoUpdateTarget, QueryFragment, QueryId,
+    },
+    query_dsl::{filter_dsl::FindDsl, LoadQuery, RunQueryDsl},
+    query_source::{QuerySource, Table},
+    result::QueryResult,
+    sql_types::HasSqlType,
+};
 use uuid::Uuid;
 
 //#[inline(always)]
@@ -72,11 +65,7 @@ where
 
 /// Generic function for getting a whole row from a given table.
 #[inline(always)]
-pub fn get_row<'a, Model, Table>(
-    table: Table,
-    uuid: Uuid,
-    conn: &PgConnection,
-) -> QueryResult<Model>
+pub fn get_row<Model, Table>(table: Table, uuid: Uuid, conn: &PgConnection) -> QueryResult<Model>
 where
     Table: FindDsl<Uuid>,
     Find<Table, Uuid>: LoadQuery<PgConnection, Model>,
@@ -86,7 +75,7 @@ where
 
 /// Generic function for deleting a row from a given table.
 #[inline(always)]
-pub fn delete_row<'a, Model, Tab>(table: Tab, uuid: Uuid, conn: &PgConnection) -> QueryResult<Model>
+pub fn delete_row<Model, Tab>(table: Tab, uuid: Uuid, conn: &PgConnection) -> QueryResult<Model>
 where
     Tab: FindDsl<Uuid> + Table,
     <Tab as FindDsl<Uuid>>::Output: IntoUpdateTarget,

@@ -1,17 +1,15 @@
-use crate::schema;
-use crate::schema::events;
-use crate::schema::events::SqlType;
-use crate::user::User;
-use chrono::Datelike;
-use chrono::NaiveDateTime;
-use chrono::Timelike;
-use diesel::pg::Pg;
-use diesel::query_dsl::QueryDsl;
-use diesel::result::QueryResult;
-use diesel::BoolExpressionMethods;
-use diesel::ExpressionMethods;
-use diesel::PgConnection;
-use diesel::{Identifiable, Insertable, Queryable, RunQueryDsl};
+use crate::{
+    schema::{
+        self,
+        events::{self, SqlType},
+    },
+    user::User,
+};
+use chrono::{Datelike, NaiveDateTime, Timelike};
+use diesel::{
+    pg::Pg, query_dsl::QueryDsl, result::QueryResult, BoolExpressionMethods, ExpressionMethods,
+    Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
