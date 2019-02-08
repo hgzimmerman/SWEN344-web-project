@@ -14,6 +14,7 @@ use pool::PooledConn;
 use uuid::Uuid;
 use warp::{path, Filter};
 use chrono::Duration;
+use warp::Rejection;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -33,24 +34,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(util::json_body_filter(3))
         .and(state.secret.clone())
         .and(state.db.clone())
-        .and_then(|login: LoginRequest, secret: Secret, conn: PooledConn| {
-            info!("Got token! {}", login.oauth_token); // TODO remove this in production
-                                                       // take token, go to platform, get client id.
-            let client_id = get_client_id(&login.oauth_token);
-            info!("Resolved OAuth token to client_id: {}", client_id);
-            // search DB for user with client id.
-            User::get_user_by_client_id(&client_id, &conn)
-                .or_else(|_| {
-                    info!("Could not find user, creating new one");
-                    // If user does not exist, create one.
-                    let new_user = NewUser { client_id };
-                    User::create_user(new_user, &conn)
-                })
-                .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
-                .map_err(Error::from)
-                .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError))
-                .map_err(Error::reject)
-        });
+        .and_then(get_or_create_user);
 
     // TODO maybe move this not under the auth/ route
     let user = path!("user")
@@ -78,6 +62,32 @@ fn get_client_id(_oauth_token: &str) -> String {
         // TODO actually fetch the client id.
         "YEEEET".to_string()
     }
+}
+
+
+/// Gets a user, and if the user doesn't exist yet, create one and return it anyway.
+///
+/// # Arguments
+/// login - The request containing the oauth token.
+/// secret - The secret used for signing JWTs.
+/// conn - The connection to the database.
+fn get_or_create_user(login: LoginRequest, secret: Secret, conn: PooledConn)  -> Result<impl Reply, Rejection> {
+    info!("Got token! {}", login.oauth_token); // TODO remove this in production
+    // take token, go to platform, get client id.
+    let client_id = get_client_id(&login.oauth_token);
+    info!("Resolved OAuth token to client_id: {}", client_id);
+    // search DB for user with client id.
+    User::get_user_by_client_id(&client_id, &conn)
+        .or_else(|_| {
+            info!("Could not find user, creating new one");
+            // If user does not exist, create one.
+            let new_user = NewUser { client_id };
+            User::create_user(new_user, &conn)
+        })
+        .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
+        .map_err(Error::from)
+        .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError))
+        .map_err(Error::reject)
 }
 
 #[cfg(test)]
@@ -136,7 +146,7 @@ mod test {
 
             let jwt = deserialize_string(resp);
 
-            let resp = warp::test::request()
+            let resp  = warp::test::request()
                 .method("GET")
                 .path("/auth/user")
                 .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))

@@ -73,6 +73,7 @@ mod unit_test {
     use super::*;
     use crate::state::StateConfig;
     use auth::BEARER;
+    use chrono::Duration;
 
     #[test]
     fn pass_filter() {
@@ -83,7 +84,7 @@ mod unit_test {
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
-        let jwt = JwtPayload::new(uuid);
+        let jwt = JwtPayload::new(uuid, Duration::weeks(2));
         let jwt = jwt.encode_jwt_string(&secret).unwrap();
 
         let filter = jwt_filter::<Uuid>(&state);
@@ -116,7 +117,7 @@ mod unit_test {
         let secret = Secret::new("yeet");
         let uuid = Uuid::new_v4();
 
-        let jwt = JwtPayload::new(uuid);
+        let jwt = JwtPayload::new(uuid, Duration::weeks(2));
         let jwt =  jwt.encode_jwt_string(&secret).expect("should encode jwt.");
 
         assert_eq!(uuid, JwtPayload::decode_jwt_string(&jwt, &secret).expect("should decode jwt").sub)
