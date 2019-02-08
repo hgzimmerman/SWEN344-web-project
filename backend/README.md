@@ -28,3 +28,17 @@ Install the diesel cli tool by running `cargo install diesel_cli --no-default-fe
 Navigate to the `/backend/server/` directory of the project and run diesel migration run.
 
 Navigate to the `/backend/server/` directory of the project and run `cargo run --release`.
+
+
+### Alternative setup
+Install Nix
+
+##### Ubuntu
+`sudo apt install nix` (Maybe, haven't tested)
+
+##### MacOS
+`curl https://nixos.org/nix/install | sh`
+https://nixos.org/nix/download.html
+
+--------
+run `nix-shell`, procede to the step where you install rust, and then diesel, etc...
