@@ -3,5 +3,6 @@ members = [
     "db",
     "server",
     "testing_common",
-    "pool"
+    "pool",
+    "auth"
 ]

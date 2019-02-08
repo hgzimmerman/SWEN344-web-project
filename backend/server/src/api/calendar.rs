@@ -5,8 +5,7 @@ use crate::util::json_body_filter;
 use db::event::{Event, NewEvent};
 use pool::PooledConn;
 use warp::Filter;
-//use apply::Apply;
-use crate::{auth::user_filter, error::Error, util};
+use crate::{server_auth::user_filter, error::Error, util};
 use chrono::NaiveDateTime;
 use db::event::EventChangeset;
 use serde::{Deserialize, Serialize};
@@ -123,9 +122,7 @@ fn delete_event(
         .map_err(Error::from)
         .and_then(|event: Event| {
             if event.user_uuid != user_uuid {
-                Err(Error::NotAuthorized {
-                    reason: "User does not own event",
-                })
+                Err(Error::BadRequest)
             } else {
                 Event::delete_event(event_uuid, &conn).map_err(Error::from)
             }
@@ -148,9 +145,7 @@ fn modify_event(
             .map_err(Error::from)
             .and_then(|event: Event| {
                 if event.user_uuid != user_uuid {
-                    Err(Error::NotAuthorized {
-                        reason: "User does not own event",
-                    })
+                    Err(Error::BadRequest)
                 } else {
                     Event::change_event(changeset, &conn).map_err(Error::from)
                 }

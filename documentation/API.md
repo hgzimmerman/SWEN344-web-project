@@ -65,7 +65,10 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 | `/api/market/stock/`                | GET    | \[StockResponse\]    |                   | yes           | All the stocks the user owns          |
 | `/api/market/stock/transact`        | POST   | StockTransaction  | StockTransactionRequest | yes        | Buys or sells a quantity of a given stock|
 | `/api/market/stock/transactions/:stockName`| GET | \[StockTransaction\] |               | yes           | Gets the transaction history for a given stock |
-| `/api/market/stock/performance`      | GET    | \[(f64, Stock)\]     |                  | yes           | Gets the performance for each stock the user has  |
+| `/api/market/stock/performance`     | GET    | \[(f64, Stock)\]   |                     | yes           | Gets the performance for each stock the user has  |
+| `/api/advertisement`                | GET    | `.png`             |                     | false         | Gets the advertisement if available   |
+| `/api/health`                       | GET    | \[HealthRecord\]   |                     | false         | Gets all of the history of requests for the advertisement      |
+| `/api/health/week`                  | GET    | \[HealthRecord\]   |                     | false         | Gets the last weeks worth of the history of requests for the advertisement      |
 
 #### UNIMPLEMENTED                      
 ###### Instructions
@@ -73,8 +76,5 @@ When one of these is implemented, move it to the upper table.
                       
 | Route                               | Method | Body Return Type   |  Body Accept Type   | Requires Auth |Description                            |
 | -------------------------------     | ------ | ----------------   | ------------------- | ------------- |-------------------------------------- |
-| `/api/advertisement`                | GET    | `.png`             |                     | false         | Gets the advertisement if available   |
-| `/api/health`                       | GET    | \[HealthRecord\]   |                     | false         | Gets all of the history of requests for the advertisement      |
-| `/api/health/week`                  | GET    | \[HealthRecord\]   |                     | false         | Gets the last weeks worth of the history of requests for the advertisement      |
 
 

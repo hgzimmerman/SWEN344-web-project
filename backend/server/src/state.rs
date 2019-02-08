@@ -1,7 +1,9 @@
 use crate::{
-    auth::{secret_filter, Secret},
     error::Error,
+    server_auth::secret_filter
 };
+
+use auth::{Secret};
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
 

@@ -71,9 +71,9 @@ mod integration_test {
 
     use crate::{
         api::{auth::LoginRequest, calendar::NewEventMessage},
-        auth::{Secret, AUTHORIZATION_HEADER_KEY, BEARER},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
+    use ::auth::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
     use db::{
         event::{Event, EventChangeset},
         user::User,
