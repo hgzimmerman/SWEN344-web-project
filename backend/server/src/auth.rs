@@ -10,28 +10,31 @@ use uuid::Uuid;
 
 /// The payload section of the JWT
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct JwtPayload {
+pub struct JwtPayload<T> {
     /// Issue date
     pub iat: NaiveDateTime,
     /// Subject (the user being authenticated by this token)
-    pub sub: Uuid,
+    pub sub: T,
     /// Expire date
     pub exp: NaiveDateTime,
 }
 
-impl JwtPayload {
+impl <T> JwtPayload<T>
+where
+    for<'de> T: Serialize + Deserialize<'de> + Send
+{
     /// Creates a new token for the user that will expire in 4 weeks.
-    pub fn new(user_uuid: Uuid) -> Self {
+    pub fn new(subject: T) -> Self {
         let now = chrono::Utc::now().naive_utc();
 
         JwtPayload {
             iat: now,
-            sub: user_uuid,
+            sub: subject,
             exp: now + Duration::weeks(4), // token will expire in 4 weeks
         }
     }
 
-    pub fn uuid(self) -> Uuid {
+    pub fn subject(self) -> T {
         self.sub
     }
 
@@ -65,18 +68,36 @@ impl JwtPayload {
 
     /// Decodes the JWT into its payload.
     /// If the signature doesn't match, then a decode error is thrown.
-    pub fn decode_jwt_string(jwt_str: &str, secret: &Secret) -> Result<JwtPayload, Error> {
+    pub fn decode_jwt_string(jwt_str: &str, secret: &Secret) -> Result<JwtPayload<T>, Error> {
         let secret: &String = &secret.0;
         let (_header, payload) = match decode(&jwt_str.to_string(), secret, Algorithm::HS256) {
             Ok(x) => x,
             Err(_) => return Err(Error::JwtDecodeError),
         };
-        let jwt: JwtPayload = match serde_json::from_value(payload) {
+        let jwt: JwtPayload<T> = match serde_json::from_value(payload) {
             Ok(x) => x,
             Err(_) => return Err(Error::DeserializeError),
         };
         Ok(jwt)
     }
+
+
+    /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
+    fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload<T>, Error> {
+        let authorization_words: Vec<String> =
+            bearer_string.split_whitespace().map(String::from).collect();
+
+        if authorization_words.len() != 2 {
+            return Err(Error::MissingToken);
+        }
+        if authorization_words[0] != BEARER {
+            return Err(Error::MalformedToken);
+        }
+        let jwt_str: &str = &authorization_words[1];
+
+        JwtPayload::decode_jwt_string(jwt_str, secret).map_err(|_| Error::IllegalToken)
+    }
+
 }
 
 /// A string that acts like a key to validate JWT signatures.
@@ -92,25 +113,13 @@ impl Secret {
 pub const BEARER: &str = "bearer";
 pub const AUTHORIZATION_HEADER_KEY: &str = "Authorization";
 
-/// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
-fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload, Error> {
-    let authorization_words: Vec<String> =
-        bearer_string.split_whitespace().map(String::from).collect();
-
-    if authorization_words.len() != 2 {
-        return Err(Error::MissingToken);
-    }
-    if authorization_words[0] != BEARER {
-        return Err(Error::MalformedToken);
-    }
-    let jwt_str: &str = &authorization_words[1];
-
-    JwtPayload::decode_jwt_string(jwt_str, secret).map_err(|_| Error::IllegalToken)
-}
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
-pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
+pub fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
+where
+    for <'de> T: Serialize + Deserialize<'de> + Send
+{
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| {
             Error::NotAuthorized {
@@ -120,7 +129,7 @@ pub fn jwt_filter(s: &State) -> BoxedFilter<(JwtPayload,)> {
         })
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
-            extract_jwt(bearer_string, &secret)
+            JwtPayload::extract_jwt(bearer_string, &secret)
                 .and_then(JwtPayload::validate_dates)
                 .map_err(Error::reject)
         })
@@ -135,7 +144,7 @@ pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
 
 /// If the user has a JWT, then the user has basic user privileges.
 pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
-    warp::any().and(jwt_filter(s)).map(JwtPayload::uuid).boxed()
+    warp::any().and(jwt_filter(s)).map(JwtPayload::subject).boxed()
 }
 
 #[allow(dead_code)]
