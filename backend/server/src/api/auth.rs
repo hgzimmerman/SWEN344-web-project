@@ -13,6 +13,7 @@ use log::info;
 use pool::PooledConn;
 use uuid::Uuid;
 use warp::{path, Filter};
+use chrono::Duration;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -21,7 +22,7 @@ pub struct LoginRequest {
     pub oauth_token: String,
 }
 
-///
+/// The authentication api.
 ///
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
@@ -45,7 +46,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                     let new_user = NewUser { client_id };
                     User::create_user(new_user, &conn)
                 })
-                .map(|user| JwtPayload::new(user.uuid))
+                .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
                 .map_err(Error::from)
                 .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError))
                 .map_err(Error::reject)
@@ -87,9 +88,10 @@ mod test {
     use testing_common::setup::setup_warp;
 
     use crate::{
-        auth::{AUTHORIZATION_HEADER_KEY, BEARER},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
+
+    use ::auth::{AUTHORIZATION_HEADER_KEY, BEARER};
 
     #[test]
     fn login_works() {

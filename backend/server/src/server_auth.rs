@@ -86,7 +86,7 @@ mod unit_test {
         let jwt = JwtPayload::new(uuid);
         let jwt = jwt.encode_jwt_string(&secret).unwrap();
 
-        let filter = jwt_filter(&state);
+        let filter = jwt_filter::<Uuid>(&state);
 
         assert!(
             warp::test::request()
@@ -104,7 +104,7 @@ mod unit_test {
         };
 
         let state = State::new(conf);
-        let filter = jwt_filter(&state);
+        let filter = jwt_filter::<Uuid>(&state);
         assert!(
             !warp::test::request()
                 .matches(&filter)
