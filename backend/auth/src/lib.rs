@@ -1,12 +1,11 @@
-//use crate::state::State;
-use warp::{filters::BoxedFilter, Filter, Rejection};
+//! This is a crate for wrapping common JWT functionality needed for securing information in a webapp.
+//! It is flexible in that it can support arbitrary payload subjects.
 
-//use crate::error::Error;
+use warp::{filters::BoxedFilter, Filter, Rejection};
 use chrono::{Duration, NaiveDateTime};
 use frank_jwt::{decode, encode, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-//use uuid::Uuid;
 
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

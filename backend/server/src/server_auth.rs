@@ -1,3 +1,5 @@
+//! Provides utilities for dealing with authentication constructs in warp.
+//!
 //! This module exists in the server crate and not in the dedicated `auth` crate because
 //! warp's semantics require unification over errors.
 //! In order to implement these fallible filters, they had to have access to the error type,
@@ -110,17 +112,6 @@ mod unit_test {
             !warp::test::request()
                 .matches(&filter)
         )
-    }
-
-    #[test]
-    fn extract_jwt() {
-        let secret = Secret::new("yeet");
-        let uuid = Uuid::new_v4();
-
-        let jwt = JwtPayload::new(uuid, Duration::weeks(2));
-        let jwt =  jwt.encode_jwt_string(&secret).expect("should encode jwt.");
-
-        assert_eq!(uuid, JwtPayload::decode_jwt_string(&jwt, &secret).expect("should decode jwt").sub)
     }
 
 }

@@ -1,4 +1,6 @@
-//use super::*;
+//! Responsible for enumerating all the possible ways the server may encounter undesired states.
+//!
+//! It handles serializing these errors so that they can be consumed by the user of the api.
 use apply::Apply;
 use serde::Serialize;
 use std::{
@@ -6,7 +8,7 @@ use std::{
     fmt::{self, Display},
 };
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
-use auth::AuthError;
+use ::auth::AuthError;
 //use log::info;
 use log::error;
 

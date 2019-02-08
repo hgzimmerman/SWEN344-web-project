@@ -1,3 +1,4 @@
+//! Responsible for granting JWT tokens on login.
 use crate::state::State;
 use serde::{Deserialize, Serialize};
 use warp::{filters::BoxedFilter, Reply};

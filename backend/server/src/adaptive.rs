@@ -1,4 +1,4 @@
-//! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
+//! [Self adaptive instructions section][http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
 
 use crate::error::Error;
 use hyper::{

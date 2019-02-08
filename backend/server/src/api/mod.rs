@@ -1,3 +1,4 @@
+//! The api defines all of the routes that are supported for the server.
 mod advertisement;
 pub(crate) mod auth;
 mod calendar;
@@ -18,6 +19,7 @@ use crate::{
     static_files::{static_files_handler, FileConfig},
 };
 
+/// The initial segment in the uri path.
 pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
@@ -34,7 +36,9 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .boxed()
 }
 
-/// A filter that:
+/// A filter that is responsible for configuring everything that can be served.
+///
+/// It is responsible for:
 /// * Routes the API
 /// * Handles file requests and redirections
 /// * Initializes warp logging
@@ -73,13 +77,16 @@ mod integration_test {
         api::{auth::LoginRequest, calendar::NewEventMessage},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
-    use ::auth::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
+//    use ::auth::{ AUTHORIZATION_HEADER_KEY, BEARER};
     use db::{
         event::{Event, EventChangeset},
         user::User,
     };
 
     use crate::testing_fixtures::util::get_jwt;
+    use ::auth::Secret;
+    use ::auth::AUTHORIZATION_HEADER_KEY;
+    use ::auth::BEARER;
 
 
     #[test]

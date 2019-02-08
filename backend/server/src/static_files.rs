@@ -1,3 +1,4 @@
+//! Responsible for serving static files and redirecting non-'/api/' requests to index.html.
 use crate::api::API_STRING;
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
