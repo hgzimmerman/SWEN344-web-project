@@ -6,7 +6,7 @@ use std::{
     fmt::{self, Display},
 };
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
-
+use auth::AuthError;
 //use log::info;
 use log::error;
 
@@ -30,24 +30,27 @@ pub enum Error {
     },
     /// The request was bad.
     BadRequest,
-    /// The used did not have privileges to access the given method.
-    /// This can also be used for users that don't have a token, but it is required.
-    // TODO the above use is out of date
-    NotAuthorized {
-        reason: &'static str,
-    },
-    /// Used to indicate that the signature does not match the hashed contents + secret
-    IllegalToken,
-    /// The expired field in the token is in the past
-    ExpiredToken,
-    /// The request did not have a token.
-    MissingToken,
-    /// The JWT 'bearer schema' was not followed.
-    MalformedToken,
-    DeserializeError,
-    SerializeError,
-    JwtDecodeError,
-    JwtEncodeError,
+
+    AuthError(AuthError),
+
+//    /// The used did not have privileges to access the given method.
+//    /// This can also be used for users that don't have a token, but it is required.
+//    // TODO the above use is out of date
+//    NotAuthorized {
+//        reason: &'static str,
+//    },
+//    /// Used to indicate that the signature does not match the hashed contents + secret
+//    IllegalToken,
+//    /// The expired field in the token is in the past
+//    ExpiredToken,
+//    /// The request did not have a token.
+//    MissingToken,
+//    /// The JWT 'bearer schema' was not followed.
+//    MalformedToken,
+//    DeserializeError,
+//    SerializeError,
+//    JwtDecodeError,
+//    JwtEncodeError,
 }
 
 impl Display for Error {
@@ -60,27 +63,31 @@ impl Display for Error {
                 Some(s) => s.clone(),
                 None => "A problem occurred with the database".to_string(),
             },
-            Error::IllegalToken => "The provided token is invalid".to_string(),
-            Error::ExpiredToken => {
-                "The provided token has expired, please reauthenticate to acquire a new one".to_string()
-            }
-            Error::MalformedToken => "The token was not formatted correctly".to_string(),
-            Error::MissingToken => {
-                "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
-            }
-            Error::NotAuthorized { reason } => {
-                format!("You are forbidden from accessing this resource. ({})", reason)
-            }
+
             Error::BadRequest => "Your request is malformed".to_string(),
             Error::InternalServerError => "Internal server error encountered".to_string(),
             Error::DependentConnectionFailed{url} => format!("An internal request needed to serve the request failed. URL: {}",url),
             Error::NotFound { type_name } => {
                 format!("The resource ({})you requested could not be found", type_name)
             }
-            Error::DeserializeError => "Something could not be deserialized".to_string(),
-            Error::SerializeError => "Something could not be serialized".to_string(),
-            Error::JwtDecodeError => "JWT could not be decoded".to_string(),
-            Error::JwtEncodeError => "JWT could not be encoded".to_string(),
+
+            Error::AuthError(auth_error) => match auth_error {
+                AuthError::DeserializeError => "Something could not be deserialized".to_string(),
+                AuthError::SerializeError => "Something could not be serialized".to_string(),
+                AuthError::JwtDecodeError => "JWT could not be decoded".to_string(),
+                AuthError::JwtEncodeError => "JWT could not be encoded".to_string(),
+                AuthError::IllegalToken => "The provided token is invalid".to_string(),
+                AuthError::ExpiredToken => {
+                    "The provided token has expired, please reauthenticate to acquire a new one".to_string()
+                }
+                AuthError::MalformedToken => "The token was not formatted correctly".to_string(),
+                AuthError::MissingToken => {
+                    "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
+                }
+                AuthError::NotAuthorized { reason } => {
+                    format!("You are forbidden from accessing this resource. ({})", reason)
+                }
+            }
         };
         write!(f, "{}", description)
     }
@@ -125,19 +132,24 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let code = match *cause {
         Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
         Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::IllegalToken => StatusCode::UNAUTHORIZED,
-        Error::ExpiredToken => StatusCode::UNAUTHORIZED,
-        Error::MalformedToken => StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
-        Error::NotAuthorized { .. } => StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges
+
         Error::BadRequest => StatusCode::BAD_REQUEST,
         Error::NotFound { .. } => StatusCode::NOT_FOUND,
         Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
-        Error::MissingToken => StatusCode::UNAUTHORIZED,
-        Error::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::JwtDecodeError => StatusCode::UNAUTHORIZED,
-        Error::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::AuthError(ref auth_error) => {
+            match *auth_error {
+                AuthError::IllegalToken => StatusCode::UNAUTHORIZED,
+                AuthError::ExpiredToken => StatusCode::UNAUTHORIZED,
+                AuthError::MalformedToken => StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
+                AuthError::NotAuthorized { .. } => StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges
+                AuthError::MissingToken => StatusCode::UNAUTHORIZED,
+                AuthError::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
+                AuthError::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
+                AuthError::JwtDecodeError => StatusCode::UNAUTHORIZED,
+                AuthError::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
+            }
+        }
     };
 
     Ok(warp::reply::with_status(json, code))

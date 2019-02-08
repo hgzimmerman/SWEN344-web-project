@@ -3,7 +3,7 @@ use log::LevelFilter;
 
 mod adaptive;
 mod api;
-mod auth;
+mod server_auth;
 mod config;
 mod error;
 mod state;

@@ -1,4 +1,4 @@
-use crate::auth::Secret;
+use auth::Secret;
 use apply::Apply;
 use clap::{App, Arg};
 

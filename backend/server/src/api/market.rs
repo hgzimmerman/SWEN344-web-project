@@ -2,7 +2,7 @@ use crate::state::State;
 use warp::{filters::BoxedFilter, path, Filter, Reply};
 
 use crate::{
-    auth::user_filter,
+    server_auth::user_filter,
     error::Error,
     util::{self, json_body_filter},
 };

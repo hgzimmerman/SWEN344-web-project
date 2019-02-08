@@ -3,10 +3,11 @@ use serde::{Deserialize, Serialize};
 use warp::{filters::BoxedFilter, Reply};
 
 use crate::{
-    auth::{user_filter, JwtPayload, Secret},
     error::Error,
     util,
 };
+use auth::{JwtPayload, Secret};
+use crate::server_auth::user_filter;
 use db::user::{NewUser, User};
 use log::info;
 use pool::PooledConn;
@@ -46,7 +47,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 })
                 .map(|user| JwtPayload::new(user.uuid))
                 .map_err(Error::from)
-                .and_then(|payload| payload.encode_jwt_string(&secret))
+                .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError))
                 .map_err(Error::reject)
         });
 
