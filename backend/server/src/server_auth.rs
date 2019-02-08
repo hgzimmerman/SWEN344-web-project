@@ -1,3 +1,11 @@
+//! This module exists in the server crate and not in the dedicated `auth` crate because
+//! warp's semantics require unification over errors.
+//! In order to implement these fallible filters, they had to have access to the error type,
+//! which can only be done in the server crate, assuming that errors are not migrated to their own crate,
+//! which is a situation that should be avoidable.
+//!
+//!
+
 use auth::{
     Secret,
     AuthError
@@ -16,6 +24,7 @@ use auth::AUTHORIZATION_HEADER_KEY;
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
+///
 pub fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
 where
     for <'de> T: Serialize + Deserialize<'de> + Send
