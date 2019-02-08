@@ -1,3 +1,4 @@
+//! [Self adaptive instructions section](http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html)
 use crate::{
     adaptive::{get_load, get_num_servers_up, should_serve_adds, Load, NumServers},
     error::Error,

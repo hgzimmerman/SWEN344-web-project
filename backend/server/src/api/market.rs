@@ -1,3 +1,4 @@
+//! Responsible for hosting routes that deal with stock market data.
 use crate::state::State;
 use warp::{filters::BoxedFilter, path, Filter, Reply};
 

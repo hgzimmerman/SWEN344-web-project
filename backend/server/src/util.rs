@@ -1,6 +1,8 @@
+//! Common utilities
 use serde::{Deserialize, Serialize};
 use warp::{filters::BoxedFilter, Filter, Reply};
 
+/// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.
 pub fn json_body_filter<T>(kb_limit: u64) -> BoxedFilter<(T,)>
 where
     T: for<'de> Deserialize<'de> + Send + Sync + 'static,
@@ -21,6 +23,7 @@ where
     warp::reply::json(&target)
 }
 
+/// Converts a serializable type to a JSON reply.
 pub fn json<T>(source: T) -> impl Reply
 where
     T: Serialize,

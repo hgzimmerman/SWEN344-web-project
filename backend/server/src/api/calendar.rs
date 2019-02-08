@@ -1,3 +1,4 @@
+//! Responsible for hosting everything related to calendar data.
 use crate::state::State;
 use warp::{filters::BoxedFilter, path, Reply};
 

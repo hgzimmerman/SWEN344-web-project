@@ -1,3 +1,4 @@
+//! Represents the shared server resources that all requests may utilize.
 use crate::{
     error::Error,
     server_auth::secret_filter
