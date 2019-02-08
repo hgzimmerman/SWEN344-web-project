@@ -119,6 +119,19 @@ mod test {
 
     #[test]
     fn load() {
-        get_load().wait();
+        let _ = get_load().wait();
+    }
+
+    #[test]
+    fn should_serve() {
+        let load = Load(27);
+        let available_servers = NumServers(3);
+        assert!(should_serve_adds(load, available_servers))
+    }
+    #[test]
+    fn should_not_serve() {
+        let load = Load(30);
+        let available_servers = NumServers(3);
+        assert!(!should_serve_adds(load, available_servers))
     }
 }

@@ -18,12 +18,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
+    /// The stock symbol.
     pub symbol: String,
     /// The sign bit indicates if it is a sale or a purchase;
     pub quantity: i32,
 }
 
 /// The Filter for the market API.
+///
+/// # Arguments
+/// s - State object reference required for accessing db connections, auth keys,
+/// and other stateful constructs.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let transact = path!("transact")
         .and(warp::post2())
@@ -105,6 +110,9 @@ fn transact(
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<impl Reply, Rejection> {
+    // TODO, this should be gotten from the stock api.
+    let current_price = get_current_price(&request.symbol).map_err(Error::reject)?;
+
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
     use diesel::result::Error as DieselError;
@@ -129,8 +137,7 @@ fn transact(
         Error::BadRequest.reject_result()?; // TODO find a better rejection message
     }
 
-    // TODO, this should be gotten from the stock api.
-    let current_price = get_current_price(&request.symbol).map_err(Error::reject)?;
+
 
     let new_stock_transaction = NewStockTransaction {
         user_uuid,

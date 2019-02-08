@@ -28,7 +28,7 @@ pub struct StateConfig {
 }
 
 impl State {
-    // TODO parameterize this to allow setting arbitrary keys for the state.
+    /// Creates a new state.
     pub fn new(conf: StateConfig) -> Self {
         let secret = conf
             .secret
@@ -46,6 +46,8 @@ impl State {
         }
     }
 
+    /// Creates a new state object from an existing object pool.
+    /// This is useful if using fixtures.
     #[cfg(test)]
     pub fn testing_init(pool: Pool, secret: Secret) -> Self {
         State {

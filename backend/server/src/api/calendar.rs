@@ -33,6 +33,12 @@ impl NewEventMessage {
     }
 }
 
+
+/// Calendar api.
+///
+/// # Arguments
+/// state - State object reference required for accessing db connections, auth keys,
+/// and other stateful constructs.
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     // TODO take optional query parameters for month and year
     let get_events = warp::get2()
@@ -154,57 +160,3 @@ fn modify_event(
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::auth::{JwtPayload, Secret};
-
-    #[test]
-    fn get_events() {
-        let secret = Secret::new("TEST");
-        let state = State::new(Some(secret.clone()));
-        let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4())
-            .encode_jwt_string(&secret)
-            .unwrap();
-
-        assert!(warp::test::request()
-            .method("GET")
-            .path("/calendar/event/events")
-            .header("Authorization", format!("bearer {}", jwt))
-            .matches(&filter));
-    }
-
-    #[test]
-    fn get_events_today() {
-        let secret = Secret::new("TEST");
-        let state = State::new(Some(secret.clone()));
-        let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4())
-            .encode_jwt_string(&secret)
-            .unwrap();
-
-        assert!(warp::test::request()
-            .method("GET")
-            .path("/calendar/event/events/today")
-            .header("Authorization", format!("bearer {}", jwt))
-            .matches(&filter));
-    }
-
-    #[test]
-    fn get_events_month() {
-        let secret = Secret::new("TEST");
-        let state = State::new(Some(secret.clone()));
-        let filter = calendar_api(&state);
-        let jwt = JwtPayload::new(Uuid::new_v4())
-            .encode_jwt_string(&secret)
-            .unwrap();
-
-        assert!(warp::test::request()
-            .method("GET")
-            .path("/calendar/event/events/month")
-            .header("Authorization", format!("bearer {}", jwt))
-            .matches(&filter));
-    }
-
-}

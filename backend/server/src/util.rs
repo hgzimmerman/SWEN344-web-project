@@ -28,13 +28,13 @@ where
     warp::reply::json(&source)
 }
 
-///// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.
-
-//pub fn many_json<T, U>(source: Vec<T>) -> impl Reply
-//where
-//    U: From<T>,
-//    U: Serialize,
-//{
-//    let target: Vec<U> = convert_vector(source);
-//    warp::reply::json(&target)
-//}
+/// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.
+#[allow(dead_code)]
+pub fn many_json_converts<T, U>(source: impl IntoIterator<Item=T>) -> impl Reply
+where
+    U: From<T>,
+    U: Serialize,
+{
+    let target: Vec<U> = source.into_iter().map(U::from).collect();
+    warp::reply::json(&target)
+}

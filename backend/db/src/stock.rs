@@ -81,9 +81,7 @@ impl Stock {
     pub fn create_stock(new_stock: NewStock, conn: &PgConnection) -> QueryResult<Stock> {
         util::create_row(schema::stocks::table, new_stock, conn)
     }
-    //    pub fn create_price(new_price: NewStockPrice, conn: &PgConnection) -> QueryResult<StockPrice> {
-    //        util::create_row(schema::stock_prices::table, new_price, conn)
-    //    }
+
     pub fn create_transaction(
         new_transaction: NewStockTransaction,
         conn: &PgConnection,

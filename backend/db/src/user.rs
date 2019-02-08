@@ -46,6 +46,7 @@ pub struct User {
     pub client_id: String,
 }
 
+/// Struct used to create new users.
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct NewUser {

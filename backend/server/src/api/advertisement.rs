@@ -14,6 +14,10 @@ use warp::{
 };
 
 /// Api for serving the advertisement.
+///
+/// # Arguments
+/// state - State object reference required for accessing db connections, auth keys,
+/// and other stateful constructs.
 pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("advertisement")
         .and(warp::get2())
