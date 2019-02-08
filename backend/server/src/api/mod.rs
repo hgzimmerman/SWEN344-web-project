@@ -70,7 +70,7 @@ mod integration_test {
     use testing_common::setup::setup_warp;
 
     use crate::{
-        api::{auth::Login, calendar::NewEventMessage},
+        api::{auth::LoginRequest, calendar::NewEventMessage},
         auth::{Secret, AUTHORIZATION_HEADER_KEY, BEARER},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
@@ -79,24 +79,8 @@ mod integration_test {
         user::User,
     };
 
-    /// Convenience function for requesting the JWT.
-    /// In the testing environment, the login function will always work.
-    fn get_jwt(filter: BoxedFilter<(impl Reply + 'static,)>) -> String {
-        let login = Login {
-            oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
-                .to_string(),
-        };
+    use crate::testing_fixtures::util::get_jwt;
 
-        let resp = warp::test::request()
-            .method("POST")
-            .path("/api/auth/login")
-            .json(&login)
-            .header("content-length", "300")
-            .reply(&filter);
-
-        let jwt = deserialize_string(resp);
-        jwt
-    }
 
     #[test]
     fn test_login_works() {
@@ -105,7 +89,7 @@ mod integration_test {
             let s = State::testing_init(pool, secret);
             let filter = routes(&s);
 
-            let login = auth::Login {
+            let login = auth::LoginRequest {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };

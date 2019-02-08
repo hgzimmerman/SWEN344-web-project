@@ -174,6 +174,7 @@ impl From<diesel::result::Error> for Error {
     }
 }
 
+/// Error response template for when the errors are rewritten.
 #[derive(Serialize)]
 struct ErrorResponse {
     message: String,

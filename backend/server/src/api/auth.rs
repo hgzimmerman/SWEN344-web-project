@@ -13,18 +13,25 @@ use pool::PooledConn;
 use uuid::Uuid;
 use warp::{path, Filter};
 
+/// A request to log in to the system.
+/// This only requires the oauth_token, as the server can resolve other details from that.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Login {
+pub struct LoginRequest {
     pub oauth_token: String,
 }
 
+///
+///
+/// # Arguments
+/// state - State object reference required for accessing db connections, auth keys,
+/// and other stateful constructs.
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let login = path!("login")
         .and(warp::post2())
         .and(util::json_body_filter(3))
         .and(state.secret.clone())
         .and(state.db.clone())
-        .and_then(|login: Login, secret: Secret, conn: PooledConn| {
+        .and_then(|login: LoginRequest, secret: Secret, conn: PooledConn| {
             info!("Got token! {}", login.oauth_token); // TODO remove this in production
                                                        // take token, go to platform, get client id.
             let client_id = get_client_id(&login.oauth_token);
@@ -42,15 +49,6 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .and_then(|payload| payload.encode_jwt_string(&secret))
                 .map_err(Error::reject)
         });
-
-    //    #[cfg(test)]
-    //    let login_unit_test = path!("login_unit_test")
-    //        .and(warp::get2())
-    //        .and(state.secret.clone())
-    //        .map(|secret: Secret| {
-    //            let payload = JwtPayload::new(Uuid::new_v4());
-    //            payload.encode_jwt_string(&secret)
-    //        });
 
     // TODO maybe move this not under the auth/ route
     let user = path!("user")
@@ -99,7 +97,7 @@ mod test {
             let s = State::testing_init(pool, secret);
             let filter = auth_api(&s);
 
-            let login = Login {
+            let login = LoginRequest {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
@@ -121,7 +119,7 @@ mod test {
             let s = State::testing_init(pool, secret);
             let filter = auth_api(&s);
 
-            let login = Login {
+            let login = LoginRequest {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
