@@ -6,7 +6,7 @@ export default class Home extends React.Component {
     return (
       <div className="App">
         <header className="App-header">
-          <p>
+          <p style={{color: 'blue'}}>
             Home Page
           </p>
 
