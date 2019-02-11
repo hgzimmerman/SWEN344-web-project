@@ -1,5 +1,5 @@
 # Requirements Document
-Team 3
+Team 3: Beltran Caliz, Sadaf Chowdhury, Dylan Forrest, John King, Henry Zimmerman
 
 ### At least 10 use cases
 
