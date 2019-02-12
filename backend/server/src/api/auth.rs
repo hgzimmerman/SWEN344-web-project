@@ -16,6 +16,12 @@ use uuid::Uuid;
 use warp::{path, Filter};
 use chrono::Duration;
 use warp::Rejection;
+use hyper::Uri;
+use futures::Future;
+use hyper::Client;
+use futures::stream::Stream;
+use hyper::Chunk;
+use apply::Apply;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -53,16 +59,37 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 pub const TEST_CLIENT_ID: &str = "test client id";
 
-// TODO actually implement this
-/// This needs to contact facebook with the token, and get the unique client id.
-/// Given an oauth token, return a client id.
-fn get_client_id(_oauth_token: &str) -> String {
+/// Shim for the get_user_id_from_facebook function.
+/// The shim allows tests to always have the auth process succeed succeed.
+fn get_user_id(oauth_token: &str) -> Result<String, Error> {
+    // If this runs in a test environment, it will work without question.
+    // Otherwise, it will attempt to acquire the user_id from facebook.
     if cfg!(test) {
-        TEST_CLIENT_ID.to_string() // allow user login for testing
+        TEST_CLIENT_ID.to_string().apply(Ok) // Allow user login for testing
     } else {
-        // TODO actually fetch the client id.
-        "YEEEET".to_string()
+        get_user_id_from_facebook(oauth_token).wait() // Await the response
     }
+}
+
+
+/// Gets the user id from facebook
+// TODO verify that this works.
+fn get_user_id_from_facebook(oauth_token: &str) -> impl Future<Item = String, Error = Error> {
+    let client = Client::new();
+    let uri: Uri = format!("https://graph.facebook.com/me?access_token={}", oauth_token).parse().unwrap();
+
+    client
+        .get(uri.clone())
+        .and_then(|res| {
+            res.into_body().concat2() // Await the whole body
+        })
+        .map_err(move |_| Error::DependentConnectionFailed { // TODO, this should look at the response code and produce another error if the access token is invalid.
+            url: uri.to_string(),
+        })
+        .map(|chunk: Chunk| {
+            let v = chunk.to_vec();
+            String::from_utf8_lossy(&v).to_string()
+        })
 }
 
 
@@ -75,7 +102,8 @@ fn get_client_id(_oauth_token: &str) -> String {
 fn get_or_create_user(login: LoginRequest, secret: Secret, conn: PooledConn)  -> Result<impl Reply, Rejection> {
     info!("Got token! {}", login.oauth_token); // TODO remove this in production
     // take token, go to platform, get client id.
-    let client_id = get_client_id(&login.oauth_token);
+    let client_id = get_user_id(&login.oauth_token)
+        .map_err(Error::reject)?;
     info!("Resolved OAuth token to client_id: {}", client_id);
     // search DB for user with client id.
     User::get_user_by_client_id(&client_id, &conn)
