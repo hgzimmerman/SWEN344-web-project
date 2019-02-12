@@ -22,6 +22,7 @@ use hyper::Client;
 use futures::stream::Stream;
 use hyper::Chunk;
 use apply::Apply;
+use hyper_tls::HttpsConnector;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -75,16 +76,26 @@ fn get_user_id(oauth_token: &str) -> Result<String, Error> {
 /// Gets the user id from facebook
 // TODO verify that this works.
 fn get_user_id_from_facebook(oauth_token: &str) -> impl Future<Item = String, Error = Error> {
-    let client = Client::new();
+    // TODO, somehow acquire a Client reference from a global managed state object
+    let https = HttpsConnector::new(4).unwrap();
+    let client = Client::builder()
+        .build::<_, hyper::Body>(https);
     let uri: Uri = format!("https://graph.facebook.com/me?access_token={}", oauth_token).parse().unwrap();
 
     client
         .get(uri.clone())
-        .and_then(|res| {
-            res.into_body().concat2() // Await the whole body
-        })
-        .map_err(move |_| Error::DependentConnectionFailed { // TODO, this should look at the response code and produce another error if the access token is invalid.
+        .map_err(move |_| Error::DependentConnectionFailed {
             url: uri.to_string(),
+        })
+        .and_then(|res| {
+            if res.status().is_client_error() {
+                Err(Error::AuthError(::auth::AuthError::NotAuthorized { reason: "Bad OAuth token"}))
+            } else {
+                Ok(res)
+            }
+        })
+        .and_then(|res| {
+           res.into_body().concat2().map_err(|_| Error::InternalServerError) // Await the whole body
         })
         .map(|chunk: Chunk| {
             let v = chunk.to_vec();

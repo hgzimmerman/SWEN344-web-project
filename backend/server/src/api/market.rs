@@ -16,6 +16,12 @@ use warp::Rejection;
 use chrono::Utc;
 use db::stock::{NewStockTransaction, UserStockResponse};
 use serde::{Deserialize, Serialize};
+use hyper::Client;
+use hyper::Uri;
+use futures::future::Future;
+use hyper::Chunk;
+use futures::stream::Stream;
+use hyper_tls::HttpsConnector;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -69,7 +75,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .into_iter()
                 .map(|s: UserStockResponse| {
                     // TODO, it would be much faster to use our stock api to get all of the prices up front and then zip them.
-                    match get_current_price(&s.stock.symbol) {
+                    match get_current_price(&s.stock.symbol).wait() {
                         Ok(price) => {
                             let net = s.transactions.into_iter().fold(0.0, |acc, transaction| {
                                 acc + ((price - transaction.price_of_stock_at_time_of_trading)
@@ -111,8 +117,7 @@ fn transact(
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<impl Reply, Rejection> {
-    // TODO, this should be gotten from the stock api.
-    let current_price = get_current_price(&request.symbol).map_err(Error::reject)?;
+    let current_price = get_current_price(&request.symbol).wait().map_err(Error::reject)?;
 
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
@@ -154,6 +159,45 @@ fn transact(
         .map(util::json)
 }
 
-fn get_current_price(_stock_symbol: &str) -> Result<f64, Error> {
-    Ok(420.0)
+// TODO this needs to be tested to verify that it works
+fn get_current_price(stock_symbol: &str) -> impl Future<Item = f64, Error = Error> {
+    let https = HttpsConnector::new(4).unwrap();
+    let client = Client::builder()
+        .build::<_, hyper::Body>(https);
+    let uri: Uri = format!("https://api.iextrading.com/1.0/stock/{}/price", stock_symbol).parse().unwrap();
+    client
+        .get(uri.clone())
+        .and_then(|res| {
+            res.into_body().concat2() // Await the whole body
+        })
+        .map_err(move |e| {
+            Error::DependentConnectionFailed {
+                url: uri.to_string(),
+            }
+        })
+        .and_then(|chunk: Chunk| {
+            let v = chunk.to_vec();
+            let body = String::from_utf8_lossy(&v).to_string();
+            body.parse::<f64>()
+                .map_err(|_| crate::error::Error::InternalServerError)
+        })
 }
+
+#[cfg(test)]
+mod integration {
+    use super::*;
+    use futures::future;
+    use tokio;
+
+    #[test]
+    fn can_get_current_price() {
+        // This test assumes that apple's stock price is above 1 dollar per share.
+        // A fair assumption, but it may not always be true :/.
+        tokio::run(future::lazy(|| {
+            get_current_price("aapl")
+                .map(|price| assert!(price > 0.0, "Aapl should have a positive share price."))
+                .map_err(|_| panic!("Could not get current price") )
+        }));
+    }
+}
+
