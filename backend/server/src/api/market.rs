@@ -71,6 +71,10 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
+
+    // Get the stocks and the user's transactions,
+    // Get the current prices,
+    // Zip the stocks and prices together, and calculate the net profit/loss for each given stock
     let portfolio_performance = warp::get2()
         .and(path!("performance")) // The string is a symbol
         .and(user_filter(s))
@@ -89,7 +93,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .map(|prices: Vec<f64>, stocks: Vec<UserStockResponse>| {
             prices
                 .into_iter()
-                .zip(stocks)
+                .zip(stocks) // This makes the assumption that the ordering is preserved in the get_current_prices() function
                 .map(|(price, stock): (f64, UserStockResponse)| {
                     let net: f64 = stock.transactions.iter().fold(0.0, |acc, transaction| {
                         acc + ((price - transaction.price_of_stock_at_time_of_trading)
@@ -194,10 +198,11 @@ fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<It
 
 // TODO, this doesn't support getting an infinite number of stocks, as there is a finite limit on the size of a url string.
 // This will need to make multiple requests in that case.
+// For the purposes of the project, this should be fine
 fn get_current_prices(stock_symbols: &[&str], client: &HttpsClient) -> impl Future<Item = Vec<f64>, Error = Error> {
     let uri: Uri = format!("https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price", stock_symbols.join(",")).parse().unwrap();
 
-    // handle something like: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
+    // handle json in the format: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
     #[derive(Serialize, Deserialize)]
     struct Price {
         price: f64
