@@ -26,7 +26,7 @@ Team 3: Beltran Caliz, Sadaf Chowdhury, Dylan Forrest, John King, Henry Zimmerma
 ![Calendar](../wireframes/Calendar.png){ width=350px }
 
 \newpage
-    
+
 ### At least 5 projects risks - with a 1-2 paragraph write up (for each risk) of how you plan to address these risks
 ##### Rust:
 
@@ -62,19 +62,19 @@ Also, running the integration tests on a CI suite may prove difficult because of
 
 
 ### At least 15 good user stories
-1. I as a user, want to be able to log in to the app using my Twitter Account.
-2. I as a user, want to be able to view some of my stocks on the main page.
-3. I as a user, want to be able to quickly access all of the main components of the app using a navigational header.
-4. I as a user, want to purchase and sell stocks.
-5. I as a user, want to download purchase and sales history.
-6. I as a user, want to see a history of my stocks and see how much money I made or lost.
-7. I as a user, want to be able to see today's calendar events on the main screen.
-8. I as an admin or curious user, want to be able to see the history of the server availability, load, and weather the "adds" were served.
-9. I as a user, want to be able see a whole month's worth of calendar events for the current month.
-9. I as a user, want to be able see calendar events for future and prior months.
-10. I as a user, want to create calendar events.
-11. I as a user, don't want to see other user's events or stock trades.
-12. I as a user, want to be able to export all of my events, so a friend can import them as their own.
-13. I as a user, want a to view part of my twitter feed on the main page.
-14. I as a user, want to cancel calendar events.
-15. I as a user, want to query available stocks.
+1. I as a user, want to be able to log in to the app using my Twitter Account to post or read tweets.
+2. I as a user, want to be able to view some of my stocks on the main page so that I may keep track of my gains and losses.
+3. I as a user, want to be able to quickly access all of the main components of the app using a navigational header so that I may navigate around the site.
+4. I as a user, want to purchase and sell stocks so that I may keep track of my gains and losses.
+5. I as a user, want to download purchase and sales history so that I can keep track of my history.
+6. I as a user, want to see a history of my stocks so that I can see how much money I made or lost.
+7. I as a user, want to be able to see today's calendar events on the main screen so that I can keep track of upcoming events.
+8. I as an admin or curious user, want to be able to see the history of the server availability, load, and weather the "adds" were served so that I can keep track of the site's performance.
+9. I as a user, want to be able see a whole month's worth of calendar events for the current month so that I can keep of upcoming events.
+9. I as a user, want to be able see calendar events for future and prior months so that I can keep track of upcoming events and make future plans.
+10. I as a user, want to create calendar events so that I can create reminders for myself.
+11. I as a user, don't want to see other user's events or stock trades so that I can keep my info confidential.
+12. I as a user, want to be able to export all of my events, so a friend can import them as their own so that we can both keep track of upcoming events.
+13. I as a user, want a to view part of my twitter feed on the main page so that I can keep track of current tweets.
+14. I as a user, want to cancel calendar events so that I can keep my calendar clean from unneeded events.
+15. I as a user, want to query available stocks so that I can have the option of purchasing them.
