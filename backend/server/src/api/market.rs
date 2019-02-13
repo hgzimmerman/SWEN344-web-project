@@ -71,8 +71,11 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
+    // Get the User's stock transactions
+    // Get the current prices for those transactions
+    // Zip them together, and calculate the net profit/loss for each.
     let portfolio_performance = warp::get2()
-        .and(path!("performance")) // The string is a symbol
+        .and(path!("performance"))
         .and(user_filter(s))
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
@@ -119,19 +122,16 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 /// Record the transaction.
 ///
 /// # Arguments
+/// * current_price - The current price of the stock, retrieved from an async https call.
 /// * request - The request struct representing a transaction.
 /// * user_uuid - The unique id of the user whose funds are being modified
 /// * conn - the connection to the database.
 fn transact(
-//    client: HttpsClient,
     current_price: f64,
     request: StockTransactionRequest,
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<impl Reply, Rejection> {
-//    let current_price = get_current_price(&request.symbol, &client).map_err(Error::reject)?;
-//    let current_price = 2.0; // TODO FIX
-
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
     use diesel::result::Error as DieselError;
