@@ -16,6 +16,13 @@ use warp::Rejection;
 use chrono::Utc;
 use db::stock::{NewStockTransaction, UserStockResponse};
 use serde::{Deserialize, Serialize};
+use hyper::Uri;
+use futures::future::Future;
+use hyper::Chunk;
+use futures::stream::Stream;
+use futures::future;
+use crate::state::HttpsClient;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -33,7 +40,14 @@ pub struct StockTransactionRequest {
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let transact = path!("transact")
         .and(warp::post2())
+        .and(s.https.clone())
         .and(json_body_filter(10))
+        .and_then(|client: HttpsClient, request: StockTransactionRequest| {
+            get_current_price(&request.symbol, &client) // Get the current price
+                .join(future::ok::<_, Error>(request)) // Join in the request, so it isn't lost.
+                .map_err(Error::reject) // Handle errors.
+        })
+        .untuple_one()
         .and(user_filter(s))
         .and(s.db.clone())
         .and_then(transact);
@@ -62,28 +76,30 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(user_filter(s))
         .and(s.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
-            let stocks = Stock::get_stocks_belonging_to_user(user_uuid, &conn)
-                .map_err(Error::from_reject)?;
-
-            stocks
+            Stock::get_stocks_belonging_to_user(user_uuid, &conn)
+                .map_err(Error::from_reject)
+        })
+        .and(s.https.clone())
+        .and_then(|stocks: Vec<UserStockResponse>, client: HttpsClient| {
+            let symbols: Vec<&str> = stocks.iter().map(|s| s.stock.symbol.as_str()).collect();
+            get_current_prices(&symbols, &client).map_err(Error::reject)
+                .join(future::ok(stocks))
+        })
+        .untuple_one()
+        .map(|prices: Vec<f64>, stocks: Vec<UserStockResponse>| {
+            prices
                 .into_iter()
-                .map(|s: UserStockResponse| {
-                    // TODO, it would be much faster to use our stock api to get all of the prices up front and then zip them.
-                    match get_current_price(&s.stock.symbol) {
-                        Ok(price) => {
-                            let net = s.transactions.into_iter().fold(0.0, |acc, transaction| {
-                                acc + ((price - transaction.price_of_stock_at_time_of_trading)
-                                    * f64::from(transaction.quantity))
-                            });
-                            Ok((s.stock, net))
-                        }
-                        Err(e) => Err(e),
-                    }
+                .zip(stocks)
+                .map(|(price, stock): (f64, UserStockResponse)| {
+                    let net: f64 = stock.transactions.iter().fold(0.0, |acc, transaction| {
+                        acc + ((price - transaction.price_of_stock_at_time_of_trading)
+                            * f64::from(transaction.quantity))
+                    });
+                    (stock, net)
                 })
-                .collect::<Result<Vec<_>, Error>>()
-                .map_err(Error::reject)
-                .map(util::json)
-        });
+                .collect::<Vec<(UserStockResponse, f64)>>() // TODO make an actual type for this.
+        })
+        .map(util::json);
 
     let stock_api = path!("stock").and(
         owned_stocks
@@ -107,12 +123,14 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 /// * user_uuid - The unique id of the user whose funds are being modified
 /// * conn - the connection to the database.
 fn transact(
+//    client: HttpsClient,
+    current_price: f64,
     request: StockTransactionRequest,
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<impl Reply, Rejection> {
-    // TODO, this should be gotten from the stock api.
-    let current_price = get_current_price(&request.symbol).map_err(Error::reject)?;
+//    let current_price = get_current_price(&request.symbol, &client).map_err(Error::reject)?;
+//    let current_price = 2.0; // TODO FIX
 
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
@@ -154,6 +172,91 @@ fn transact(
         .map(util::json)
 }
 
-fn get_current_price(_stock_symbol: &str) -> Result<f64, Error> {
-    Ok(420.0)
+fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<Item = f64, Error = Error> {
+    let uri: Uri = format!("https://api.iextrading.com/1.0/stock/{}/price", stock_symbol).parse().unwrap();
+    client
+        .get(uri.clone())
+        .and_then(|res| {
+            res.into_body().concat2() // Await the whole body
+        })
+        .map_err(move |_| {
+            Error::DependentConnectionFailed {
+                url: uri.to_string(),
+            }
+        })
+        .and_then(|chunk: Chunk| {
+            let v = chunk.to_vec();
+            let body = String::from_utf8_lossy(&v).to_string();
+            body.parse::<f64>()
+                .map_err(|_| crate::error::Error::InternalServerError)
+        })
 }
+
+// TODO, this doesn't support getting an infinite number of stocks, as there is a finite limit on the size of a url string.
+// This will need to make multiple requests in that case.
+fn get_current_prices(stock_symbols: &[&str], client: &HttpsClient) -> impl Future<Item = Vec<f64>, Error = Error> {
+    let uri: Uri = format!("https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price", stock_symbols.join(",")).parse().unwrap();
+
+    // handle something like: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
+    #[derive(Serialize, Deserialize)]
+    struct Price {
+        price: f64
+    }
+    client
+        .get(uri.clone())
+        .and_then(|res| {
+            res.into_body().concat2() // Await the whole body
+        })
+        .map_err(move |_| {
+            Error::DependentConnectionFailed {
+                url: uri.to_string(),
+            }
+        })
+        .and_then(|chunk: Chunk| {
+            let v = chunk.to_vec();
+            let body = String::from_utf8_lossy(&v).to_string();
+            serde_json::from_str::<HashMap<String, Price>>(&body)
+                .map(|r| r.values().map(|v| v.price).collect())
+                .map_err(|_| crate::error::Error::InternalServerError)
+
+        })
+}
+
+#[cfg(test)]
+mod integration {
+    use super::*;
+    use futures::future;
+    use tokio;
+    use hyper_tls::HttpsConnector;
+    use hyper::Client;
+
+    #[test]
+    fn can_get_current_price() {
+        // This test assumes that apple's stock price is above 1 dollar per share.
+        // A fair assumption, but it may not always be true :/.
+        tokio::run(future::lazy(|| {
+            let https = HttpsConnector::new(4).unwrap();
+            let client = Client::builder()
+                .build::<_, hyper::Body>(https);
+            get_current_price("aapl", &client)
+                .map(|price| assert!(price > 0.0, "Aapl should have a positive share price."))
+                .map_err(|_| panic!("Could not get current price") )
+        }));
+    }
+
+
+    #[test]
+    fn can_get_multiple_current_price() {
+        // This test assumes that apple's stock price is above 1 dollar per share.
+        // A fair assumption, but it may not always be true :/.
+        tokio::run(future::lazy(|| {
+            let https = HttpsConnector::new(4).unwrap();
+            let client = Client::builder()
+                .build::<_, hyper::Body>(https);
+            get_current_prices(&["aapl", "fb"], &client)
+                .map(|prices| assert!(prices.len() == 2))
+                .map_err(|_| panic!("Could not get current prices") )
+        }));
+    }
+}
+

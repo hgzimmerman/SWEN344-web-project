@@ -23,4 +23,6 @@ pool = {path="../pool"}
 auth = {path = "../auth"}
 hyper = "0.12.23"
 futures = "0.1.25"
+hyper-tls = "0.3.1"
+tokio = "0.1.15"
 

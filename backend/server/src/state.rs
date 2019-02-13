@@ -7,6 +7,13 @@ use crate::{
 use auth::{Secret};
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
+use hyper::Client;
+use hyper_tls::HttpsConnector;
+use hyper::client::HttpConnector;
+use hyper::client::connect::dns::GaiResolver;
+use hyper::Body;
+
+pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 
 /// State that is passed around to all of the api handlers.
 /// It can be used to acquire connections to the database,
@@ -19,6 +26,8 @@ pub struct State {
     pub db: BoxedFilter<(PooledConn,)>,
     /// The secret key.
     pub secret: BoxedFilter<(Secret,)>,
+    /// Https client
+    pub https: BoxedFilter<(HttpsClient,)>
 }
 
 /// Configuration object for creating the state.
@@ -42,10 +51,14 @@ impl State {
             ..Default::default()
         };
         let pool = init_pool(DATABASE_URL, pool_conf);
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder()
+        .build::<_, hyper::Body>(https);
 
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
+            https: http_filter(client)
         }
     }
 
@@ -53,11 +66,24 @@ impl State {
     /// This is useful if using fixtures.
     #[cfg(test)]
     pub fn testing_init(pool: Pool, secret: Secret) -> Self {
+        use std::time::Duration;
+        let https = HttpsConnector::new(1).unwrap();
+        let client = Client::builder()
+            .keep_alive_timeout(Some(Duration::new(12,0)))
+            .build::<_, hyper::Body>(https);
+
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
+            https: http_filter(client)
         }
     }
+}
+
+pub fn http_filter(client: HttpsClient) -> BoxedFilter<(HttpsClient,)> {
+    warp::any()
+        .map(move || client.clone())
+        .boxed()
 }
 
 /// Filter that exposes connections to the database to individual filter requests

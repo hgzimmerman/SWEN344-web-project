@@ -18,10 +18,10 @@ use chrono::Duration;
 use warp::Rejection;
 use hyper::Uri;
 use futures::Future;
-use hyper::Client;
 use futures::stream::Stream;
 use hyper::Chunk;
 use apply::Apply;
+use crate::state::HttpsClient;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -39,6 +39,12 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let login = path!("login")
         .and(warp::post2())
         .and(util::json_body_filter(3))
+        .and(state.https.clone())
+        .and_then(|request: LoginRequest, client: HttpsClient| {
+            // Resolve the client id using the login request
+//            dbg!("Getting auth_api");
+            get_user_id(&request.oauth_token, client).map_err(Error::reject)
+        })
         .and(state.secret.clone())
         .and(state.db.clone())
         .and_then(get_or_create_user);
@@ -61,30 +67,36 @@ pub const TEST_CLIENT_ID: &str = "test client id";
 
 /// Shim for the get_user_id_from_facebook function.
 /// The shim allows tests to always have the auth process succeed succeed.
-fn get_user_id(oauth_token: &str) -> Result<String, Error> {
+fn get_user_id(oauth_token: &str, client: HttpsClient) -> impl Future<Item = String, Error = Error>{
     // If this runs in a test environment, it will work without question.
     // Otherwise, it will attempt to acquire the user_id from facebook.
+    use futures::future::Either;
     if cfg!(test) {
-        TEST_CLIENT_ID.to_string().apply(Ok) // Allow user login for testing
+        futures::future::ok::<String, Error>(TEST_CLIENT_ID.to_string()).apply(Either::A) // Automatic user login for testing
     } else {
-        get_user_id_from_facebook(oauth_token).wait() // Await the response
+        get_user_id_from_facebook(oauth_token, client).apply(Either::B) // Await the response
     }
 }
 
 
 /// Gets the user id from facebook
 // TODO verify that this works.
-fn get_user_id_from_facebook(oauth_token: &str) -> impl Future<Item = String, Error = Error> {
-    let client = Client::new();
+fn get_user_id_from_facebook(oauth_token: &str, client: HttpsClient) -> impl Future<Item = String, Error = Error> {
     let uri: Uri = format!("https://graph.facebook.com/me?access_token={}", oauth_token).parse().unwrap();
-
     client
         .get(uri.clone())
-        .and_then(|res| {
-            res.into_body().concat2() // Await the whole body
-        })
-        .map_err(move |_| Error::DependentConnectionFailed { // TODO, this should look at the response code and produce another error if the access token is invalid.
+        .map_err(move |_| Error::DependentConnectionFailed {
             url: uri.to_string(),
+        })
+        .and_then(|res| {
+            if res.status().is_client_error() {
+                Err(Error::AuthError(::auth::AuthError::NotAuthorized { reason: "Bad OAuth token"}))
+            } else {
+                Ok(res)
+            }
+        })
+        .and_then(|res| {
+           res.into_body().concat2().map_err(|_| Error::InternalServerError) // Await the whole body
         })
         .map(|chunk: Chunk| {
             let v = chunk.to_vec();
@@ -99,11 +111,8 @@ fn get_user_id_from_facebook(oauth_token: &str) -> impl Future<Item = String, Er
 /// login - The request containing the oauth token.
 /// secret - The secret used for signing JWTs.
 /// conn - The connection to the database.
-fn get_or_create_user(login: LoginRequest, secret: Secret, conn: PooledConn)  -> Result<impl Reply, Rejection> {
-    info!("Got token! {}", login.oauth_token); // TODO remove this in production
+fn get_or_create_user(client_id: String, secret: Secret, conn: PooledConn)  -> Result<impl Reply, Rejection> {
     // take token, go to platform, get client id.
-    let client_id = get_user_id(&login.oauth_token)
-        .map_err(Error::reject)?;
     info!("Resolved OAuth token to client_id: {}", client_id);
     // search DB for user with client id.
     User::get_user_by_client_id(&client_id, &conn)
@@ -115,7 +124,7 @@ fn get_or_create_user(login: LoginRequest, secret: Secret, conn: PooledConn)  ->
         })
         .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
         .map_err(Error::from)
-        .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError))
+        .and_then(|payload| payload.encode_jwt_string(&secret).map_err(Error::AuthError).map(|a| a)) //dbg!(a)))
         .map_err(Error::reject)
 }
 

@@ -100,6 +100,9 @@ mod integration_test {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
+//            tokio::run(|| {
+//
+//            });
             let resp = warp::test::request()
                 .method("POST")
                 .path("/api/auth/login")
@@ -460,7 +463,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 let request = StockTransactionRequest {
-                    symbol: "APPL".to_string(),
+                    symbol: "AAPL".to_string(),
                     quantity: 1,
                 };
 
@@ -472,6 +475,7 @@ mod integration_test {
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
+                dbg!(&resp.body());
                 assert_eq!(resp.status(), 200);
             });
         }
@@ -486,7 +490,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 let request = StockTransactionRequest {
-                    symbol: "APPL".to_string(),
+                    symbol: "AAPL".to_string(),
                     quantity: 1,
                 };
 
