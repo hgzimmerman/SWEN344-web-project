@@ -12,6 +12,7 @@ use hyper_tls::HttpsConnector;
 use hyper::client::HttpConnector;
 use hyper::client::connect::dns::GaiResolver;
 use hyper::Body;
+use std::time::Duration;
 
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 
@@ -66,9 +67,13 @@ impl State {
     /// This is useful if using fixtures.
     #[cfg(test)]
     pub fn testing_init(pool: Pool, secret: Secret) -> Self {
-        let https = HttpsConnector::new(4).unwrap();
+        use tokio::runtime::current_thread;
+        let https = HttpsConnector::new(1).unwrap();
+//        let exec = current_thread::TaskExecutor::current();
         let client = Client::builder()
-        .build::<_, hyper::Body>(https);
+            .keep_alive_timeout(Some(Duration::new(12,0)))
+//            .executor(exec)
+            .build::<_, hyper::Body>(https);
 
         State {
             db: db_filter(pool),

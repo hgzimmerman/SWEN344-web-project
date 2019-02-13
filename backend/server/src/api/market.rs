@@ -21,6 +21,7 @@ use hyper::Uri;
 use futures::future::Future;
 use hyper::Chunk;
 use futures::stream::Stream;
+use futures::future;
 use hyper_tls::HttpsConnector;
 use crate::state::HttpsClient;
 
@@ -42,6 +43,12 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::post2())
         .and(s.https.clone())
         .and(json_body_filter(10))
+        .and_then(|client: HttpsClient, request: StockTransactionRequest| {
+            get_current_price(&request.symbol, &client) // Get the current price
+                .join(future::ok::<_, Error>(request)) // Join in the request, so it isn't lost.
+                .map_err(Error::reject) // Handle errors.
+        })
+        .untuple_one()
         .and(user_filter(s))
         .and(s.db.clone())
         .and_then(transact);
@@ -78,6 +85,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .into_iter()
                 .map(|s: UserStockResponse| {
                     // TODO, it would be much faster to use our stock api to get all of the prices up front and then zip them.
+                    // TODO calling wait() tends to mess up tests. So remove them.
                     match get_current_price(&s.stock.symbol, &client).wait() {
                         Ok(price) => {
                             let net = s.transactions.into_iter().fold(0.0, |acc, transaction| {
@@ -116,14 +124,14 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
 /// * user_uuid - The unique id of the user whose funds are being modified
 /// * conn - the connection to the database.
 fn transact(
-//    current_price: f64,
-    client: HttpsClient,
+//    client: HttpsClient,
+    current_price: f64,
     request: StockTransactionRequest,
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<impl Reply, Rejection> {
-
-    let current_price = get_current_price(&request.symbol, &client).wait().map_err(Error::reject)?;
+//    let current_price = get_current_price(&request.symbol, &client).map_err(Error::reject)?;
+//    let current_price = 2.0; // TODO FIX
 
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
