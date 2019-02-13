@@ -18,11 +18,9 @@ use chrono::Duration;
 use warp::Rejection;
 use hyper::Uri;
 use futures::Future;
-use hyper::Client;
 use futures::stream::Stream;
 use hyper::Chunk;
 use apply::Apply;
-use hyper_tls::HttpsConnector;
 use crate::state::HttpsClient;
 
 /// A request to log in to the system.
@@ -115,7 +113,6 @@ fn get_user_id_from_facebook(oauth_token: &str, client: HttpsClient) -> impl Fut
 /// conn - The connection to the database.
 fn get_or_create_user(client_id: String, secret: Secret, conn: PooledConn)  -> Result<impl Reply, Rejection> {
     // take token, go to platform, get client id.
-//    dbg!(&client_id);
     info!("Resolved OAuth token to client_id: {}", client_id);
     // search DB for user with client id.
     User::get_user_by_client_id(&client_id, &conn)
