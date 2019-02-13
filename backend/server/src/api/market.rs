@@ -24,6 +24,7 @@ use futures::stream::Stream;
 use futures::future;
 use hyper_tls::HttpsConnector;
 use crate::state::HttpsClient;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -173,7 +174,6 @@ fn transact(
         .map(util::json)
 }
 
-// TODO this needs to be tested to verify that it works
 fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<Item = f64, Error = Error> {
     let uri: Uri = format!("https://api.iextrading.com/1.0/stock/{}/price", stock_symbol).parse().unwrap();
     client
@@ -194,6 +194,36 @@ fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<It
         })
 }
 
+// TODO, this doesn't support getting an infinite number of stocks, as there is a finite limit on the size of a url string.
+// This will need to make multiple requests in that case.
+fn get_current_prices(stock_symbols: &[&str], client: &HttpsClient) -> impl Future<Item = Vec<f64>, Error = Error> {
+    let uri: Uri = format!("https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price", stock_symbols.join(",")).parse().unwrap();
+
+    // handle something like: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
+    #[derive(Serialize, Deserialize)]
+    struct Price {
+        price: f64
+    }
+    client
+        .get(uri.clone())
+        .and_then(|res| {
+            res.into_body().concat2() // Await the whole body
+        })
+        .map_err(move |_| {
+            Error::DependentConnectionFailed {
+                url: uri.to_string(),
+            }
+        })
+        .and_then(|chunk: Chunk| {
+            let v = chunk.to_vec();
+            let body = String::from_utf8_lossy(&v).to_string();
+            serde_json::from_str::<HashMap<String, Price>>(&body)
+                .map(|r| r.values().map(|v| v.price).collect())
+                .map_err(|_| crate::error::Error::InternalServerError)
+
+        })
+}
+
 #[cfg(test)]
 mod integration {
     use super::*;
@@ -210,6 +240,21 @@ mod integration {
                 .build::<_, hyper::Body>(https);
             get_current_price("aapl", &client)
                 .map(|price| assert!(price > 0.0, "Aapl should have a positive share price."))
+                .map_err(|_| panic!("Could not get current price") )
+        }));
+    }
+
+
+    #[test]
+    fn can_get_multiple_current_price() {
+        // This test assumes that apple's stock price is above 1 dollar per share.
+        // A fair assumption, but it may not always be true :/.
+        tokio::run(future::lazy(|| {
+            let https = HttpsConnector::new(4).unwrap();
+            let client = Client::builder()
+                .build::<_, hyper::Body>(https);
+            get_current_prices(&["aapl", "fb"], &client)
+                .map(|prices| assert!(prices.len() == 2))
                 .map_err(|_| panic!("Could not get current price") )
         }));
     }
