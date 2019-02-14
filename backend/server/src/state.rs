@@ -50,7 +50,7 @@ impl State {
 
         let pool = init_pool(DATABASE_URL, pool_conf);
         let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, hyper::Body>(https);
+        let client = Client::builder().build::<_, _>(https);
 
         State {
             db: db_filter(pool),
