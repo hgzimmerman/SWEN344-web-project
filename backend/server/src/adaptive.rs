@@ -53,7 +53,7 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
         url: uri_4.to_string(),
     });
 
-    a_1.join4(a_2, a_3, a_4).map(|(a, b, c, d)| {
+    a_1.join4(a_2, a_3, a_4).map(|(a, b, c, d)| -> NumServers {
         let mut acc = 0;
         if a {
             acc += 1;
@@ -91,7 +91,7 @@ pub fn get_load() -> impl Future<Item = Load, Error = Error> {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
             body.parse::<u32>()
-                .map_err(|_| crate::error::Error::InternalServerError)
+                .map_err(|_| crate::error::Error::internal_server_error("Could not parse u32 from load".to_string()))
         })
         .map(Load)
 }
@@ -103,6 +103,10 @@ pub fn get_load() -> impl Future<Item = Load, Error = Error> {
 /// # Arguments
 /// load_units - The current load across the "servers"
 /// available_servers - The number (out of 4) of servers that are available.
+///
+/// # Return
+/// True indicates that the server can serve an add.
+/// False indicates that the server cannot serve the add.
 pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> bool {
     const UNITS_PER_SERVER: u32 = 10;
     let available_capacity = available_servers.0 * UNITS_PER_SERVER;

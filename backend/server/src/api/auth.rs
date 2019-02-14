@@ -89,9 +89,9 @@ fn get_user_id_from_facebook(
         })
         .and_then(|res| {
             if res.status().is_client_error() {
-                Err(Error::AuthError(authorization::AuthError::NotAuthorized {
+                Err(Error::NotAuthorized {
                     reason: "Bad OAuth token",
-                }))
+                })
             } else {
                 Ok(res)
             }
@@ -99,9 +99,9 @@ fn get_user_id_from_facebook(
         .and_then(|res| {
             res.into_body()
                 .concat2()
-                .map_err(|_| Error::InternalServerError) // Await the whole body
+                .map_err(|_| Error::internal_server_error_empty()) // Await the whole body
         })
-        .map(|chunk: Chunk| {
+        .map(|chunk: Chunk| -> String {
             let v = chunk.to_vec();
             String::from_utf8_lossy(&v).to_string()
         })

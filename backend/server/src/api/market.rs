@@ -23,6 +23,7 @@ use futures::{
 use hyper::{Chunk, Uri};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use log::info;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -161,7 +162,7 @@ fn transact(
             "Can't sell more stocks than you have. Owned: {}, Transaction: {}",
             quantity, request.quantity
         );
-        Error::BadRequestString(err).reject_result()?;
+        Error::bad_request(err).reject_result()?;
     }
 
     let new_stock_transaction = NewStockTransaction {
@@ -198,11 +199,11 @@ fn get_current_price(
         .map_err(move |_| Error::DependentConnectionFailed {
             url: uri_copy_1.to_string(),
         })
-        .and_then(move |chunk: Chunk| {
+        .and_then(move |chunk: Chunk| -> Result<f64, Error> {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
-            body.parse::<f64>().map_err(move |_| {
-                crate::error::Error::InternalServerErrorString(format!(
+            body.parse::<f64>().map_err(move |_| -> Error {
+                crate::error::Error::internal_server_error(format!(
                     "Could not parse body of dependent connection: {}, body: {}",
                     uri_copy_2.to_string(),
                     body
@@ -222,9 +223,10 @@ fn get_current_prices(
     )
     .parse()
     .unwrap();
+    info!("Getting current prices for: {}", uri);
 
     // handle something like: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     struct Price {
         price: f64,
     }
@@ -240,8 +242,11 @@ fn get_current_prices(
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
             serde_json::from_str::<HashMap<String, Price>>(&body)
-                .map(|r| r.values().map(|v| v.price).collect())
-                .map_err(|_| crate::error::Error::InternalServerError)
+                .map(|r|  {
+                    info!("Get current prices: {:#?}", r);
+                    r.values().map(|v| v.price).collect()
+                })
+                .map_err(|_| crate::error::Error::internal_server_error("Could not get current prices".to_string()))
         })
 }
 

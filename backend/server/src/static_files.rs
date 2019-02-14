@@ -3,6 +3,7 @@ use crate::{api::API_STRING, error::Error};
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
 
+/// The directory that the webapp is stored in.
 const ASSETS_DIRECTORY: &str = "../../frontend/build/";
 
 /// Configuration object for setting up static files.

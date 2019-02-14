@@ -9,7 +9,7 @@
 //!
 
 use crate::{error::Error, state::State};
-use authorization::{AuthError, JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
+use authorization::{JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{filters::BoxedFilter, Filter, Rejection};
@@ -17,15 +17,15 @@ use warp::{filters::BoxedFilter, Filter, Rejection};
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 ///
-pub fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
+fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
 where
     for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| {
-            Error::AuthError(AuthError::NotAuthorized {
+            Error::NotAuthorized {
                 reason: "token required",
-            })
+            }
             .reject_result()
         })
         .and(s.secret.clone())

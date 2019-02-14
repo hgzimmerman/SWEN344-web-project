@@ -41,7 +41,7 @@ impl State {
     pub fn new(conf: StateConfig) -> Self {
         let secret = conf
             .secret
-            .unwrap_or_else(|| Secret::new("yeetyeetyeetyeetyeet"));
+            .unwrap_or_else(|| Secret::new("yeetyeetyeetyeetyeet")); // TODO Make this random
 
         let pool_conf = PoolConfig {
             max_connections: conf.max_pool_size,
@@ -76,6 +76,7 @@ impl State {
     }
 }
 
+/// Function that creates the HttpClient filter.
 pub fn http_filter(client: HttpsClient) -> BoxedFilter<(HttpsClient,)> {
     warp::any().map(move || client.clone()).boxed()
 }

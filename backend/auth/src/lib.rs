@@ -9,9 +9,7 @@ use warp::{filters::BoxedFilter, Filter, Rejection};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AuthError {
-    NotAuthorized {
-        reason: &'static str,
-    },
+
     /// Used to indicate that the signature does not match the hashed contents + secret
     IllegalToken,
     /// The expired field in the token is in the past
@@ -56,6 +54,7 @@ where
         }
     }
 
+    /// Gets the subject of the JWT payload.
     pub fn subject(self) -> T {
         self.sub
     }
@@ -135,6 +134,9 @@ pub const AUTHORIZATION_HEADER_KEY: &str = "Authorization";
 
 /// Brings the secret into scope.
 /// The secret is used to create and verify JWTs.
+///
+/// # Arguments
+/// secret - The secret that will be returned by the filter.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any().map(move || secret.clone()).boxed()
 }

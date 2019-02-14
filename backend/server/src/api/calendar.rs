@@ -14,15 +14,17 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{Filter, Rejection};
 
+/// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct NewEventMessage {
+pub struct NewEventRequest {
     pub title: String,
     pub text: String,
     pub start_at: NaiveDateTime,
     pub stop_at: NaiveDateTime,
 }
 
-impl NewEventMessage {
+impl NewEventRequest {
+    /// Attach the user uuid acquired from the JWT to create a NewEvent that can be inserted into the DB.
     fn into_new_event(self, user_uuid: Uuid) -> NewEvent {
         NewEvent {
             user_uuid,
@@ -88,11 +90,11 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(json_body_filter(50))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(|e: NewEventMessage, user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|e: NewEventRequest, user_uuid: Uuid, conn: PooledConn| {
             let new_event = e.into_new_event(user_uuid);
             // check logical ordering of start and stop times
             if new_event.start_at > new_event.stop_at {
-                Error::BadRequestStr("Request can't start after it has ended.").reject_result()
+                Error::bad_request("Request can't start after it has ended.").reject_result()
             } else {
                 Event::create_event(new_event, &conn)
                     .map_err(Error::from_reject)
@@ -134,7 +136,7 @@ fn delete_event(
         .map_err(Error::from)
         .and_then(|event: Event| {
             if event.user_uuid != user_uuid {
-                Err(Error::BadRequest)
+                Err(Error::NotAuthorized {reason: "User UUIDs do not match"})
             } else {
                 Event::delete_event(event_uuid, &conn).map_err(Error::from)
             }
@@ -150,14 +152,14 @@ fn modify_event(
 ) -> Result<impl Reply, Rejection> {
     // check logical ordering of start and stop times
     if changeset.start_at > changeset.stop_at {
-        Error::BadRequestStr("Request can't start after it has ended.").reject_result()
+        Error::bad_request("Request can't start after it has ended.").reject_result()
     } else {
         // Check if the user has authority to change the event.
         Event::get_event(changeset.uuid, &conn)
             .map_err(Error::from)
             .and_then(|event: Event| {
                 if event.user_uuid != user_uuid {
-                    Err(Error::BadRequest)
+                    Err(Error::NotAuthorized {reason: "User UUIDs do not match"})
                 } else {
                     Event::change_event(changeset, &conn).map_err(Error::from)
                 }

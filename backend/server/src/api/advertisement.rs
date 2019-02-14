@@ -29,7 +29,7 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             servers.join(load)
         })
         .untuple_one()
-        .and(warp::fs::file(".static/add/rit_add.png"))
+        .and(warp::fs::file(".static/add/rit_add.png")) // TODO, verify that this is correct
         .and(state.db.clone())
         .and_then(
             |servers: NumServers,
@@ -82,6 +82,6 @@ fn serve_add(available_servers: NumServers, load: Load, conn: &PooledConn) -> Re
     if should_send_advertisement {
         Ok(())
     } else {
-        Err(Error::InternalServerErrorString("The server load was determined to be too high, and therefore the \"advertisement\" was not sent ".to_string()))
+        Err(Error::internal_server_error("The server load was determined to be too high, and therefore the \"advertisement\" was not sent "))
     }
 }
