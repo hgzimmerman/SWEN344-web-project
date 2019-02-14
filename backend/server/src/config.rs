@@ -1,3 +1,4 @@
+//! Configuration for the server.
 use apply::Apply;
 use clap::{App, Arg};
 

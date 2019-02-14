@@ -23,10 +23,8 @@ where
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| {
-            Error::NotAuthorized {
-                reason: "token required",
-            }
-            .reject_result()
+            Error::not_authorized("Token Required")
+                .reject_result()
         })
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
