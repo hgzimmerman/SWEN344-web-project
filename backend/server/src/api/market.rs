@@ -195,8 +195,7 @@ fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<It
         })
 }
 
-// TODO, this doesn't support getting an arbitrary number of stocks, as there is a finite limit on the size of a url string.
-// This will need to make multiple requests in that case.
+/// Get the current prices for a set of stocks.
 fn get_current_prices(stock_symbols: &[&str], client: &HttpsClient) -> impl Future<Item = Vec<f64>, Error = Error> {
     let uri: Uri = format!("https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price", stock_symbols.join(",")).parse().unwrap();
 

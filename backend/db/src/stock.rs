@@ -120,23 +120,6 @@ impl Stock {
             .first(conn)
     }
 
-    //    pub fn get_stocks_and_their_current_prices(conn: &PgConnection) -> QueryResult<Vec<(Stock, Option<StockPrice>)>> {
-    //        let stocks = Self::get_stocks(conn)?;
-    //
-    //        let prices = StockPrice::belonging_to(&stocks)
-    //            .order_by(schema::stock_prices::dsl::record_time.desc()) // TODO verify that this is in order, but it should be.
-    //            .distinct_on(schema::stock_prices::stock_uuid)
-    //            .load::<StockPrice>(conn)?
-    //            .grouped_by(&stocks);
-    //
-    //        stocks
-    //            .into_iter()
-    //            .zip(prices)
-    //            .map(|(stock, mut prices): (Stock, Vec<StockPrice>)| (stock, prices.pop()) ) // There should only be one element in here
-    //            .collect::<Vec<_>>()
-    //            .apply(Ok)
-    //    }
-
     pub fn get_stocks_belonging_to_user(
         user_uuid: Uuid,
         conn: &PgConnection,

@@ -5,3 +5,4 @@ backend/pgsql
 .idea
 db.logfile
 **/DS_Store
+frontend/build
