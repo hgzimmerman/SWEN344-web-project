@@ -4,7 +4,7 @@ use crate::{
     server_auth::secret_filter
 };
 
-use auth::{Secret};
+use authorization::{Secret};
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
 use hyper::Client;
@@ -95,6 +95,8 @@ pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
     }
 
     warp::any()
-        .and_then(move || get_conn_from_pool(&pool))
+        .and_then(move || -> Result<PooledConn, Rejection> {
+            get_conn_from_pool(&pool)
+        })
         .boxed()
 }

@@ -8,9 +8,9 @@ use std::{
     fmt::{self, Display},
 };
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
-use ::auth::AuthError;
-//use log::info;
+use authorization::AuthError;
 use log::error;
+use diesel::result::DatabaseErrorKind;
 
 /// Server-wide error variants.
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -18,7 +18,7 @@ pub enum Error {
     /// The database could not be reached, or otherwise is experiencing troubles running queries.
     DatabaseUnavailable,
     /// The database encountered an error while running a query.
-    DatabaseError(Option<String>),
+    DatabaseError(String),
     /// If the server needs to talk to an external API to properly serve a request,
     /// and that server experiences an error, this is the error to represent that.
     DependentConnectionFailed {
@@ -26,33 +26,18 @@ pub enum Error {
     },
     /// The server encountered an unspecified error.
     InternalServerError,
+    InternalServerErrorString(String),
     /// The requested entity could not be located.
     NotFound {
         type_name: String,
     },
     /// The request was bad.
     BadRequest,
-
+    /// The request was bad, with a dynamic reason.
+    BadRequestString(String),
+    /// The request was bad, with a reason.
+    BadRequestStr(&'static str),
     AuthError(AuthError),
-
-//    /// The used did not have privileges to access the given method.
-//    /// This can also be used for users that don't have a token, but it is required.
-//    // TODO the above use is out of date
-//    NotAuthorized {
-//        reason: &'static str,
-//    },
-//    /// Used to indicate that the signature does not match the hashed contents + secret
-//    IllegalToken,
-//    /// The expired field in the token is in the past
-//    ExpiredToken,
-//    /// The request did not have a token.
-//    MissingToken,
-//    /// The JWT 'bearer schema' was not followed.
-//    MalformedToken,
-//    DeserializeError,
-//    SerializeError,
-//    JwtDecodeError,
-//    JwtEncodeError,
 }
 
 impl Display for Error {
@@ -61,13 +46,12 @@ impl Display for Error {
             Error::DatabaseUnavailable => {
                 "Could not acquire a connection to the database, the connection pool may be occupied".to_string()
             }
-            Error::DatabaseError(e) => match e {
-                Some(s) => s.clone(),
-                None => "A problem occurred with the database".to_string(),
-            },
-
+            Error::DatabaseError(e) => e.to_string(),
             Error::BadRequest => "Your request is malformed".to_string(),
+            Error::BadRequestString(s)=> s.to_string(),
+            Error::BadRequestStr(s) => s.to_string(),
             Error::InternalServerError => "Internal server error encountered".to_string(),
+            Error::InternalServerErrorString(s) => s.to_string(),
             Error::DependentConnectionFailed{url} => format!("An internal request needed to serve the request failed. URL: {}",url),
             Error::NotFound { type_name } => {
                 format!("The resource ({})you requested could not be found", type_name)
@@ -126,7 +110,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
 
     use std::fmt::Write;
     let mut s: String = String::new();
-    let _ = write!(s, "{}", cause);
+    write!(s, "{}", cause).map_err(|_| Error::InternalServerError.reject())?;
 
     let error_response = ErrorResponse { message: s };
     let json = warp::reply::json(&error_response);
@@ -134,10 +118,12 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let code = match *cause {
         Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
         Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-
         Error::BadRequest => StatusCode::BAD_REQUEST,
+        Error::BadRequestString(_)=> StatusCode::BAD_REQUEST,
+        Error::BadRequestStr(_) => StatusCode::BAD_REQUEST,
         Error::NotFound { .. } => StatusCode::NOT_FOUND,
         Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::InternalServerErrorString(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
         Error::AuthError(ref auth_error) => {
             match *auth_error {
@@ -176,7 +162,16 @@ impl From<diesel::result::Error> for Error {
         use self::Error::*;
         use diesel::result::Error as DieselError;
         match error {
-            DieselError::DatabaseError(_, _) => DatabaseError(None), // todo flesh this one out a bit
+            DieselError::DatabaseError(e, _) => {
+                let e = match e {
+                    DatabaseErrorKind::ForeignKeyViolation => "A foreign key constraint was violated in the database",
+                    DatabaseErrorKind::SerializationFailure => "Value failed to serialize in the database",
+                    DatabaseErrorKind::UnableToSendCommand => "Database Protocol violation, possibly too many bound parameters",
+                    DatabaseErrorKind::UniqueViolation => "A unique constraint was violated in the database",
+                    DatabaseErrorKind::__Unknown => "An unknown error occurred in the database"
+                }.to_string();
+                DatabaseError(e)
+            }
             DieselError::NotFound => NotFound {
                 type_name: "not implemented".to_string(),
             },

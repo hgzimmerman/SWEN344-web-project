@@ -2,6 +2,7 @@
 use crate::api::API_STRING;
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
+use crate::error::Error;
 
 const ASSETS_DIRECTORY: &str = "../../frontend/app/static/"; // TODO Point this at the build directory for the frontend.
 
@@ -56,8 +57,7 @@ fn index_static_file_redirect(index_file_path: String) -> BoxedFilter<(impl Repl
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    //                    return Error::NotFound.reject()
-                    return Err(warp::reject::not_found()); // TODO maybe keep this in the Error Type
+                    return Err(Error::NotFound.reject);
                 }
             }
             Ok(file)

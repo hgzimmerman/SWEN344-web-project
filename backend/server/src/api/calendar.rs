@@ -80,7 +80,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             let new_event = e.into_new_event(user_uuid);
             // check logical ordering of start and stop times
             if new_event.start_at > new_event.stop_at {
-                Error::BadRequest.reject_result()
+                Error::BadRequestStr("Request can't start after it has ended.").reject_result()
             } else {
                 Event::create_event(new_event, &conn)
                     .map_err(Error::from_reject)
@@ -88,7 +88,6 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             }
         });
 
-    // TODO, do we want canceling events as well?
     let delete_event = warp::delete2()
         .and(path!(Uuid))
         .and(user_filter(state))
@@ -139,7 +138,7 @@ fn modify_event(
 ) -> Result<impl Reply, Rejection> {
     // check logical ordering of start and stop times
     if changeset.start_at > changeset.stop_at {
-        Error::BadRequest.reject_result() // TODO better error message.
+        Error::BadRequestStr("Request can't start after it has ended.").reject_result()
     } else {
         // Check if the user has authority to change the event.
         Event::get_event(changeset.uuid, &conn)

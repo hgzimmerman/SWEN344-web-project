@@ -1,4 +1,4 @@
-use auth::Secret;
+use authorization::Secret;
 use apply::Apply;
 use clap::{App, Arg};
 
