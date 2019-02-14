@@ -16,6 +16,7 @@ use std::{
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
 
 /// Server-wide error variants.
+/// These integrate tightly with the error rewriting infrastructure provided by `warp`.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Error {
     /// The database could not be reached, or otherwise is experiencing troubles running queries.
@@ -37,7 +38,7 @@ pub enum Error {
     /// Authorization - user may be authenticated, but still should not access the resource.
     /// This is synonymous with HTTP - Forbidden code.
     NotAuthorized {
-        reason: &'static str, // TODO make this a String
+        reason: String, // TODO make this a String
     },
 }
 
@@ -89,11 +90,16 @@ impl StdError for Error {
 }
 
 /// Takes a rejection, which Warp would otherwise handle in its own way, and transform it into
-/// an Ok(Reply) where the status is set to correspond to the provided error.
+/// an `Ok(Reply)` where the status is set to correspond to the provided error.
 ///
+/// # Note
 /// This only works if the Rejection is of the custom Error type. Any others will just fall through this unchanged.
 ///
 /// This should be used at the top level of the exposed api.
+///
+/// # Arguments
+/// * err - A `Rejection` that will be rewritten into an `ErrorResponse`.
+///
 pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let not_found = Error::NotFound {
         type_name: "route not found".to_string(),
@@ -189,6 +195,15 @@ impl Error {
         }
     }
 
+    /// Construct a not found error with the name of the type that could not be found.
+    #[allow(dead_code)]
+    pub fn not_authorized<T: ToString>(reason: T) -> Self {
+        Error::NotAuthorized {
+            reason: reason.to_string(),
+        }
+    }
+
+    /// Construct a connection failed error.
     pub fn connection_failed<T: ToString>(url: T) -> Self {
         Error::DependentConnectionFailed {
             url: url.to_string(),

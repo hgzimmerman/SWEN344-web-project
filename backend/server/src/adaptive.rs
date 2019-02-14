@@ -1,5 +1,6 @@
-//! [Self adaptive instructions section][http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
-
+//! API routes related to serving ads and recording health data about them.
+//! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
+//!
 use crate::error::Error;
 use hyper::{
     rt::{Future, Stream},
@@ -106,12 +107,12 @@ pub fn get_load() -> impl Future<Item = Load, Error = Error> {
 /// If the current server load exceeds what can be "served", then activate the dimmer (don't display the advertisement)
 ///
 /// # Arguments
-/// load_units - The current load across the "servers"
-/// available_servers - The number (out of 4) of servers that are available.
+/// * load_units - The current load across the "servers"
+/// * available_servers - The number (out of 4) of servers that are available.
 ///
 /// # Return
-/// True indicates that the server can serve an add.
-/// False indicates that the server cannot serve the add.
+/// * True indicates that the server can serve an add.
+/// * False indicates that the server cannot serve the add.
 pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> bool {
     const UNITS_PER_SERVER: u32 = 10;
     let available_capacity = available_servers.0 * UNITS_PER_SERVER;

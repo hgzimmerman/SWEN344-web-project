@@ -95,9 +95,8 @@ fn get_user_id_from_facebook(
         })
         .and_then(|res| {
             if res.status().is_client_error() {
-                Err(Error::NotAuthorized {
-                    reason: "Bad OAuth token",
-                })
+                Err(
+                    Error::not_authorized("Bad OAuth token"))
             } else {
                 Ok(res)
             }
