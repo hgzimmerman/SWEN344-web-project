@@ -36,8 +36,6 @@ use uuid::Uuid;
 // If it expires, they just log into facebook again.
 // When that second login takes place, the api or app checks if the user is the same
 
-// TODO this may have a name that is acquired when the user first logs in by requesting the name from the oauth provider, but it isn't strictly necessary.
-
 #[derive(Clone, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]

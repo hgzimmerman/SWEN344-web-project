@@ -13,6 +13,7 @@ use warp::{
     filters::{fs::File, BoxedFilter},
     path, Filter, Reply,
 };
+use warp::Rejection;
 
 /// Api for serving the advertisement.
 ///
@@ -32,7 +33,7 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::fs::file(".static/add/rit_add.png"))
         .and(state.db.clone())
         .and_then(
-            |servers: NumServers, load: Load, file: File, conn: PooledConn| {
+            |servers: NumServers, load: Load, file: File, conn: PooledConn| -> Result<File, Rejection> {
                 serve_add(servers, load, &conn)
                     .map(|_| file)
                     .map_err(|e| e.reject())
@@ -78,6 +79,6 @@ fn serve_add(available_servers: NumServers, load: Load, conn: &PooledConn) -> Re
     if should_send_advertisement {
         Ok(())
     } else {
-        Err(Error::InternalServerError) // TODO better error messages.
+        Err(Error::InternalServerErrorString("The server load was determined to be too high, and therefore the \"advertisement\" was not sent ".to_string()))
     }
 }

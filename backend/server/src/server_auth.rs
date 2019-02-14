@@ -8,7 +8,7 @@
 //!
 //!
 
-use auth::{
+use authorization::{
     Secret,
     AuthError
 };
@@ -20,8 +20,8 @@ use warp::Rejection;
 use crate::error::Error;
 use uuid::Uuid;
 use warp::Filter;
-use auth::JwtPayload;
-use auth::AUTHORIZATION_HEADER_KEY;
+use authorization::JwtPayload;
+use authorization::AUTHORIZATION_HEADER_KEY;
 
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
@@ -74,7 +74,7 @@ pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
 mod unit_test {
     use super::*;
     use crate::state::StateConfig;
-    use auth::BEARER;
+    use authorization::BEARER;
     use chrono::Duration;
 
     #[test]

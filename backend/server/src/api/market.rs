@@ -78,7 +78,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("performance"))
         .and(user_filter(s))
         .and(s.db.clone())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+        .and_then(|user_uuid: Uuid, conn: PooledConn| -> Result<Vec<UserStockResponse>, Rejection> {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
         })
@@ -89,7 +89,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                 .join(future::ok(stocks))
         })
         .untuple_one()
-        .map(|prices: Vec<f64>, stocks: Vec<UserStockResponse>| {
+        .map(|prices: Vec<f64>, stocks: Vec<UserStockResponse>| -> Vec<(UserStockResponse, f64)> {
             prices
                 .into_iter()
                 .zip(stocks)
@@ -153,9 +153,10 @@ fn transact(
 
     // Users can't sell more than they have.
     if -request.quantity > quantity {
-        Error::BadRequest.reject_result()?; // TODO find a better rejection message
+        let err = format!("Can't sell more stocks than you have. Owned: {}, Transaction: {}", quantity, request.quantity);
+        Error::BadRequestString(err)
+            .reject_result()?;
     }
-
 
 
     let new_stock_transaction = NewStockTransaction {
@@ -174,25 +175,27 @@ fn transact(
 
 fn get_current_price(stock_symbol: &str, client: &HttpsClient) -> impl Future<Item = f64, Error = Error> {
     let uri: Uri = format!("https://api.iextrading.com/1.0/stock/{}/price", stock_symbol).parse().unwrap();
+    let uri_copy_1 = uri.clone();
+    let uri_copy_2 = uri.clone();
     client
         .get(uri.clone())
         .and_then(|res| {
             res.into_body().concat2() // Await the whole body
         })
-        .map_err(move |_| {
+        .map_err( move |_| {
             Error::DependentConnectionFailed {
-                url: uri.to_string(),
+                url: uri_copy_1.to_string(),
             }
         })
-        .and_then(|chunk: Chunk| {
+        .and_then(move |chunk: Chunk| {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
             body.parse::<f64>()
-                .map_err(|_| crate::error::Error::InternalServerError)
+                .map_err(move |_| crate::error::Error::InternalServerErrorString(format!("Could not parse body of dependent connection: {}, body: {}", uri_copy_2.to_string(), body)))
         })
 }
 
-// TODO, this doesn't support getting an infinite number of stocks, as there is a finite limit on the size of a url string.
+// TODO, this doesn't support getting an arbitrary number of stocks, as there is a finite limit on the size of a url string.
 // This will need to make multiple requests in that case.
 fn get_current_prices(stock_symbols: &[&str], client: &HttpsClient) -> impl Future<Item = Vec<f64>, Error = Error> {
     let uri: Uri = format!("https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price", stock_symbols.join(",")).parse().unwrap();

@@ -93,7 +93,6 @@ impl Stock {
         )
     }
 
-    // TODO, move this to the server crate so it can have a reasonable quantity.
     pub fn create_transaction_safe(
         user_uuid: Uuid,
         new_transaction: NewStockTransaction,
@@ -102,7 +101,7 @@ impl Stock {
         let t = Self::get_user_transactions_for_stock(user_uuid, new_transaction.stock_uuid, conn)?;
         let quantity = t.iter().fold(0, |acc, st| acc + st.quantity);
         if new_transaction.quantity > quantity {
-            panic!() // can't have negative -> need a real error
+            panic!("can't have negative -> need a real error")
         } else {
             Stock::create_transaction(new_transaction, conn)
         }

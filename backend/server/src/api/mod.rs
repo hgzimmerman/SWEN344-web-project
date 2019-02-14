@@ -84,9 +84,9 @@ mod integration_test {
     };
 
     use crate::testing_fixtures::util::get_jwt;
-    use ::auth::Secret;
-    use ::auth::AUTHORIZATION_HEADER_KEY;
-    use ::auth::BEARER;
+    use authorization::Secret;
+    use authorization::AUTHORIZATION_HEADER_KEY;
+    use authorization::BEARER;
 
 
     #[test]
@@ -100,9 +100,6 @@ mod integration_test {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
-//            tokio::run(|| {
-//
-//            });
             let resp = warp::test::request()
                 .method("POST")
                 .path("/api/auth/login")

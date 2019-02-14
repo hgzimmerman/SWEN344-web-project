@@ -7,7 +7,7 @@ use crate::{
     error::Error,
     util,
 };
-use auth::{JwtPayload, Secret};
+use authorization::{JwtPayload, Secret};
 use crate::server_auth::user_filter;
 use db::user::{NewUser, User};
 use log::info;
@@ -90,7 +90,7 @@ fn get_user_id_from_facebook(oauth_token: &str, client: HttpsClient) -> impl Fut
         })
         .and_then(|res| {
             if res.status().is_client_error() {
-                Err(Error::AuthError(::auth::AuthError::NotAuthorized { reason: "Bad OAuth token"}))
+                Err(Error::AuthError(authorization::AuthError::NotAuthorized { reason: "Bad OAuth token"}))
             } else {
                 Ok(res)
             }
@@ -139,7 +139,7 @@ mod test {
         testing_fixtures::util::{deserialize, deserialize_string},
     };
 
-    use ::auth::{AUTHORIZATION_HEADER_KEY, BEARER};
+    use authorization::{AUTHORIZATION_HEADER_KEY, BEARER};
 
     #[test]
     fn login_works() {
