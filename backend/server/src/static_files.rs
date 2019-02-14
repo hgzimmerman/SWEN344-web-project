@@ -121,7 +121,5 @@ mod unit_test {
             Err(e) => e,
         };
         assert!(err.is_not_found())
-        //    let err = *err.into_cause::<Error>().expect("Should be a cause.");
-        //    assert_eq!(err, Error::NotFound)
     }
 }

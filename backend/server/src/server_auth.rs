@@ -40,11 +40,17 @@ where
 
 /// Brings the secret into scope.
 /// The secret is used to create and verify JWTs.
+///
+/// # Arguments
+/// * secret - The secret to be made available by the returned Filter.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any().map(move || secret.clone()).boxed()
 }
 
 /// If the user has a JWT, then the user has basic user privileges.
+///
+/// # Arguments
+/// * s - The state used to validate the JWT
 pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
     warp::any()
         .and(jwt_filter(s))
@@ -55,6 +61,9 @@ pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
 #[allow(dead_code)]
 /// Gets an Option<UserUuid> from the request.
 /// Returns Some(user_uuid) if the user has a valid JWT, and None otherwise.
+///
+/// # Arguments
+/// * s - The state used to validate the JWT.
 pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
     user_filter(s)
         .map(Some)

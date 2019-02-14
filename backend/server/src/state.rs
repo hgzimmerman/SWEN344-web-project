@@ -47,6 +47,7 @@ impl State {
             max_connections: conf.max_pool_size,
             ..Default::default()
         };
+
         let pool = init_pool(DATABASE_URL, pool_conf);
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, hyper::Body>(https);

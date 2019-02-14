@@ -74,6 +74,10 @@ fn get_user_id(
 }
 
 /// Gets the user id from facebook
+///
+/// # Arguments
+/// * oauth_token - The string representing the oauth access token granted from facebook.
+/// * client - The https client used to make the request.
 // TODO verify that this works.
 fn get_user_id_from_facebook(
     oauth_token: &str,

@@ -25,6 +25,9 @@ pub struct NewEventRequest {
 
 impl NewEventRequest {
     /// Attach the user uuid acquired from the JWT to create a NewEvent that can be inserted into the DB.
+    ///
+    /// # Arguments
+    /// * user_uuid - The UUID of the user to be combined with Self to create a NewEvent.
     fn into_new_event(self, user_uuid: Uuid) -> NewEvent {
         NewEvent {
             user_uuid,
@@ -127,6 +130,14 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 }
 
 /// Deletes the event after checking that it belongs to the user.
+/// First, it gets the event from the database, then it checks if the event belongs to the user,
+/// then it deletes the event.
+///
+/// # Arguments
+/// * event_uuid - The uuid of the event to be deleted.
+/// * user_uuid - The user's uuid.
+/// Used to validate that the user owns the event being modified.
+/// * conn - The connection to the database.
 fn delete_event(
     event_uuid: Uuid,
     user_uuid: Uuid,
@@ -145,6 +156,13 @@ fn delete_event(
         .map(util::json)
 }
 
+/// Modifies an existing event.
+///
+/// # Arguments
+/// * changeset - The changeset used to modify the event.
+/// * user_uuid - The user's uuid.
+/// Used to validate that the user owns the event being modified.
+/// * conn - The connection to the database.
 fn modify_event(
     changeset: EventChangeset,
     user_uuid: Uuid,

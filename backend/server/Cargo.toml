@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-warp = "0.1.11"
+warp = {version="0.1.13", features=["tls"]}
 apply = "0.2.2"
 clap = "2.32.0"
 log = "0.4.6"

@@ -44,14 +44,15 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .and(s.https.clone())
         .and(json_body_filter(10))
         .and_then(|client: HttpsClient, request: StockTransactionRequest| {
-            get_current_price(&request.symbol, &client) // Get the current price
+            // Get the current price from a remote source
+            get_current_price(&request.symbol, &client)
                 .join(future::ok::<_, Error>(request)) // Join in the request, so it isn't lost.
                 .map_err(Error::reject) // Handle errors.
         })
         .untuple_one()
         .and(user_filter(s))
         .and(s.db.clone())
-        .and_then(transact);
+        .and_then(transact); // Store the purchase/sale in the db
 
     let owned_stocks = warp::get2().and(user_filter(s)).and(s.db.clone()).and_then(
         |user_uuid: Uuid, conn: PooledConn| {
@@ -196,9 +197,7 @@ fn get_current_price(
         .and_then(|res| {
             res.into_body().concat2() // Await the whole body
         })
-        .map_err(move |_| Error::DependentConnectionFailed {
-            url: uri_copy_1.to_string(),
-        })
+        .map_err(move |_| Error::connection_failed(uri_copy_1))
         .and_then(move |chunk: Chunk| -> Result<f64, Error> {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
@@ -225,11 +224,12 @@ fn get_current_prices(
     .unwrap();
     info!("Getting current prices for: {}", uri);
 
-    // handle something like: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
+    // handle json in the form: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
     #[derive(Serialize, Deserialize, Debug)]
     struct Price {
         price: f64,
     }
+
     client
         .get(uri.clone())
         .and_then(|res| {

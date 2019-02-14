@@ -38,6 +38,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 /// A filter that is responsible for configuring everything that can be served.
 ///
+/// # Notes
 /// It is responsible for:
 /// * Routes the API
 /// * Handles file requests and redirections

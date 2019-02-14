@@ -34,8 +34,13 @@ fn main() {
     };
 
     let state = State::new(state_config);
-
     let routes = routes(&state);
 
-    warp::serve(routes).run(addr);
+    if config.tls_enabled {
+        warp::serve(routes)
+            .tls("tls/cert.pem", "tls/key.rsa") // TODO, actually get these keys.
+            .run(addr);
+    } else {
+        warp::serve(routes).run(addr);
+    }
 }

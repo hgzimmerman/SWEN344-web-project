@@ -1,3 +1,4 @@
+//! All database queries directly related to users are contained within this module.
 use crate::schema::{self, users};
 use diesel::{
     pg::PgConnection, query_dsl::QueryDsl, result::QueryResult, ExpressionMethods, Identifiable,
@@ -36,30 +37,37 @@ use uuid::Uuid;
 // If it expires, they just log into facebook again.
 // When that second login takes place, the api or app checks if the user is the same
 
+/// A struct representing all the columns in the `users` table.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[table_name = "users"]
 pub struct User {
+    /// The user's unique identifier within the application.
     pub uuid: Uuid,
-    pub client_id: String,
+    /// The user's unique identifier within facebook.
+    pub client_id: String, // TODO change name to user_id
 }
 
 /// Struct used to create new users.
 #[derive(Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct NewUser {
+    /// The user's unique identifier within facebook.
     pub client_id: String,
 }
 
 impl User {
+    /// Creates a user
     pub fn create_user(user: NewUser, conn: &PgConnection) -> QueryResult<User> {
         crate::util::create_row(schema::users::table, user, conn)
     }
 
+    /// Gets a user using its unique identifier.
     pub fn get_user(uuid: Uuid, conn: &PgConnection) -> QueryResult<User> {
         crate::util::get_row(schema::users::table, uuid, conn)
     }
 
+    /// Gets a user by the client id.
     pub fn get_user_by_client_id(client_id: &str, conn: &PgConnection) -> QueryResult<User> {
         users::table
             .filter(users::dsl::client_id.eq(client_id))

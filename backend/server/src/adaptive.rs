@@ -6,8 +6,10 @@ use hyper::{
     Chunk, Client, Uri,
 };
 
+/// The fictional load encountered by the servers.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Load(pub u32);
+/// The fictional number of servers currently available.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct NumServers(pub u32);
 

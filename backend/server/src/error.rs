@@ -119,10 +119,13 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let mut s: String = String::new();
     write!(s, "{}", cause).map_err(|_| Error::InternalServerError(None).reject())?;
 
-    let error_response = ErrorResponse { message: s };
+    let code: StatusCode = cause.error_code();
+    let error_response = ErrorResponse {
+        message: s,
+        canonical_reason: code.canonical_reason().unwrap_or_default()
+    };
     let json = warp::reply::json(&error_response);
 
-    let code: StatusCode = cause.error_code();
     Ok(warp::reply::with_status(json, code))
 }
 
@@ -189,6 +192,10 @@ impl Error {
     pub fn not_found<T: Into<String>>(type_name: T) -> Self {
         Error::NotFound {type_name: type_name.into()}
     }
+
+    pub fn connection_failed<T: ToString>(url: T) -> Self {
+        Error::DependentConnectionFailed {url: url.to_string()}
+    }
 }
 
 impl From<diesel::result::Error> for Error {
@@ -230,4 +237,5 @@ impl From<diesel::result::Error> for Error {
 #[derive(Serialize)]
 struct ErrorResponse {
     message: String,
+    canonical_reason: &'static str
 }

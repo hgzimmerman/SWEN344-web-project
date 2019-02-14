@@ -17,7 +17,7 @@ use warp::{
 /// Api for serving the advertisement.
 ///
 /// # Arguments
-/// state - State object reference required for accessing db connections, auth keys,
+/// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("advertisement")
@@ -37,7 +37,7 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
              file: File,
              conn: PooledConn|
              -> Result<File, Rejection> {
-                serve_add(servers, load, &conn)
+                determine_and_record_ad_serving(servers, load, &conn)
                     .map(|_| file)
                     .map_err(|e| e.reject())
             },
@@ -46,6 +46,10 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 }
 
 /// Api for accessing health information related to serving the advertisement.
+///
+/// # Arguments
+/// * state - State object reference required for accessing db connections, auth keys,
+/// and other stateful constructs.
 pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let all_health = warp::get2()
         .and(state.db.clone())
@@ -67,7 +71,16 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     path("health").and(all_health.or(last_week_health)).boxed()
 }
 
-fn serve_add(available_servers: NumServers, load: Load, conn: &PooledConn) -> Result<(), Error> {
+/// Determines if the add should be served and records the result.
+///
+/// # Arguments
+/// * available_servers - The number of servers that are available.
+/// * load - The "load" currently on those servers.
+/// * conn - The connection to the database.
+///
+/// # Note
+/// It returns Ok(()) if the add should be served, and throws an 500 internal server error if it can't be sent.
+fn determine_and_record_ad_serving(available_servers: NumServers, load: Load, conn: &PooledConn) -> Result<(), Error> {
     let should_send_advertisement = should_serve_adds(load, available_servers);
 
     let hr = NewHealthRecord {
@@ -82,6 +95,6 @@ fn serve_add(available_servers: NumServers, load: Load, conn: &PooledConn) -> Re
     if should_send_advertisement {
         Ok(())
     } else {
-        Err(Error::internal_server_error("The server load was determined to be too high, and therefore the \"advertisement\" was not sent "))
+        Err(Error::internal_server_error("The server load was determined to be too high, and therefore the \"advertisement\" was not sent."))
     }
 }
