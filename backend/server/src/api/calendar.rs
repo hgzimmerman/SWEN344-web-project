@@ -13,6 +13,7 @@ use pool::PooledConn;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{Filter, Rejection};
+use log::info;
 
 /// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -45,6 +46,7 @@ impl NewEventRequest {
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+    info!("Attaching Calendar Api");
     let get_events = warp::get2()
         .and(path!("events"))
         .and(path::end())

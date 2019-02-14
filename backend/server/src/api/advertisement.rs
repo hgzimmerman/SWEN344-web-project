@@ -13,13 +13,15 @@ use warp::{
     filters::{fs::File, BoxedFilter},
     path, Filter, Rejection, Reply,
 };
+use log::info;
 
 /// Api for serving the advertisement.
 ///
 /// # Arguments
 /// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+    info!("Attaching Ad Api");
     path("advertisement")
         .and(warp::get2())
         .and_then(|| {
@@ -51,6 +53,7 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+    info!("Attaching Health Api");
     let all_health = warp::get2()
         .and(state.db.clone())
         .and_then(|conn: PooledConn| {

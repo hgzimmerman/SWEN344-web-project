@@ -28,13 +28,14 @@ pub struct LoginRequest {
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+    info!("Attaching Auth api");
     let login = path!("login")
         .and(warp::post2())
         .and(util::json_body_filter(3))
         .and(state.https.clone())
         .and_then(|request: LoginRequest, client: HttpsClient| {
             // Resolve the client id using the login request
-            //            dbg!("Getting auth_api");
+            info!("Getting user id from oauth provider");
             get_user_id(&request.oauth_token, client).map_err(Error::reject)
         })
         .and(state.secret.clone())
@@ -83,6 +84,7 @@ fn get_user_id_from_facebook(
     oauth_token: &str,
     client: HttpsClient,
 ) -> impl Future<Item = String, Error = Error> {
+    info!("Making request to Facebook to get the user_id");
     let uri: Uri = format!("https://graph.facebook.com/me?access_token={}", oauth_token)
         .parse()
         .unwrap();
@@ -207,5 +209,4 @@ mod test {
             assert_eq!(user, fixture.user)
         });
     }
-
 }

@@ -12,7 +12,7 @@ use warp::{path, Filter};
 use self::calendar::calendar_api;
 use crate::{
     api::{
-        advertisement::{add_api, health_api},
+        advertisement::{ad_api, health_api},
         auth::auth_api,
         market::market_api,
     },
@@ -30,7 +30,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
-                .or(add_api(state))
+                .or(ad_api(state))
                 .or(health_api(state)),
         )
         .boxed()

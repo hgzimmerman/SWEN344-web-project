@@ -36,7 +36,7 @@ pub fn start() {
     let config = Config::parse_command_line_arguments();
     info!("{:#?}", config);
 
-    let localhost = [127, 0, 0, 1]; // TODO, make a config for the host address (Local - default, 0.0.0.0)
+    let localhost = [0, 0, 0, 0];
     let addr = (localhost, config.port);
 
     let state_config = StateConfig {

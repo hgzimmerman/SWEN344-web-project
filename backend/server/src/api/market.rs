@@ -39,6 +39,7 @@ pub struct StockTransactionRequest {
 /// s - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
+    info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
         .and(s.https.clone())
