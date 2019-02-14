@@ -10,6 +10,7 @@ use hyper_tls::HttpsConnector;
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
 
+/// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 
 /// State that is passed around to all of the api handlers.
