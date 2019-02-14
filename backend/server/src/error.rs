@@ -1,16 +1,19 @@
 //! Responsible for enumerating all the possible ways the server may encounter undesired states.
 //!
 //! It handles serializing these errors so that they can be consumed by the user of the api.
+//!
+//! Currently, this is tightly coupled to both Warp, Diesel, and Authorization.
+//! It likely should be broken off into its own crate with the warp-related functions allowed as a feature.
 use apply::Apply;
+use authorization::AuthError;
+use diesel::result::DatabaseErrorKind;
+use log::error;
 use serde::Serialize;
 use std::{
     error::Error as StdError,
     fmt::{self, Display},
 };
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
-use authorization::AuthError;
-use log::error;
-use diesel::result::DatabaseErrorKind;
 
 /// Server-wide error variants.
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -21,23 +24,21 @@ pub enum Error {
     DatabaseError(String),
     /// If the server needs to talk to an external API to properly serve a request,
     /// and that server experiences an error, this is the error to represent that.
-    DependentConnectionFailed {
-        url: String,
-    },
+    DependentConnectionFailed { url: String },
     /// The server encountered an unspecified error.
-    InternalServerError,
-    InternalServerErrorString(String),
+    InternalServerError(Option<String>),
     /// The requested entity could not be located.
-    NotFound {
-        type_name: String,
-    },
-    /// The request was bad.
-    BadRequest,
+    NotFound { type_name: String },
     /// The request was bad, with a dynamic reason.
-    BadRequestString(String),
-    /// The request was bad, with a reason.
-    BadRequestStr(&'static str),
+    BadRequest(String),
+    /// An error in authentication.
     AuthError(AuthError),
+    /// The user does not have access to a particular resource.
+    /// Authorization - user may be authenticated, but still should not access the resource.
+    /// This is synonymous with HTTP - Forbidden code.
+    NotAuthorized {
+        reason: &'static str, // TODO make this a String
+    },
 }
 
 impl Display for Error {
@@ -47,16 +48,18 @@ impl Display for Error {
                 "Could not acquire a connection to the database, the connection pool may be occupied".to_string()
             }
             Error::DatabaseError(e) => e.to_string(),
-            Error::BadRequest => "Your request is malformed".to_string(),
-            Error::BadRequestString(s)=> s.to_string(),
-            Error::BadRequestStr(s) => s.to_string(),
-            Error::InternalServerError => "Internal server error encountered".to_string(),
-            Error::InternalServerErrorString(s) => s.to_string(),
+            Error::BadRequest(s)=> s.to_string(),
+            Error::InternalServerError(s) => {
+                if let Some(e) = s {
+                    e.clone()
+                } else {
+                    "Internal server error encountered".to_string()
+                }
+            },
             Error::DependentConnectionFailed{url} => format!("An internal request needed to serve the request failed. URL: {}",url),
             Error::NotFound { type_name } => {
-                format!("The resource ({})you requested could not be found", type_name)
+                format!("The resource ({}) you requested could not be found", type_name)
             }
-
             Error::AuthError(auth_error) => match auth_error {
                 AuthError::DeserializeError => "Something could not be deserialized".to_string(),
                 AuthError::SerializeError => "Something could not be serialized".to_string(),
@@ -70,9 +73,9 @@ impl Display for Error {
                 AuthError::MissingToken => {
                     "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
                 }
-                AuthError::NotAuthorized { reason } => {
-                    format!("You are forbidden from accessing this resource. ({})", reason)
-                }
+            }
+            Error::NotAuthorized { reason } => {
+                format!("You are forbidden from accessing this resource. ({})", reason)
             }
         };
         write!(f, "{}", description)
@@ -95,7 +98,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let not_found = Error::NotFound {
         type_name: "route not found".to_string(),
     };
-    let internal_server = Error::InternalServerError;
+    let internal_server = Error::InternalServerError(None);
 
     let cause = match err.find_cause::<Error>() {
         Some(ok) => ok,
@@ -110,50 +113,86 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
 
     use std::fmt::Write;
     let mut s: String = String::new();
-    write!(s, "{}", cause).map_err(|_| Error::InternalServerError.reject())?;
+    write!(s, "{}", cause).map_err(|_| Error::InternalServerError(None).reject())?;
 
-    let error_response = ErrorResponse { message: s };
-    let json = warp::reply::json(&error_response);
-
-    let code = match *cause {
-        Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::BadRequest => StatusCode::BAD_REQUEST,
-        Error::BadRequestString(_)=> StatusCode::BAD_REQUEST,
-        Error::BadRequestStr(_) => StatusCode::BAD_REQUEST,
-        Error::NotFound { .. } => StatusCode::NOT_FOUND,
-        Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::InternalServerErrorString(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
-        Error::AuthError(ref auth_error) => {
-            match *auth_error {
-                AuthError::IllegalToken => StatusCode::UNAUTHORIZED,
-                AuthError::ExpiredToken => StatusCode::UNAUTHORIZED,
-                AuthError::MalformedToken => StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
-                AuthError::NotAuthorized { .. } => StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges
-                AuthError::MissingToken => StatusCode::UNAUTHORIZED,
-                AuthError::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
-                AuthError::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
-                AuthError::JwtDecodeError => StatusCode::UNAUTHORIZED,
-                AuthError::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
-            }
-        }
+    let code: StatusCode = cause.error_code();
+    let error_response = ErrorResponse {
+        message: s,
+        canonical_reason: code.canonical_reason().unwrap_or_default(),
     };
+    let json = warp::reply::json(&error_response);
 
     Ok(warp::reply::with_status(json, code))
 }
 
 impl Error {
+    /// Get the error code correlated with the status code.
+    fn error_code(&self) -> StatusCode {
+        match *self {
+            Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Error::NotFound { .. } => StatusCode::NOT_FOUND,
+            Error::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
+            Error::AuthError(ref auth_error) => {
+                match *auth_error {
+                    AuthError::IllegalToken => StatusCode::UNAUTHORIZED,
+                    AuthError::ExpiredToken => StatusCode::UNAUTHORIZED,
+                    AuthError::MalformedToken => StatusCode::UNAUTHORIZED, // Unauthorized is for requests that require authentication and the authentication is out of date or not present
+                    AuthError::MissingToken => StatusCode::UNAUTHORIZED,
+                    AuthError::DeserializeError => StatusCode::INTERNAL_SERVER_ERROR,
+                    AuthError::SerializeError => StatusCode::INTERNAL_SERVER_ERROR,
+                    AuthError::JwtDecodeError => StatusCode::UNAUTHORIZED,
+                    AuthError::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
+                }
+            }
+            Error::NotAuthorized { .. } => StatusCode::FORBIDDEN,
+        }
+    }
+
+    /// Reject an error into a Result `Err`.
+    /// This is useful under some circumstances when returning a specific error from within Warp.
     pub fn reject_result<T>(self) -> Result<T, Rejection> {
         Err(warp::reject::custom(self))
     }
 
+    /// Reject an error.
     pub fn reject(self) -> Rejection {
         warp::reject::custom(self)
     }
 
-    pub fn from_reject(error: diesel::result::Error) -> Rejection {
-        Error::from(error).apply(Self::reject)
+    /// Transform a compatible error and reject it.
+    pub fn from_reject<T: Into<Error>>(error: T) -> Rejection {
+        error.into().apply(Self::reject)
+    }
+
+    pub fn bad_request<T: Into<String>>(message: T) -> Self {
+        Error::BadRequest(message.into())
+    }
+    /// Construct an internal error with a custom message.
+    pub fn internal_server_error<T: Into<String>>(reason: T) -> Self {
+        Error::InternalServerError(Some(reason.into()))
+    }
+
+    /// Construct a generic internal error.
+    #[allow(dead_code)]
+    pub fn internal_server_error_empty() -> Self {
+        Error::InternalServerError(None)
+    }
+
+    /// Construct a not found error with the name of the type that could not be found.
+    #[allow(dead_code)]
+    pub fn not_found<T: Into<String>>(type_name: T) -> Self {
+        Error::NotFound {
+            type_name: type_name.into(),
+        }
+    }
+
+    pub fn connection_failed<T: ToString>(url: T) -> Self {
+        Error::DependentConnectionFailed {
+            url: url.to_string(),
+        }
     }
 }
 
@@ -164,12 +203,21 @@ impl From<diesel::result::Error> for Error {
         match error {
             DieselError::DatabaseError(e, _) => {
                 let e = match e {
-                    DatabaseErrorKind::ForeignKeyViolation => "A foreign key constraint was violated in the database",
-                    DatabaseErrorKind::SerializationFailure => "Value failed to serialize in the database",
-                    DatabaseErrorKind::UnableToSendCommand => "Database Protocol violation, possibly too many bound parameters",
-                    DatabaseErrorKind::UniqueViolation => "A unique constraint was violated in the database",
-                    DatabaseErrorKind::__Unknown => "An unknown error occurred in the database"
-                }.to_string();
+                    DatabaseErrorKind::ForeignKeyViolation => {
+                        "A foreign key constraint was violated in the database"
+                    }
+                    DatabaseErrorKind::SerializationFailure => {
+                        "Value failed to serialize in the database"
+                    }
+                    DatabaseErrorKind::UnableToSendCommand => {
+                        "Database Protocol violation, possibly too many bound parameters"
+                    }
+                    DatabaseErrorKind::UniqueViolation => {
+                        "A unique constraint was violated in the database"
+                    }
+                    DatabaseErrorKind::__Unknown => "An unknown error occurred in the database",
+                }
+                .to_string();
                 DatabaseError(e)
             }
             DieselError::NotFound => NotFound {
@@ -177,7 +225,7 @@ impl From<diesel::result::Error> for Error {
             },
             e => {
                 error!("{}", e);
-                InternalServerError
+                InternalServerError(None)
             }
         }
     }
@@ -187,4 +235,5 @@ impl From<diesel::result::Error> for Error {
 #[derive(Serialize)]
 struct ErrorResponse {
     message: String,
+    canonical_reason: &'static str,
 }

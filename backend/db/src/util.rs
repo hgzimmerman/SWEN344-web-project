@@ -1,3 +1,4 @@
+//! Provides generic helper functions for manipulating database rows.
 use diesel::{
     associations::HasTable,
     delete,
@@ -16,7 +17,7 @@ use diesel::{
 };
 use uuid::Uuid;
 
-
+/// Creates a row for an arbitrary table.
 pub fn create_row<Model, NewModel, Table, Values>(
     table: Table,
     model_to_insert: NewModel,
@@ -31,6 +32,7 @@ where
         .get_result::<Model>(connection)
 }
 
+/// Updates a generic row.
 #[inline(always)]
 pub fn update_row<Model, Chg, Tab>(
     table: Tab,

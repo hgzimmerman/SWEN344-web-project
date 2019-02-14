@@ -1,18 +1,26 @@
 //! This is a crate for wrapping common JWT functionality needed for securing information in a webapp.
 //! It is flexible in that it can support arbitrary payload subjects.
 
-use warp::{filters::BoxedFilter, Filter, Rejection};
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_qualifications
+)]
+
 use chrono::{Duration, NaiveDateTime};
 use frank_jwt::{decode, encode, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use warp::{filters::BoxedFilter, Filter};
 
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+/// Enumeration of all errors that can occur while authenticating.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AuthError {
-    NotAuthorized {
-        reason: &'static str,
-    },
     /// Used to indicate that the signature does not match the hashed contents + secret
     IllegalToken,
     /// The expired field in the token is in the past
@@ -21,9 +29,13 @@ pub enum AuthError {
     MissingToken,
     /// The JWT 'bearer schema' was not followed.
     MalformedToken,
+    /// Could not deserialize the base64 encoded JWT.
     DeserializeError,
+    /// Could not serialize the JWT to base64.
     SerializeError,
+    /// Could not decode the JWT.
     JwtDecodeError,
+    /// Could not encode the JWT.
     JwtEncodeError,
 }
 
@@ -38,9 +50,9 @@ pub struct JwtPayload<T> {
     pub exp: NaiveDateTime,
 }
 
-impl <T> JwtPayload<T>
+impl<T> JwtPayload<T>
 where
-    for<'de> T: Serialize + Deserialize<'de> + Send
+    for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     /// Creates a new token for the user that will expire after a specified time.
     ///
@@ -57,6 +69,7 @@ where
         }
     }
 
+    /// Gets the subject of the JWT payload.
     pub fn subject(self) -> T {
         self.sub
     }
@@ -104,7 +117,6 @@ where
         Ok(jwt)
     }
 
-
     /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
     pub fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload<T>, AuthError> {
         let authorization_words: Vec<String> =
@@ -120,7 +132,6 @@ where
 
         JwtPayload::decode_jwt_string(jwt_str, secret).map_err(|_| AuthError::IllegalToken)
     }
-
 }
 
 /// A string that acts like a key to validate JWT signatures.
@@ -128,21 +139,25 @@ where
 pub struct Secret(String);
 
 impl Secret {
+    /// Creates a new secret.
     pub fn new(s: &str) -> Self {
         Secret(s.to_string())
     }
 }
 
+/// The prefix before the encoded JWT in the header value that corresponds to the "Authorization" key.
 pub const BEARER: &str = "bearer";
+/// The key used in the header to map to the authentication data.
 pub const AUTHORIZATION_HEADER_KEY: &str = "Authorization";
 
 /// Brings the secret into scope.
 /// The secret is used to create and verify JWTs.
+///
+/// # Arguments
+/// secret - The secret that will be returned by the filter.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any().map(move || secret.clone()).boxed()
 }
-
-
 
 #[cfg(test)]
 mod test {

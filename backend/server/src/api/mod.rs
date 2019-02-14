@@ -12,7 +12,7 @@ use warp::{path, Filter};
 use self::calendar::calendar_api;
 use crate::{
     api::{
-        advertisement::{add_api, health_api},
+        advertisement::{ad_api, health_api},
         auth::auth_api,
         market::market_api,
     },
@@ -30,7 +30,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
-                .or(add_api(state))
+                .or(ad_api(state))
                 .or(health_api(state)),
         )
         .boxed()
@@ -38,6 +38,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 /// A filter that is responsible for configuring everything that can be served.
 ///
+/// # Notes
 /// It is responsible for:
 /// * Routes the API
 /// * Handles file requests and redirections
@@ -70,24 +71,19 @@ mod integration_test {
     use super::*;
     use crate::{state::State, testing_fixtures::user::UserFixture};
     use pool::Pool;
-    //    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 
     use crate::{
-        api::{auth::LoginRequest, calendar::NewEventMessage},
+        api::{auth::LoginRequest, calendar::NewEventRequest},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
-//    use ::auth::{ AUTHORIZATION_HEADER_KEY, BEARER};
     use db::{
         event::{Event, EventChangeset},
         user::User,
     };
 
     use crate::testing_fixtures::util::get_jwt;
-    use authorization::Secret;
-    use authorization::AUTHORIZATION_HEADER_KEY;
-    use authorization::BEARER;
-
+    use authorization::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
 
     #[test]
     fn test_login_works() {
@@ -146,7 +142,7 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -178,7 +174,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -220,7 +216,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -238,7 +234,7 @@ mod integration_test {
                 assert_eq!(resp.status(), 200);
 
                 // create another event in a week.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing a week from now".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
@@ -282,7 +278,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
@@ -302,7 +298,7 @@ mod integration_test {
                 assert_eq!(resp.status(), 200);
 
                 // create another event in a week.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing a week from now".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
@@ -347,7 +343,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -400,7 +396,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),

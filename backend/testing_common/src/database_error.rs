@@ -6,6 +6,7 @@ use self::DatabaseError::*;
 
 pub type DatabaseResult<T> = Result<T, DatabaseError>;
 
+/// Errors that can occur while setting up or operating the test database.
 #[derive(Debug)]
 pub enum DatabaseError {
     #[allow(dead_code)]

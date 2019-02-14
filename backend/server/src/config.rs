@@ -1,8 +1,10 @@
-use authorization::Secret;
 use apply::Apply;
 use clap::{App, Arg};
 
+use authorization::Secret;
+
 /// Configuration options for initializing the server.
+#[derive(Debug)]
 pub struct Config {
     /// The port to start the server on.
     pub port: u16,
@@ -64,7 +66,7 @@ impl Config {
         let max_pool_size: u32 = if let Some(size) = matches.value_of("max_pool_size") {
             size.parse().expect("Pool size must be an integer.")
         } else {
-            10
+            10 // There should be, by default, 10 database connections in the pool.
         };
         let max_pool_size = max_pool_size.apply(Some);
 

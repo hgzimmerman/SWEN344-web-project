@@ -1,3 +1,4 @@
+//! All database queries directly related to health metrics related to advertisement serving are contained within this module.
 use crate::schema::health;
 use chrono::NaiveDateTime;
 use diesel::{
@@ -10,23 +11,35 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Server health data.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize,
+)]
 #[primary_key(uuid)]
 #[table_name = "health"]
 pub struct HealthRecord {
+    /// Unique identifier
     uuid: Uuid,
+    /// The number of available servers.
     available_servers: i32,
+    /// The encountered load on the servers
     load: i32,
+    /// Did the server serve an advertisement under these conditions?
     did_serve: bool,
+    /// The time the health record was recorded.
     time_recorded: NaiveDateTime,
 }
 
-#[derive(Insertable, Debug, Serialize, Deserialize)]
+/// A struct that facilitates the creation of `health` rows.
+#[derive(Clone, Copy, Insertable, Debug, Serialize, Deserialize)]
 #[table_name = "health"]
 pub struct NewHealthRecord {
+    /// The number of available servers.
     pub available_servers: i32,
+    /// The encountered load on the servers
     pub load: i32,
+    /// Did the server serve an advertisement under these conditions?
     pub did_serve: bool,
+    /// The time the health record was recorded.
     pub time_recorded: NaiveDateTime,
 }
 
