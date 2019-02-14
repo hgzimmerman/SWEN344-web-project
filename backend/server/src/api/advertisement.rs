@@ -10,7 +10,7 @@ use db::health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
 use pool::PooledConn;
 use warp::{
-    filters::{fs::File, BoxedFilter},
+    filters::BoxedFilter,
     path, Filter, Rejection, Reply,
 };
 use log::info;
@@ -30,20 +30,19 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             let load = get_load().map_err(Error::reject);
             servers.join(load)
         })
-        .untuple_one()
-        .and(warp::fs::file(".static/add/rit_add.png")) // TODO, verify that this is correct
+        .untuple_one() // converts `(NumServers, Load)` to `NumServers, Load`
         .and(state.db.clone())
         .and_then(
             |servers: NumServers,
              load: Load,
-             file: File,
              conn: PooledConn|
-             -> Result<File, Rejection> {
+             -> Result<(), Rejection> {
                 determine_and_record_ad_serving(servers, load, &conn)
-                    .map(|_| file)
                     .map_err(|e| e.reject())
             },
         )
+        .untuple_one() // converts `()` to ``
+        .and(warp::fs::file(".static/ad/rit_ad.png")) // TODO, verify that this is correct
         .boxed()
 }
 
