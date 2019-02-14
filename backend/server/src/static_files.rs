@@ -4,7 +4,7 @@ use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
 use crate::error::Error;
 
-const ASSETS_DIRECTORY: &str = "../../frontend/app/static/"; // TODO Point this at the build directory for the frontend.
+const ASSETS_DIRECTORY: &str = "../../frontend/build/";
 
 /// Configuration object for setting up static files.
 pub struct FileConfig {
