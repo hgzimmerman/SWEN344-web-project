@@ -1,12 +1,11 @@
 //! This is a crate for wrapping common JWT functionality needed for securing information in a webapp.
 //! It is flexible in that it can support arbitrary payload subjects.
 
-use warp::{filters::BoxedFilter, Filter, Rejection};
 use chrono::{Duration, NaiveDateTime};
 use frank_jwt::{decode, encode, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-
+use warp::{filters::BoxedFilter, Filter, Rejection};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AuthError {
@@ -38,9 +37,9 @@ pub struct JwtPayload<T> {
     pub exp: NaiveDateTime,
 }
 
-impl <T> JwtPayload<T>
+impl<T> JwtPayload<T>
 where
-    for<'de> T: Serialize + Deserialize<'de> + Send
+    for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     /// Creates a new token for the user that will expire after a specified time.
     ///
@@ -104,7 +103,6 @@ where
         Ok(jwt)
     }
 
-
     /// Removes the jwt from the bearer string, and decodes it to determine if it was signed properly.
     pub fn extract_jwt(bearer_string: String, secret: &Secret) -> Result<JwtPayload<T>, AuthError> {
         let authorization_words: Vec<String> =
@@ -120,7 +118,6 @@ where
 
         JwtPayload::decode_jwt_string(jwt_str, secret).map_err(|_| AuthError::IllegalToken)
     }
-
 }
 
 /// A string that acts like a key to validate JWT signatures.
@@ -141,8 +138,6 @@ pub const AUTHORIZATION_HEADER_KEY: &str = "Authorization";
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any().map(move || secret.clone()).boxed()
 }
-
-
 
 #[cfg(test)]
 mod test {

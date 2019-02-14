@@ -16,7 +16,6 @@ use diesel::{
 };
 use uuid::Uuid;
 
-
 pub fn create_row<Model, NewModel, Table, Values>(
     table: Table,
     model_to_insert: NewModel,

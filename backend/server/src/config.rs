@@ -1,6 +1,7 @@
-use authorization::Secret;
 use apply::Apply;
 use clap::{App, Arg};
+
+use authorization::Secret;
 
 /// Configuration options for initializing the server.
 pub struct Config {

@@ -33,7 +33,7 @@ where
 
 /// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.
 #[allow(dead_code)]
-pub fn many_json_converts<T, U>(source: impl IntoIterator<Item=T>) -> impl Reply
+pub fn many_json_converts<T, U>(source: impl IntoIterator<Item = T>) -> impl Reply
 where
     U: From<T>,
     U: Serialize,

@@ -2,15 +2,15 @@
 //!
 //! It handles serializing these errors so that they can be consumed by the user of the api.
 use apply::Apply;
+use authorization::AuthError;
+use diesel::result::DatabaseErrorKind;
+use log::error;
 use serde::Serialize;
 use std::{
     error::Error as StdError,
     fmt::{self, Display},
 };
 use warp::{http::StatusCode, reject::Rejection, reply::Reply};
-use authorization::AuthError;
-use log::error;
-use diesel::result::DatabaseErrorKind;
 
 /// Server-wide error variants.
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -119,7 +119,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
         Error::DatabaseUnavailable => StatusCode::INTERNAL_SERVER_ERROR,
         Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         Error::BadRequest => StatusCode::BAD_REQUEST,
-        Error::BadRequestString(_)=> StatusCode::BAD_REQUEST,
+        Error::BadRequestString(_) => StatusCode::BAD_REQUEST,
         Error::BadRequestStr(_) => StatusCode::BAD_REQUEST,
         Error::NotFound { .. } => StatusCode::NOT_FOUND,
         Error::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
@@ -164,12 +164,21 @@ impl From<diesel::result::Error> for Error {
         match error {
             DieselError::DatabaseError(e, _) => {
                 let e = match e {
-                    DatabaseErrorKind::ForeignKeyViolation => "A foreign key constraint was violated in the database",
-                    DatabaseErrorKind::SerializationFailure => "Value failed to serialize in the database",
-                    DatabaseErrorKind::UnableToSendCommand => "Database Protocol violation, possibly too many bound parameters",
-                    DatabaseErrorKind::UniqueViolation => "A unique constraint was violated in the database",
-                    DatabaseErrorKind::__Unknown => "An unknown error occurred in the database"
-                }.to_string();
+                    DatabaseErrorKind::ForeignKeyViolation => {
+                        "A foreign key constraint was violated in the database"
+                    }
+                    DatabaseErrorKind::SerializationFailure => {
+                        "Value failed to serialize in the database"
+                    }
+                    DatabaseErrorKind::UnableToSendCommand => {
+                        "Database Protocol violation, possibly too many bound parameters"
+                    }
+                    DatabaseErrorKind::UniqueViolation => {
+                        "A unique constraint was violated in the database"
+                    }
+                    DatabaseErrorKind::__Unknown => "An unknown error occurred in the database",
+                }
+                .to_string();
                 DatabaseError(e)
             }
             DieselError::NotFound => NotFound {

@@ -1,8 +1,7 @@
 //! Responsible for serving static files and redirecting non-'/api/' requests to index.html.
-use crate::api::API_STRING;
+use crate::{api::API_STRING, error::Error};
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
-use crate::error::Error;
 
 const ASSETS_DIRECTORY: &str = "../../frontend/build/";
 
@@ -57,7 +56,10 @@ fn index_static_file_redirect(index_file_path: String) -> BoxedFilter<(impl Repl
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    return Err(Error::NotFound.reject);
+                    return Err(Error::NotFound {
+                        type_name: "File".to_string(),
+                    }
+                    .reject());
                 }
             }
             Ok(file)
@@ -122,4 +124,3 @@ mod unit_test {
         //    assert_eq!(err, Error::NotFound)
     }
 }
-

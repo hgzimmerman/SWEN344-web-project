@@ -8,28 +8,18 @@
 //!
 //!
 
-use authorization::{
-    Secret,
-    AuthError
-};
-use warp::filters::BoxedFilter;
-use crate::state::State;
-use serde::Serialize;
-use serde::Deserialize;
-use warp::Rejection;
-use crate::error::Error;
+use crate::{error::Error, state::State};
+use authorization::{AuthError, JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use warp::Filter;
-use authorization::JwtPayload;
-use authorization::AUTHORIZATION_HEADER_KEY;
-
+use warp::{filters::BoxedFilter, Filter, Rejection};
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 ///
 pub fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
 where
-    for <'de> T: Serialize + Deserialize<'de> + Send
+    for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| {
@@ -56,7 +46,10 @@ pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
 
 /// If the user has a JWT, then the user has basic user privileges.
 pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
-    warp::any().and(jwt_filter(s)).map(JwtPayload::subject).boxed()
+    warp::any()
+        .and(jwt_filter(s))
+        .map(JwtPayload::subject)
+        .boxed()
 }
 
 #[allow(dead_code)]
@@ -82,7 +75,7 @@ mod unit_test {
         let secret = Secret::new("yeet");
         let conf = StateConfig {
             secret: Some(secret.clone()),
-            max_pool_size: None
+            max_pool_size: None,
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
@@ -91,11 +84,9 @@ mod unit_test {
 
         let filter = jwt_filter::<Uuid>(&state);
 
-        assert!(
-            warp::test::request()
-                .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                .matches(&filter)
-        )
+        assert!(warp::test::request()
+            .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+            .matches(&filter))
     }
 
     #[test]
@@ -103,15 +94,12 @@ mod unit_test {
         let secret = Secret::new("yeet");
         let conf = StateConfig {
             secret: Some(secret.clone()),
-            max_pool_size: None
+            max_pool_size: None,
         };
 
         let state = State::new(conf);
         let filter = jwt_filter::<Uuid>(&state);
-        assert!(
-            !warp::test::request()
-                .matches(&filter)
-        )
+        assert!(!warp::test::request().matches(&filter))
     }
 
 }

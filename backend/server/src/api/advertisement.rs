@@ -11,9 +11,8 @@ use futures::future::Future;
 use pool::PooledConn;
 use warp::{
     filters::{fs::File, BoxedFilter},
-    path, Filter, Reply,
+    path, Filter, Rejection, Reply,
 };
-use warp::Rejection;
 
 /// Api for serving the advertisement.
 ///
@@ -33,7 +32,11 @@ pub fn add_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::fs::file(".static/add/rit_add.png"))
         .and(state.db.clone())
         .and_then(
-            |servers: NumServers, load: Load, file: File, conn: PooledConn| -> Result<File, Rejection> {
+            |servers: NumServers,
+             load: Load,
+             file: File,
+             conn: PooledConn|
+             -> Result<File, Rejection> {
                 serve_add(servers, load, &conn)
                     .map(|_| file)
                     .map_err(|e| e.reject())

@@ -1,17 +1,14 @@
 //! Represents the shared server resources that all requests may utilize.
-use crate::{
-    error::Error,
-    server_auth::secret_filter
-};
+use crate::{error::Error, server_auth::secret_filter};
 
-use authorization::{Secret};
+use authorization::Secret;
+use hyper::{
+    client::{connect::dns::GaiResolver, HttpConnector},
+    Body, Client,
+};
+use hyper_tls::HttpsConnector;
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
-use hyper::Client;
-use hyper_tls::HttpsConnector;
-use hyper::client::HttpConnector;
-use hyper::client::connect::dns::GaiResolver;
-use hyper::Body;
 
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 
@@ -27,7 +24,7 @@ pub struct State {
     /// The secret key.
     pub secret: BoxedFilter<(Secret,)>,
     /// Https client
-    pub https: BoxedFilter<(HttpsClient,)>
+    pub https: BoxedFilter<(HttpsClient,)>,
 }
 
 /// Configuration object for creating the state.
@@ -52,13 +49,12 @@ impl State {
         };
         let pool = init_pool(DATABASE_URL, pool_conf);
         let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder()
-        .build::<_, hyper::Body>(https);
+        let client = Client::builder().build::<_, hyper::Body>(https);
 
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
-            https: http_filter(client)
+            https: http_filter(client),
         }
     }
 
@@ -69,21 +65,19 @@ impl State {
         use std::time::Duration;
         let https = HttpsConnector::new(1).unwrap();
         let client = Client::builder()
-            .keep_alive_timeout(Some(Duration::new(12,0)))
+            .keep_alive_timeout(Some(Duration::new(12, 0)))
             .build::<_, hyper::Body>(https);
 
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
-            https: http_filter(client)
+            https: http_filter(client),
         }
     }
 }
 
 pub fn http_filter(client: HttpsClient) -> BoxedFilter<(HttpsClient,)> {
-    warp::any()
-        .map(move || client.clone())
-        .boxed()
+    warp::any().map(move || client.clone()).boxed()
 }
 
 /// Filter that exposes connections to the database to individual filter requests
@@ -95,8 +89,6 @@ pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
     }
 
     warp::any()
-        .and_then(move || -> Result<PooledConn, Rejection> {
-            get_conn_from_pool(&pool)
-        })
+        .and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
         .boxed()
 }

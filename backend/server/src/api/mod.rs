@@ -77,17 +77,14 @@ mod integration_test {
         api::{auth::LoginRequest, calendar::NewEventMessage},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
-//    use ::auth::{ AUTHORIZATION_HEADER_KEY, BEARER};
+    //    use ::auth::{ AUTHORIZATION_HEADER_KEY, BEARER};
     use db::{
         event::{Event, EventChangeset},
         user::User,
     };
 
     use crate::testing_fixtures::util::get_jwt;
-    use authorization::Secret;
-    use authorization::AUTHORIZATION_HEADER_KEY;
-    use authorization::BEARER;
-
+    use authorization::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
 
     #[test]
     fn test_login_works() {

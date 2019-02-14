@@ -3,9 +3,9 @@ use log::LevelFilter;
 
 mod adaptive;
 mod api;
-mod server_auth;
 mod config;
 mod error;
+mod server_auth;
 mod state;
 mod static_files;
 #[cfg(test)]

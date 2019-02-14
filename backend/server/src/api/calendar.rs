@@ -2,16 +2,17 @@
 use crate::state::State;
 use warp::{filters::BoxedFilter, path, Reply};
 
-use crate::util::json_body_filter;
-use db::event::{Event, NewEvent};
-use pool::PooledConn;
-use warp::Filter;
-use crate::{server_auth::user_filter, error::Error, util};
+use crate::{
+    error::Error,
+    server_auth::user_filter,
+    util::{self, json_body_filter},
+};
 use chrono::NaiveDateTime;
-use db::event::EventChangeset;
+use db::event::{Event, EventChangeset, NewEvent};
+use pool::PooledConn;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use warp::Rejection;
+use warp::{Filter, Rejection};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewEventMessage {
@@ -33,14 +34,12 @@ impl NewEventMessage {
     }
 }
 
-
 /// Calendar api.
 ///
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    // TODO take optional query parameters for month and year
     let get_events = warp::get2()
         .and(path!("events"))
         .and(path::end())
@@ -51,6 +50,19 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(Error::from_reject)
                 .map(util::json)
         });
+
+    // TODO take optional query parameters for month and year
+    //    let get_events = warp::get2()
+    //        .and(path!("events" / u32))
+    //        .and(path::end())
+    //        .and(user_filter(state))
+    //        .and(state.db.clone())
+    //        .and_then(|month_index: u32, user_uuid: Uuid, conn: PooledConn| -> Result<impl Reply, Rejection> {
+    ////            Event::events(user_uuid, &conn)
+    ////                .map_err(Error::from_reject)
+    ////                .map(util::json)
+    //            unimplemented!()
+    //        });
 
     let events_today = warp::get2()
         .and(path!("events" / "today"))
@@ -154,4 +166,3 @@ fn modify_event(
             .map(util::json)
     }
 }
-
