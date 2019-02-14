@@ -35,11 +35,13 @@ pub enum Error {
     },
     /// The request was bad, with a dynamic reason.
     BadRequest(String),
-    /// An error in authorization
+    /// An error in authentication.
     AuthError(AuthError),
     /// The user does not have access to a particular resource.
+    /// Authorization - user may be authenticated, but still should not access the resource.
+    /// This is synonymous with HTTP - Forbidden code.
     NotAuthorized {
-        reason: &'static str,
+        reason: &'static str, // TODO make this a String
     },
 }
 
@@ -75,7 +77,6 @@ impl Display for Error {
                 AuthError::MissingToken => {
                     "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
                 }
-
             }
             Error::NotAuthorized { reason } => {
                 format!("You are forbidden from accessing this resource. ({})", reason)
@@ -149,20 +150,24 @@ impl Error {
                     AuthError::JwtEncodeError => StatusCode::INTERNAL_SERVER_ERROR,
                 }
             }
-            Error::NotAuthorized { .. } => StatusCode::FORBIDDEN, // Forbidden is for requests that will not served due to a lack of privileges, eg resource does not belong to a user.
+            Error::NotAuthorized { .. } => StatusCode::FORBIDDEN,
         }
     }
 
+    /// Reject an error into a Result `Err`.
+    /// This is useful under some circumstances when returning a specific error from within Warp.
     pub fn reject_result<T>(self) -> Result<T, Rejection> {
         Err(warp::reject::custom(self))
     }
 
+    /// Reject an error.
     pub fn reject(self) -> Rejection {
         warp::reject::custom(self)
     }
 
-    pub fn from_reject(error: diesel::result::Error) -> Rejection {
-        Error::from(error).apply(Self::reject)
+    /// Transform a compatible error and reject it.
+    pub fn from_reject<T: Into<Error>>(error: T) -> Rejection {
+        error.into().apply(Self::reject)
     }
 
     pub fn bad_request<T: Into<String>>(message: T) -> Self {
