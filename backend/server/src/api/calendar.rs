@@ -147,7 +147,9 @@ fn delete_event(
         .map_err(Error::from)
         .and_then(|event: Event| {
             if event.user_uuid != user_uuid {
-                Err(Error::NotAuthorized {reason: "User UUIDs do not match"})
+                Err(Error::NotAuthorized {
+                    reason: "User UUIDs do not match",
+                })
             } else {
                 Event::delete_event(event_uuid, &conn).map_err(Error::from)
             }
@@ -177,7 +179,9 @@ fn modify_event(
             .map_err(Error::from)
             .and_then(|event: Event| {
                 if event.user_uuid != user_uuid {
-                    Err(Error::NotAuthorized {reason: "User UUIDs do not match"})
+                    Err(Error::NotAuthorized {
+                        reason: "User UUIDs do not match",
+                    })
                 } else {
                     Event::change_event(changeset, &conn).map_err(Error::from)
                 }

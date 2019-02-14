@@ -26,9 +26,8 @@ use crate::{
     config::Config,
     state::{State, StateConfig},
 };
-use log::info;
 use env_logger::Builder as LoggerBuilder;
-use log::LevelFilter;
+use log::{info, LevelFilter};
 
 /// parses the command line arguments and starts the server.
 pub fn start() {

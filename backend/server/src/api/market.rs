@@ -21,9 +21,9 @@ use futures::{
     stream::Stream,
 };
 use hyper::{Chunk, Uri};
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use log::info;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -242,11 +242,15 @@ fn get_current_prices(
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
             serde_json::from_str::<HashMap<String, Price>>(&body)
-                .map(|r|  {
+                .map(|r| {
                     info!("Get current prices: {:#?}", r);
                     r.values().map(|v| v.price).collect()
                 })
-                .map_err(|_| crate::error::Error::internal_server_error("Could not get current prices".to_string()))
+                .map_err(|_| {
+                    crate::error::Error::internal_server_error(
+                        "Could not get current prices".to_string(),
+                    )
+                })
         })
 }
 

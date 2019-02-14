@@ -24,15 +24,11 @@ pub enum Error {
     DatabaseError(String),
     /// If the server needs to talk to an external API to properly serve a request,
     /// and that server experiences an error, this is the error to represent that.
-    DependentConnectionFailed {
-        url: String,
-    },
+    DependentConnectionFailed { url: String },
     /// The server encountered an unspecified error.
     InternalServerError(Option<String>),
     /// The requested entity could not be located.
-    NotFound {
-        type_name: String,
-    },
+    NotFound { type_name: String },
     /// The request was bad, with a dynamic reason.
     BadRequest(String),
     /// An error in authentication.
@@ -122,16 +118,14 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let code: StatusCode = cause.error_code();
     let error_response = ErrorResponse {
         message: s,
-        canonical_reason: code.canonical_reason().unwrap_or_default()
+        canonical_reason: code.canonical_reason().unwrap_or_default(),
     };
     let json = warp::reply::json(&error_response);
 
     Ok(warp::reply::with_status(json, code))
 }
 
-
 impl Error {
-
     /// Get the error code correlated with the status code.
     fn error_code(&self) -> StatusCode {
         match *self {
@@ -190,11 +184,15 @@ impl Error {
     /// Construct a not found error with the name of the type that could not be found.
     #[allow(dead_code)]
     pub fn not_found<T: Into<String>>(type_name: T) -> Self {
-        Error::NotFound {type_name: type_name.into()}
+        Error::NotFound {
+            type_name: type_name.into(),
+        }
     }
 
     pub fn connection_failed<T: ToString>(url: T) -> Self {
-        Error::DependentConnectionFailed {url: url.to_string()}
+        Error::DependentConnectionFailed {
+            url: url.to_string(),
+        }
     }
 }
 
@@ -237,5 +235,5 @@ impl From<diesel::result::Error> for Error {
 #[derive(Serialize)]
 struct ErrorResponse {
     message: String,
-    canonical_reason: &'static str
+    canonical_reason: &'static str,
 }

@@ -92,8 +92,11 @@ pub fn get_load() -> impl Future<Item = Load, Error = Error> {
         .and_then(|chunk: Chunk| {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
-            body.parse::<u32>()
-                .map_err(|_| crate::error::Error::internal_server_error("Could not parse u32 from load".to_string()))
+            body.parse::<u32>().map_err(|_| {
+                crate::error::Error::internal_server_error(
+                    "Could not parse u32 from load".to_string(),
+                )
+            })
         })
         .map(Load)
 }

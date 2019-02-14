@@ -51,7 +51,6 @@ pub struct NewStock {
     pub stock_name: String,
 }
 
-
 /// Struct to represent a row in the `stock_transactions` table.
 /// A stock transaction records how much of a given stock a user purchases or sells at discrete times and prices.
 #[derive(

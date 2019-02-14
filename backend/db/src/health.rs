@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Server health data.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize,
+)]
 #[primary_key(uuid)]
 #[table_name = "health"]
 pub struct HealthRecord {

@@ -14,7 +14,6 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-
 /// A struct that represents a row in the `events` table.
 #[derive(Clone, Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[primary_key(uuid)]

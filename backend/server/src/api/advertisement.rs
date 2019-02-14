@@ -80,7 +80,11 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 ///
 /// # Note
 /// It returns Ok(()) if the add should be served, and throws an 500 internal server error if it can't be sent.
-fn determine_and_record_ad_serving(available_servers: NumServers, load: Load, conn: &PooledConn) -> Result<(), Error> {
+fn determine_and_record_ad_serving(
+    available_servers: NumServers,
+    load: Load,
+    conn: &PooledConn,
+) -> Result<(), Error> {
     let should_send_advertisement = should_serve_adds(load, available_servers);
 
     let hr = NewHealthRecord {
