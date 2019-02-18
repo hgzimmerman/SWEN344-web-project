@@ -11,11 +11,6 @@ import FormGroup from '@material-ui/core/FormGroup';
 import Menu from '@material-ui/core/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import MenuItem from '@material-ui/core/MenuItem';
-//
-//
-// import MenuItem from '@material-ui/core/MenuItem';
-// import Divider from '@material-ui/core/Divider';
-// import {Toolbar, ToolbarGroup, ToolbarSeparator} from '@material-ui/core/Toolbar';
 
 export default class CustomNavbar extends React.Component {
   state = {
