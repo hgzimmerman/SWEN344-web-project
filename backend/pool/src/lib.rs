@@ -19,7 +19,7 @@ use std::time::Duration;
 
 /// The URL used for connecting to the database.
 /// Sourced via an environment variable.
-/// It should be in the postgres formate.
+/// It should be in the postgres format.
 pub const DATABASE_URL: &'static str = env!("DATABASE_URL");
 
 /// Holds a bunch of connections to the database and hands them out to routes as needed.

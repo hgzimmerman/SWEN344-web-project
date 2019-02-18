@@ -3,8 +3,8 @@ Team 3: Beltran Caliz, Sadaf Chowdhury, Dylan Forrest, John King, Henry Zimmerma
 
 ### At least 10 use cases
 
-1. Create Facebook/twitter statuses.
-2. Look at Facebook/twitter statuses.
+1. Create Facebook statuses.
+2. Look at Facebook statuses.
 3. Create Calendar events.
 4. See upcoming Calendar events.
 5. Modify Calendar events.
