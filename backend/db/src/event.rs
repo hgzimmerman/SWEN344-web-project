@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// A struct that represents a row in the `events` table.
+///
+/// # Note
+/// The times associated with `Events` are created using UTC.
 #[derive(Clone, Debug, Identifiable, Queryable, Associations, Serialize, Deserialize)]
 #[primary_key(uuid)]
 #[belongs_to(User, foreign_key = "user_uuid")]
