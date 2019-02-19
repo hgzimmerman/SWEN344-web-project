@@ -3,7 +3,7 @@ use crate::state::State;
 use serde::{Deserialize, Serialize};
 use warp::{filters::BoxedFilter, Reply};
 
-use crate::{error::Error, server_auth::user_filter, state::HttpsClient, util};
+use crate::{error::Error, state::HttpsClient, util};
 use apply::Apply;
 use authorization::{JwtPayload, Secret};
 use chrono::Duration;
@@ -12,7 +12,6 @@ use futures::{stream::Stream, Future};
 use hyper::{Chunk, Uri};
 use log::info;
 use pool::PooledConn;
-use uuid::Uuid;
 use warp::{path, Filter, Rejection};
 
 /// A request to log in to the system.
@@ -42,18 +41,8 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.db.clone())
         .and_then(get_or_create_user);
 
-    // TODO maybe move this not under the auth/ route
-    let user = path!("user")
-        .and(user_filter(state))
-        .and(state.db.clone())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| {
-            User::get_user(user_uuid, &conn)
-                .map_err(Error::from)
-                .map_err(Error::reject)
-                .map(util::json)
-        });
 
-    path!("auth").and(login.or(user)).boxed()
+    path!("auth").and(login).boxed()
 }
 
 pub const TEST_CLIENT_ID: &str = "test client id";

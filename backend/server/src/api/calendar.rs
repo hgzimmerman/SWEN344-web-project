@@ -52,7 +52,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Calendar Api");
     // Get all events in the NewEventRequest format.
     let export_events = warp::get2()
-        .and(path!("events"))
+        .and(path!("events/export"))
         .and(path::end())
         .and(user_filter(state))
         .and(state.db.clone())

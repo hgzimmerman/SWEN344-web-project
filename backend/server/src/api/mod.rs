@@ -3,6 +3,7 @@ mod advertisement;
 pub(crate) mod auth;
 mod calendar;
 mod market;
+mod user;
 
 use warp::{filters::BoxedFilter, Reply};
 
@@ -15,6 +16,7 @@ use crate::{
         advertisement::{ad_api, health_api},
         auth::auth_api,
         market::market_api,
+        user::user_api
     },
     static_files::{static_files_handler, FileConfig},
 };
@@ -31,7 +33,8 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .or(calendar_api(state))
                 .or(auth_api(state))
                 .or(ad_api(state))
-                .or(health_api(state)),
+                .or(health_api(state))
+                .or(user_api(state)),
         )
         .boxed()
 }
