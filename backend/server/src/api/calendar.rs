@@ -47,6 +47,7 @@ impl NewEventRequest {
 /// and other stateful constructs.
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Calendar Api");
+    // Get all events
     let get_events = warp::get2()
         .and(path!("events"))
         .and(path::end())
@@ -54,6 +55,19 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events(user_uuid, &conn)
+                .map_err(Error::from_reject)
+                .map(util::json)
+        });
+
+    let import_events = warp::post2()
+        .and(path!("events/import"))
+        .and(path::end())
+        .and(json_body_filter(350)) // you can import a bunch 'o events
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .and_then(|events: Vec<NewEventRequest>, user_uuid: Uuid, conn: PooledConn| {
+            let events = events.into_iter().map(|e| e.into_new_event(user_uuid)).collect::<Vec<_>>();
+            Event::import_events(events, &conn)
                 .map_err(Error::from_reject)
                 .map(util::json)
         });
@@ -122,6 +136,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let events = path!("event").and(
         get_events
             .or(create_event)
+            .or(import_events)
             .or(events_today)
             .or(events_month)
             .or(delete_event)

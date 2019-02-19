@@ -107,6 +107,19 @@ impl Event {
             .into_boxed()
     }
 
+    /// Allows the creation of many events at a time.
+    pub fn import_events(new_events: Vec<NewEvent>, conn: &PgConnection) -> QueryResult<()> {
+        new_events.chunks(20_000)
+            .map(move |chunk| {
+                diesel::insert_into(events::table)
+                    .values(chunk)
+                    .execute(conn)
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .map(|_| ())
+
+    }
+
     /// Returns every event that belongs to a given user.
     pub fn events(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
         Self::user_events(user_uuid).load::<Event>(conn)
