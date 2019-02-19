@@ -16,6 +16,7 @@ use warp::{Filter, Rejection};
 use log::info;
 use db::event::MonthIndex;
 use db::event::Year;
+use apply::Apply;
 
 /// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -55,7 +56,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path::end())
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+        .map(|user_uuid: Uuid, conn: PooledConn| -> Result<Vec<NewEventRequest>, diesel::result::Error> {
             Event::events(user_uuid, &conn)
                 .map(|events| {
                     events
@@ -70,9 +71,8 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                         })
                         .collect::<Vec<_>>()
                 })
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
+        })
+        .and_then(util::json_or_reject);
 
     let import_events = warp::post2()
         .and(path!("events/import"))
@@ -80,28 +80,30 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(json_body_filter(350)) // you can import a bunch 'o events
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(|events: Vec<NewEventRequest>, user_uuid: Uuid, conn: PooledConn| {
-            let events = events.into_iter().map(|e| e.into_new_event(user_uuid)).collect::<Vec<_>>();
+        .map(|events: Vec<NewEventRequest>, user_uuid: Uuid, conn: PooledConn| -> Result<(), diesel::result::Error>{
+            let events = events
+                .into_iter()
+                .map(|e| e.into_new_event(user_uuid))
+                .collect::<Vec<_>>();
             Event::import_events(events, &conn)
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
+        })
+        .and_then(util::json_or_reject);
 
-    // TODO take optional query parameters for month and year
-        let get_events_custom_month_and_year = warp::get2()
-            .and(path!("events" / i32 / u32))
-            .and(path::end())
-            .and(user_filter(state))
-            .and(state.db.clone())
-            .and_then(|year: i32, month_index: u32, user_uuid: Uuid, conn: PooledConn| {
-                let month_index = MonthIndex::from_1_indexed_u32(month_index)
-                    .ok_or_else(|| Error::bad_request("Month index is out of bounds (needs 1-12)").reject())?;
-                let year = Year::from_i32(year)
-                    .ok_or_else(|| Error::bad_request("Year is not within reasonable bounds").reject())?;
-                Event::events_for_any_month(month_index, year, user_uuid, &conn)
-                    .map_err(Error::from_reject)
-                    .map(util::json)
-            });
+    let get_events_custom_month_and_year = warp::get2()
+        .and(path!("events" / i32 / u32)) // "events", year, month
+        .and(path::end())
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .map(|year: i32, month_index: u32, user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, Error> {
+            let month_index = MonthIndex::from_1_indexed_u32(month_index)
+                .ok_or_else(|| Error::bad_request("Month index is out of bounds (needs 1-12)"))?;
+            let year = Year::from_i32(year)
+                .ok_or_else(|| Error::bad_request("Year is not within reasonable bounds"))?;
+            Event::events_for_any_month(month_index, year, user_uuid, &conn)
+                .map_err(Error::from)
+        })
+        .and_then(util::json_or_reject);
+
 
     // Events Today
     let events_today = warp::get2()
@@ -119,27 +121,26 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("events" / "month"))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| {
+        .map(|user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, diesel::result::Error>{
             Event::events_month(user_uuid, &conn)
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
+        })
+        .and_then(util::json_or_reject);
 
     let create_event = warp::post2()
         .and(json_body_filter(50))
         .and(user_filter(state))
         .and(state.db.clone())
-        .and_then(|e: NewEventRequest, user_uuid: Uuid, conn: PooledConn| {
+        .map(|e: NewEventRequest, user_uuid: Uuid, conn: PooledConn| {
             let new_event = e.into_new_event(user_uuid);
             // check logical ordering of start and stop times
             if new_event.start_at > new_event.stop_at {
-                Error::bad_request("Request can't start after it has ended.").reject_result()
+                Error::bad_request("Request can't start after it has ended.").apply(Err)
             } else {
                 Event::create_event(new_event, &conn)
-                    .map_err(Error::from_reject)
-                    .map(util::json)
+                    .map_err(Error::from)
             }
-        });
+        })
+        .and_then(util::json_or_reject);
 
     let delete_event = warp::delete2()
         .and(path!(Uuid))

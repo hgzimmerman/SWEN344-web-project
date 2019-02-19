@@ -9,6 +9,9 @@ use hyper::{
 use hyper_tls::HttpsConnector;
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use warp::{filters::BoxedFilter, Filter, Rejection};
+use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
+use apply::Apply;
 
 /// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
@@ -40,9 +43,17 @@ pub struct StateConfig {
 impl State {
     /// Creates a new state.
     pub fn new(conf: StateConfig) -> Self {
+        const RANDOM_KEY_LENGTH: usize = 200;
         let secret = conf
             .secret
-            .unwrap_or_else(|| Secret::new("yeetyeetyeetyeetyeet")); // TODO Make this random
+            .unwrap_or_else(|| {
+                // Generate a new random key if none is provided.
+                thread_rng()
+                    .sample_iter(&Alphanumeric)
+                    .take(RANDOM_KEY_LENGTH)
+                    .collect::<String>()
+                    .apply(|s| Secret::new(&s))
+            });
 
         let pool_conf = PoolConfig {
             max_connections: conf.max_pool_size,
@@ -87,7 +98,7 @@ pub fn http_filter(client: HttpsClient) -> BoxedFilter<(HttpsClient,)> {
 pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
     fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
         pool.clone()
-            .get()
+            .get() // Will get the connection from the pool, or wait a specified time until one becomes available.
             .map_err(|_| Error::DatabaseUnavailable.reject())
     }
 

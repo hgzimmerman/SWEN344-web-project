@@ -38,7 +38,7 @@ pub enum Error {
     /// Authorization - user may be authenticated, but still should not access the resource.
     /// This is synonymous with HTTP - Forbidden code.
     NotAuthorized {
-        reason: String, // TODO make this a String
+        reason: String,
     },
 }
 

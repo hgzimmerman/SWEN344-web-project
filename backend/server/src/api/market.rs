@@ -33,6 +33,15 @@ pub struct StockTransactionRequest {
     pub quantity: i32,
 }
 
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StockAndPerfResponse {
+    /// The stock.
+    pub stock: UserStockResponse,
+    /// Net loss or gain.
+    pub performance: f64,
+}
+
 /// The Filter for the market API.
 ///
 /// # Arguments
@@ -95,7 +104,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .untuple_one()
         .map(
-            |prices: Vec<f64>, stocks: Vec<UserStockResponse>| -> Vec<(UserStockResponse, f64)> {
+            |prices: Vec<f64>, stocks: Vec<UserStockResponse>| -> Vec<StockAndPerfResponse> {
                 prices
                     .into_iter()
                     .zip(stocks)
@@ -104,9 +113,12 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                             acc + ((price - transaction.price_of_stock_at_time_of_trading)
                                 * f64::from(transaction.quantity))
                         });
-                        (stock, net)
+                        StockAndPerfResponse {
+                            stock,
+                            performance: net
+                        }
                     })
-                    .collect::<Vec<(UserStockResponse, f64)>>() // TODO make an actual type for this.
+                    .collect::<Vec<StockAndPerfResponse>>() // TODO make an actual type for this.
             },
         )
         .map(util::json);

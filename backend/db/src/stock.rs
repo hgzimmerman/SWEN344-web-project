@@ -196,7 +196,7 @@ impl Stock {
 }
 
 /// A response struct containing a stock row, as well as its associated transactions.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserStockResponse {
     /// Stock row.
     pub stock: Stock,
