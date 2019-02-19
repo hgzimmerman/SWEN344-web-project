@@ -57,8 +57,8 @@ where
     /// Creates a new token for the user that will expire after a specified time.
     ///
     /// # Arguments
-    /// - subject The subject of the JWT, it holds the contents that should be trusted by the server on return trips.
-    /// - lifetime How long the JWT will be valid for after its creation.
+    /// * subject - The subject of the JWT, it holds the contents that should be trusted by the server on return trips.
+    /// * lifetime - How long the JWT will be valid for after its creation.
     pub fn new(subject: T, lifetime: Duration) -> Self {
         let now = chrono::Utc::now().naive_utc();
 
