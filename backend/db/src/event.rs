@@ -69,6 +69,46 @@ pub struct EventChangeset {
     pub stop_at: NaiveDateTime,
 }
 
+/// Limits the number to between 0 and 11.
+#[derive(Clone, Copy, Debug)]
+pub struct MonthIndex(u32);
+
+impl MonthIndex {
+    /// Converts a 0 indexed u32 to a month index.
+    pub fn from_1_indexed_u32(value: u32) -> Option<Self> {
+        if value == 0 || value > 12 {
+            None
+        } else {
+            Some(MonthIndex(value - 1))
+        }
+    }
+
+    /// Converts a 0 indexed u32 to a month index.
+    pub fn from_0_indexed_u32(value: u32) -> Option<Self> {
+        if  value > 11 {
+            None
+        } else {
+            Some(MonthIndex(value))
+        }
+    }
+}
+
+/// Wrapper around year values.
+/// It provides basic validation.
+#[derive(Clone, Copy, Debug)]
+pub struct Year(i32);
+impl Year {
+    /// Validates that the i32 is a valid year
+    /// For lack of understanding of the chrono API, I'm limiting this to 10_000 bce/ce.
+   pub fn from_i32(value: i32) -> Option<Self> {
+      if value < -10_0000  || value > 10_000 {
+          None
+      } else {
+          Some(Year(value))
+      }
+   }
+}
+
 /// A type representing all the columns in the events table.
 type All = diesel::dsl::Select<events::table, AllColumns>;
 
@@ -117,12 +157,33 @@ impl Event {
             })
             .collect::<Result<Vec<_>, _>>()
             .map(|_| ())
-
     }
 
     /// Returns every event that belongs to a given user.
     pub fn events(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
         Self::user_events(user_uuid).load::<Event>(conn)
+    }
+
+
+    /// The month index is 0-indexed.
+    /// So 0-11 are valid input values.
+    pub fn events_for_any_month(month_index: MonthIndex, year: Year, user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
+        let start = chrono::Utc::now()
+            .naive_utc()
+            .with_year(year.0)
+            .unwrap()
+            .with_month0(month_index.0)
+            .unwrap()
+            .with_hour(0)
+            .unwrap()
+            .with_minute(0)
+            .unwrap()
+            .with_second(0)
+            .unwrap()
+            .with_nanosecond(0)
+            .unwrap();
+        let end = start.with_month((month_index.0 + 1) % 13).unwrap();
+        Event::events_from_n_to_n(user_uuid, start, end, conn)
     }
 
     /// All events that belong to a user that ocurr on the current date.
@@ -180,7 +241,7 @@ impl Event {
     }
 
     /// All events occurring from a starting time to an end time, that belong to a user.
-    pub fn events_from_n_to_n(
+    fn events_from_n_to_n(
         user_uuid: Uuid,
         start: NaiveDateTime,
         end: NaiveDateTime,
