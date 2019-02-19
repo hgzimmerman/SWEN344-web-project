@@ -49,14 +49,27 @@ impl NewEventRequest {
 /// and other stateful constructs.
 pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Calendar Api");
-    // Get all events
-    let get_events = warp::get2()
+    // Get all events in the NewEventRequest format.
+    let export_events = warp::get2()
         .and(path!("events"))
         .and(path::end())
         .and(user_filter(state))
         .and(state.db.clone())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events(user_uuid, &conn)
+                .map(|events| {
+                    events
+                        .into_iter()
+                        .map(|event| {
+                            NewEventRequest {
+                                title: event.title,
+                                text: event.text,
+                                start_at: event.start_at,
+                                stop_at: event.stop_at
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                })
                 .map_err(Error::from_reject)
                 .map(util::json)
         });
@@ -90,6 +103,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                     .map(util::json)
             });
 
+    // Events Today
     let events_today = warp::get2()
         .and(path!("events" / "today"))
         .and(user_filter(state))
@@ -100,6 +114,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
+    // This month
     let events_month = warp::get2()
         .and(path!("events" / "month"))
         .and(user_filter(state))
@@ -139,9 +154,9 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(modify_event);
 
     let events = path!("event").and(
-        get_events
-            .or(create_event)
+        export_events
             .or(import_events)
+            .or(create_event)
             .or(events_today)
             .or(events_month)
             .or(get_events_custom_month_and_year)
