@@ -14,6 +14,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{Filter, Rejection};
 use log::info;
+use db::event::MonthIndex;
+use db::event::Year;
 
 /// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -73,17 +75,20 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         });
 
     // TODO take optional query parameters for month and year
-    //    let get_events = warp::get2()
-    //        .and(path!("events" / u32))
-    //        .and(path::end())
-    //        .and(user_filter(state))
-    //        .and(state.db.clone())
-    //        .and_then(|month_index: u32, user_uuid: Uuid, conn: PooledConn| -> Result<impl Reply, Rejection> {
-    ////            Event::events(user_uuid, &conn)
-    ////                .map_err(Error::from_reject)
-    ////                .map(util::json)
-    //            unimplemented!()
-    //        });
+        let get_events_custom_month_and_year = warp::get2()
+            .and(path!("events" / i32 / u32))
+            .and(path::end())
+            .and(user_filter(state))
+            .and(state.db.clone())
+            .and_then(|year: i32, month_index: u32, user_uuid: Uuid, conn: PooledConn| {
+                let month_index = MonthIndex::from_1_indexed_u32(month_index)
+                    .ok_or_else(|| Error::bad_request("Month index is out of bounds (needs 1-12)").reject())?;
+                let year = Year::from_i32(year)
+                    .ok_or_else(|| Error::bad_request("Year is not within reasonable bounds").reject())?;
+                Event::events_for_any_month(month_index, year, user_uuid, &conn)
+                    .map_err(Error::from_reject)
+                    .map(util::json)
+            });
 
     let events_today = warp::get2()
         .and(path!("events" / "today"))
@@ -139,6 +144,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             .or(import_events)
             .or(events_today)
             .or(events_month)
+            .or(get_events_custom_month_and_year)
             .or(delete_event)
             .or(modify_event),
     );
