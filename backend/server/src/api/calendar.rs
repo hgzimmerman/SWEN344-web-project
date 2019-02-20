@@ -52,7 +52,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Calendar Api");
     // Get all events in the NewEventRequest format.
     let export_events = warp::get2()
-        .and(path!("events/export"))
+        .and(path!("events" / "export"))
         .and(path::end())
         .and(user_filter(state))
         .and(state.db.clone())
@@ -75,7 +75,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(util::json_or_reject);
 
     let import_events = warp::post2()
-        .and(path!("events/import"))
+        .and(path!("events" / "import"))
         .and(path::end())
         .and(json_body_filter(350)) // you can import a bunch 'o events
         .and(user_filter(state))
@@ -89,6 +89,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .and_then(util::json_or_reject);
 
+    /// Query parameters for /events
     #[derive(Clone, Debug, Serialize, Deserialize)]
     struct TimeBoundaries {
         start: NaiveDateTime,

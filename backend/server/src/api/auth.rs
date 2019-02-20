@@ -139,6 +139,7 @@ mod test {
     use crate::{state::State, testing_fixtures::user::UserFixture};
     use pool::Pool;
     use testing_common::setup::setup_warp;
+    use std::option::Option;
 
     use crate::testing_fixtures::util::{deserialize, deserialize_string};
 
@@ -166,35 +167,4 @@ mod test {
         });
     }
 
-    #[test]
-    fn user_works() {
-        setup_warp(|fixture: &UserFixture, pool: Pool| {
-            let secret = Secret::new("test");
-            let s = State::testing_init(pool, secret);
-            let filter = auth_api(&s);
-
-            let login = LoginRequest {
-                oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
-                    .to_string(),
-            };
-
-            let resp = warp::test::request()
-                .method("POST")
-                .path("/auth/login")
-                .json(&login)
-                .header("content-length", "300")
-                .reply(&filter);
-
-            let jwt = deserialize_string(resp);
-
-            let resp = warp::test::request()
-                .method("GET")
-                .path("/auth/user")
-                .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                .reply(&filter);
-
-            let user: User = deserialize(resp);
-            assert_eq!(user, fixture.user)
-        });
-    }
 }

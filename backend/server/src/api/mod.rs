@@ -95,7 +95,7 @@ mod integration_test {
             let s = State::testing_init(pool, secret);
             let filter = routes(&s);
 
-            let login = auth::LoginRequest {
+            let login = LoginRequest {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
@@ -121,7 +121,7 @@ mod integration_test {
 
             let resp = warp::test::request()
                 .method("GET")
-                .path("/api/auth/user")
+                .path("/api/user")
                 .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                 .reply(&filter);
 
@@ -135,6 +135,7 @@ mod integration_test {
     mod events {
         use super::*;
         use chrono::Datelike;
+        use chrono::NaiveDateTime;
 
         #[test]
         fn create_event() {
@@ -184,6 +185,21 @@ mod integration_test {
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
                 };
 
+                let start = chrono::Utc::now().naive_utc();
+                let stop = start + chrono::Duration::hours(4);
+
+                use serde::Serialize;
+                #[derive(Serialize)]
+                struct TimeBounds {
+                    start: NaiveDateTime,
+                    stop: NaiveDateTime
+                }
+
+                let tb = TimeBounds {
+                    start,
+                    stop
+                };
+
                 let resp = warp::test::request()
                     .method("POST")
                     .path("/api/calendar/event")
@@ -196,7 +212,7 @@ mod integration_test {
 
                 let resp = warp::test::request()
                     .method("GET")
-                    .path("/api/calendar/event/events")
+                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
@@ -406,6 +422,22 @@ mod integration_test {
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
                 };
 
+                let start = chrono::Utc::now().naive_utc();
+                let stop = start + chrono::Duration::hours(4);
+
+
+                use serde::Serialize;
+                #[derive(Serialize)]
+                struct TimeBounds {
+                    start: NaiveDateTime,
+                    stop: NaiveDateTime
+                }
+
+                let tb = TimeBounds {
+                    start,
+                    stop
+                };
+
                 let resp = warp::test::request()
                     .method("POST")
                     .path("/api/calendar/event")
@@ -432,7 +464,7 @@ mod integration_test {
                 // verify it was deleted
                 let resp = warp::test::request()
                     .method("GET")
-                    .path("/api/calendar/event/events")
+                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 

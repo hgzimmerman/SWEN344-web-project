@@ -79,7 +79,7 @@ impl State {
         let https = HttpsConnector::new(1).unwrap();
         let client = Client::builder()
             .keep_alive_timeout(Some(Duration::new(12, 0)))
-            .build::<_, hyper::Body>(https);
+            .build::<_, Body>(https);
 
         State {
             db: db_filter(pool),
