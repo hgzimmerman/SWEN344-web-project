@@ -186,7 +186,7 @@ impl Event {
         Event::events_from_n_to_n(user_uuid, start, end, conn)
     }
 
-    /// All events that belong to a user that ocurr on the current date.
+    /// All events that belong to a user that occur on the current date.
     pub fn events_today(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
         // TODO may want to make local at some point
         // yes, this doesn't take into account the timezone of the user :/
@@ -241,7 +241,7 @@ impl Event {
     }
 
     /// All events occurring from a starting time to an end time, that belong to a user.
-    fn events_from_n_to_n(
+    pub fn events_from_n_to_n(
         user_uuid: Uuid,
         start: NaiveDateTime,
         end: NaiveDateTime,

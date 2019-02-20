@@ -1,11 +1,15 @@
 //! API routes related to serving ads and recording health data about them.
 //! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
 //!
+//! This module is much more understandable with the aid of this (helpful future reference)[https://rufflewind.com/img/rust-futures-cheatsheet.html].
 use crate::error::Error;
 use hyper::{
     rt::{Future, Stream},
     Chunk, Client, Uri,
 };
+
+use futures::future::join_all;
+use apply::Apply;
 
 /// The fictional load encountered by the servers.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -19,19 +23,30 @@ pub struct NumServers(pub u32);
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
-// TODO This would be a good case for using the ! type if the never type stabilizes before this project is due.
-pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
+pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Send + 'static> {
     let client = Client::new();
 
-    let uri_1: Uri = "http://129.21.208.2:3000/availability/1".parse().unwrap();
-    let uri_2: Uri = "http://129.21.208.2:3000/availability/2".parse().unwrap();
-    let uri_3: Uri = "http://129.21.208.2:3000/availability/3".parse().unwrap();
-    let uri_4: Uri = "http://129.21.208.2:3000/availability/4".parse().unwrap();
+    let uris = vec![
+        "http://129.21.208.2:3000/availability/1",
+        "http://129.21.208.2:3000/availability/2",
+        "http://129.21.208.2:3000/availability/3",
+        "http://129.21.208.2:3000/availability/4"
+    ]
+        .into_iter()
+        .map(|s| s.parse::<Uri>().map_err(|e| Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))))
+        .collect::<Result<Vec<_>, Error>>();
 
-    let request_is_up = |uri: &Uri| {
+    let uris = match uris {
+        Ok(uris) => uris,
+        Err(e) => return Box::new(futures::future::err(e)) // Return early with the parse error.
+    };
+
+    // The Type has to include `static and Send in order for the compiler to accept this.
+    // For some reason, it can't deduce these automatically.
+    let request_is_up = |uri: Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
         client
             .get(uri.clone())
-            .and_then(|res| res.into_body().concat2())
+            .and_then(|res| res.into_body().concat2()) // Get the whole body.
             .map(|chunk| {
                 let v = chunk.to_vec();
                 let body = String::from_utf8_lossy(&v).to_string();
@@ -41,37 +56,26 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
                 }
             })
             .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
+            .apply(Box::new)
     };
 
-    let a_1 = request_is_up(&uri_1).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_1.to_string(),
-    });
-    let a_2 = request_is_up(&uri_2).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_2.to_string(),
-    });
-    let a_3 = request_is_up(&uri_3).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_3.to_string(),
-    });
-    let a_4 = request_is_up(&uri_4).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_4.to_string(),
-    });
+    let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris
+        .into_iter()
+        .map(request_is_up)
+        .collect();
 
-    a_1.join4(a_2, a_3, a_4).map(|(a, b, c, d)| -> NumServers {
-        let mut acc = 0;
-        if a {
-            acc += 1;
-        }
-        if b {
-            acc += 1;
-        }
-        if c {
-            acc += 1;
-        }
-        if d {
-            acc += 1;
-        }
-        NumServers(acc)
-    })
+    join_all(servers) // Wait for all requests to finish.
+        .map(|x: Vec<bool>| {
+            // Sum the number of servers that responded with a positive message.
+            x
+                .into_iter()
+                .fold(0, |acc, b| -> u32 {
+                    acc + b as u32
+                })
+                .apply(NumServers)
+        })
+        .map_err(|_| Error::InternalServerError(None)) // This can never error, but Type Coherency must be maintained
+        .apply(Box::new) // It has to be a Box to allow a future of different internal type to represent the URI parsing error.
 }
 
 /// Gets the "load" on the "servers".

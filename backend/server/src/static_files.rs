@@ -120,6 +120,7 @@ mod unit_test {
             Ok(_) => panic!("Error was expected, found valid Reply"),
             Err(e) => e,
         };
-        assert!(err.is_not_found())
+        let cause = err.find_cause::<Error>().unwrap();
+        assert_eq!(*cause, Error::NotFound {type_name: "File".to_string()})
     }
 }
