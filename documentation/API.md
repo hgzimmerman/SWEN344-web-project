@@ -51,27 +51,27 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 #### Implemented
 
 
-| Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            |
-| -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |
-| `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 |
-| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string |
-| `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         |
-| `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              |
-| `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user |
-| `/api/calendar/event/events?start=:date,stop=:date`  | GET    | \[Event\]|              | yes           | Gets events for user within the time bounds|
-| `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            |
-| `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this month for user       |
-| `/api/calendar/event/events/:year/:month`|GET| \[Event\]          |                     | yes           | Gets events at this specified year/month |
-| `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         |
-| `/api/calendar/event/`              | POST   | Event              | NewEventRequest     | yes           | Creates event                         |
-| `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        |
-| `/api/market/stock/`                | GET    | \[StockResponse\]  |                     | yes           | All the stocks the user owns          |
-| `/api/market/stock/transact`        | POST   | StockTransaction  | StockTransactionRequest | yes        | Buys or sells a quantity of a given stock|
-| `/api/market/stock/transactions/:stockName`| GET | \[StockTransaction\] |               | yes           | Gets the transaction history for a given stock |
-| `/api/market/stock/performance`     | GET    | \[(f64, Stock)\]   |                     | yes           | Gets the performance for each stock the user has  |
-| `/api/advertisement`                | GET    | `.png`             |                     | false         | Gets the advertisement if available   |
-| `/api/health`                       | GET    | \[HealthRecord\]   |                     | false         | Gets all of the history of requests for the advertisement      |
-| `/api/health/week`                  | GET    | \[HealthRecord\]   |                     | false         | Gets the last weeks worth of the history of requests for the advertisement      |
+| Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            | Deprecated |
+| -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |------------|
+| `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 | |
+| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | |
+| `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
+| `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              | |
+| `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user | |
+| `/api/calendar/event/events?start=:date,stop=:date`  | GET    | \[Event\]|              | yes           | Gets events for user within the time bounds| |
+| `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            | Deprecated |
+| `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this month for user       | Deprecated |
+| `/api/calendar/event/events/:year/:month`|GET| \[Event\]          |                     | yes           | Gets events at this specified year/month | Deprecated |
+| `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         | |
+| `/api/calendar/event/`              | POST   | Event              | NewEventRequest     | yes           | Creates event                         | |
+| `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        | |
+| `/api/market/stock/`                | GET    | \[StockResponse\]  |                     | yes           | All the stocks the user owns          | |
+| `/api/market/stock/transact`        | POST   | StockTransaction  | StockTransactionRequest | yes        | Buys or sells a quantity of a given stock| |
+| `/api/market/stock/transactions/:stockName`| GET | \[StockTransaction\] |               | yes           | Gets the transaction history for a given stock | |
+| `/api/market/stock/performance`     | GET    | \[(f64, Stock)\]   |                     | yes           | Gets the performance for each stock the user has  | |
+| `/api/advertisement`                | GET    | `.png`             |                     | false         | Gets the advertisement if available   | |
+| `/api/health`                       | GET    | \[HealthRecord\]   |                     | false         | Gets all of the history of requests for the advertisement  |    |
+| `/api/health/week`                  | GET    | \[HealthRecord\]   |                     | false         | Gets the last weeks worth of the history of requests for the advertisement      | |
 
 #### UNIMPLEMENTED                      
 ###### Instructions

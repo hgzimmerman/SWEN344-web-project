@@ -106,6 +106,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .and_then(util::json_or_reject);
 
+    // TODO deprecate
     let get_events_custom_month_and_year = warp::get2()
         .and(path!("events" / i32 / u32)) // "events", year, month
         .and(path::end())
@@ -122,6 +123,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(util::json_or_reject);
 
 
+    // TODO deprecate
     // Events Today
     let events_today = warp::get2()
         .and(path!("events" / "today"))
@@ -133,6 +135,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
+    // TODO deprecate
     // This month
     let events_month = warp::get2()
         .and(path!("events" / "month"))
