@@ -24,6 +24,8 @@ use hyper::{Chunk, Uri};
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use futures::future::Either;
+use apply::Apply;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -197,31 +199,37 @@ fn get_current_price(
     stock_symbol: &str,
     client: &HttpsClient,
 ) -> impl Future<Item = f64, Error = Error> {
-    let uri: Uri = format!(
+    let uri = format!(
         "https://api.iextrading.com/1.0/stock/{}/price",
         stock_symbol
     )
-    .parse()
-    .unwrap();
-    let uri_copy_1 = uri.clone();
-    let uri_copy_2 = uri.clone();
-    client
-        .get(uri.clone())
-        .and_then(|res| {
-            res.into_body().concat2() // Await the whole body
-        })
-        .map_err(move |_| Error::connection_failed(uri_copy_1))
-        .and_then(move |chunk: Chunk| -> Result<f64, Error> {
-            let v = chunk.to_vec();
-            let body = String::from_utf8_lossy(&v).to_string();
-            body.parse::<f64>().map_err(move |_| -> Error {
-                crate::error::Error::internal_server_error(format!(
-                    "Could not parse body of dependent connection: {}, body: {}",
-                    uri_copy_2.to_string(),
-                    body
-                ))
-            })
-        })
+        .parse::<Uri>()
+        .map_err(|e| Error::bad_request(format!("{:?}", e)));
+
+    match uri {
+        Ok(uri) => {
+            let uri_string = uri.to_string(); // create this here, so it can be moved into the closure.
+            client
+                .get(uri.clone())
+                .and_then(|res| {
+                    res.into_body().concat2() // Await the whole body
+                })
+                .map_err(move |_| Error::connection_failed(uri))
+                .and_then(move |chunk: Chunk| -> Result<f64, Error> {
+                    let v = chunk.to_vec();
+                    let body = String::from_utf8_lossy(&v).to_string();
+                    body.parse::<f64>().map_err(move |_| -> Error {
+                        crate::error::Error::internal_server_error(format!(
+                            "Could not parse body of dependent connection: {}, body: {}",
+                            uri_string,
+                            body
+                        ))
+                    })
+                })
+                .apply(|fut| Either::A(fut))
+        }
+        Err(e) => e.apply(futures::future::err).apply(Either::B)
+    }
 }
 
 /// Get the current prices for a set of stocks.

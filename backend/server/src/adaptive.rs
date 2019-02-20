@@ -10,6 +10,7 @@ use hyper::{
 
 use futures::future::join_all;
 use apply::Apply;
+use futures::future::Either;
 
 /// The fictional load encountered by the servers.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -23,7 +24,7 @@ pub struct NumServers(pub u32);
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
-pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Send + 'static> {
+pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
     let client = Client::new();
 
     let uris = vec![
@@ -38,7 +39,7 @@ pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Se
 
     let uris = match uris {
         Ok(uris) => uris,
-        Err(e) => return Box::new(futures::future::err(e)) // Return early with the parse error.
+        Err(e) => return Either::A(futures::future::err(e)) // Return early with the parse error.
     };
 
     // The Type has to include `static and Send in order for the compiler to accept this.
@@ -56,7 +57,7 @@ pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Se
                 }
             })
             .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
-            .apply(Box::new)
+            .apply(Box::new) // This needs to be boxed in order for multiple different futures to be joined
     };
 
     let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris
@@ -75,7 +76,7 @@ pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Se
                 .apply(NumServers)
         })
         .map_err(|_| Error::InternalServerError(None)) // This can never error, but Type Coherency must be maintained
-        .apply(Box::new) // It has to be a Box to allow a future of different internal type to represent the URI parsing error.
+        .apply(Either::B) // Use Either here to remove the need for boxing.
 }
 
 /// Gets the "load" on the "servers".
