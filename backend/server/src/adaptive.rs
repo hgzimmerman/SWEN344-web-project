@@ -7,6 +7,9 @@ use hyper::{
     Chunk, Client, Uri,
 };
 
+use futures::future::join_all;
+use apply::Apply;
+
 /// The fictional load encountered by the servers.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Load(pub u32);
@@ -28,7 +31,7 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
     let uri_3: Uri = "http://129.21.208.2:3000/availability/3".parse().unwrap();
     let uri_4: Uri = "http://129.21.208.2:3000/availability/4".parse().unwrap();
 
-    let request_is_up = |uri: &Uri| {
+    let request_is_up = |uri: &Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
         client
             .get(uri.clone())
             .and_then(|res| res.into_body().concat2())
@@ -41,37 +44,26 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
                 }
             })
             .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
+            .apply(Box::new)
     };
 
-    let a_1 = request_is_up(&uri_1).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_1.to_string(),
-    });
-    let a_2 = request_is_up(&uri_2).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_2.to_string(),
-    });
-    let a_3 = request_is_up(&uri_3).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_3.to_string(),
-    });
-    let a_4 = request_is_up(&uri_4).map_err(move |_: ()| Error::DependentConnectionFailed {
-        url: uri_4.to_string(),
-    });
+    let servers = vec![
+        request_is_up(&uri_1),
+        request_is_up(&uri_2),
+        request_is_up(&uri_3),
+        request_is_up(&uri_4)
+    ];
 
-    a_1.join4(a_2, a_3, a_4).map(|(a, b, c, d)| -> NumServers {
-        let mut acc = 0;
-        if a {
-            acc += 1;
-        }
-        if b {
-            acc += 1;
-        }
-        if c {
-            acc += 1;
-        }
-        if d {
-            acc += 1;
-        }
-        NumServers(acc)
-    })
+    join_all(servers)
+        .map(|x: Vec<bool>| { // Sum the number of servers that responded with a positive message.
+            x
+                .into_iter()
+                .fold(0, |acc, b| -> u32 {
+                    acc + b as u32
+                })
+                .apply(NumServers)
+        })
+        .map_err(|_| Error::InternalServerError(None)) // This can never error, but Type Coherency must be maintained
 }
 
 /// Gets the "load" on the "servers".
