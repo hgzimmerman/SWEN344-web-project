@@ -1,6 +1,7 @@
 //! API routes related to serving ads and recording health data about them.
 //! (Self adaptive instructions section)[http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html]
 //!
+//! This module is much more understandable with the aid of this (helpful future reference)[https://rufflewind.com/img/rust-futures-cheatsheet.html].
 use crate::error::Error;
 use hyper::{
     rt::{Future, Stream},
@@ -22,7 +23,7 @@ pub struct NumServers(pub u32);
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
-pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
+pub fn get_num_servers_up() -> Box<Future<Item = NumServers, Error = Error> + Send + 'static> {
     let client = Client::new();
 
     let uris = vec![
@@ -32,12 +33,20 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
         "http://129.21.208.2:3000/availability/4"
     ]
         .into_iter()
-        .map(|s| s.parse::<Uri>().expect("Poor uri format"));
+        .map(|s| s.parse::<Uri>().map_err(|e| Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))))
+        .collect::<Result<Vec<_>, Error>>();
 
+    let uris = match uris {
+        Ok(uris) => uris,
+        Err(e) => return Box::new(futures::future::err(e)) // Return early with the parse error.
+    };
+
+    // The Type has to include `static and Send in order for the compiler to accept this.
+    // For some reason, it can't deduce these automatically.
     let request_is_up = |uri: Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
         client
             .get(uri.clone())
-            .and_then(|res| res.into_body().concat2())
+            .and_then(|res| res.into_body().concat2()) // Get the whole body.
             .map(|chunk| {
                 let v = chunk.to_vec();
                 let body = String::from_utf8_lossy(&v).to_string();
@@ -50,10 +59,14 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
             .apply(Box::new)
     };
 
-    let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris.map(request_is_up).collect();
+    let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris
+        .into_iter()
+        .map(request_is_up)
+        .collect();
 
     join_all(servers) // Wait for all requests to finish.
-        .map(|x: Vec<bool>| { // Sum the number of servers that responded with a positive message.
+        .map(|x: Vec<bool>| {
+            // Sum the number of servers that responded with a positive message.
             x
                 .into_iter()
                 .fold(0, |acc, b| -> u32 {
@@ -62,6 +75,7 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
                 .apply(NumServers)
         })
         .map_err(|_| Error::InternalServerError(None)) // This can never error, but Type Coherency must be maintained
+        .apply(Box::new) // It has to be a Box to allow a future of different internal type to represent the URI parsing error.
 }
 
 /// Gets the "load" on the "servers".
