@@ -4,3 +4,5 @@ RUN nix-env -iA \
  nixpkgs.curl \
  nixpkgs.rustup \
  nixpkgs.bashInteractive
+
+ADD . /Swen344
