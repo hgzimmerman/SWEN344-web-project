@@ -22,16 +22,19 @@ pub struct NumServers(pub u32);
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
-// TODO This would be a good case for using the ! type if the never type stabilizes before this project is due.
 pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
     let client = Client::new();
 
-    let uri_1: Uri = "http://129.21.208.2:3000/availability/1".parse().unwrap();
-    let uri_2: Uri = "http://129.21.208.2:3000/availability/2".parse().unwrap();
-    let uri_3: Uri = "http://129.21.208.2:3000/availability/3".parse().unwrap();
-    let uri_4: Uri = "http://129.21.208.2:3000/availability/4".parse().unwrap();
+    let uris = vec![
+        "http://129.21.208.2:3000/availability/1",
+        "http://129.21.208.2:3000/availability/2",
+        "http://129.21.208.2:3000/availability/3",
+        "http://129.21.208.2:3000/availability/4"
+    ]
+        .into_iter()
+        .map(|s| s.parse::<Uri>().expect("Poor uri format"));
 
-    let request_is_up = |uri: &Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
+    let request_is_up = |uri: Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
         client
             .get(uri.clone())
             .and_then(|res| res.into_body().concat2())
@@ -47,14 +50,9 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
             .apply(Box::new)
     };
 
-    let servers = vec![
-        request_is_up(&uri_1),
-        request_is_up(&uri_2),
-        request_is_up(&uri_3),
-        request_is_up(&uri_4)
-    ];
+    let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris.map(request_is_up).collect();
 
-    join_all(servers)
+    join_all(servers) // Wait for all requests to finish.
         .map(|x: Vec<bool>| { // Sum the number of servers that responded with a positive message.
             x
                 .into_iter()
