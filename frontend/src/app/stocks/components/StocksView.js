@@ -35,6 +35,7 @@ export default class StocksView extends React.Component {
 
 
   render(){
+
     return(
       <div className="App">
         <div style={styles.panel} className="tables">
@@ -51,21 +52,21 @@ export default class StocksView extends React.Component {
                     <TableCell align="right">Symbol</TableCell>
                     <TableCell align="right">Price</TableCell>
                     <TableCell align="right">Owned</TableCell>
-                    <TableCell align="right">Change</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.Items.map(row => (
-                    <TableRow key={row.id}>
-                      <TableCell component="th" scope="row">
-                        {row.name}
-                      </TableCell>
-                      <TableCell align="right">{row.symbol}</TableCell>
-                      <TableCell align="right">{row.price}</TableCell>
-                      <TableCell align="right">{row.owned}</TableCell>
-                      <TableCell align="right">{row.change}</TableCell>
-                    </TableRow>
-                  ))}
+                  {
+                    this.props.stocks.map((stock) => (
+                      <TableRow key={stock.id}>
+                        <TableCell component="th" scope="row">
+                          {stock.companyName}
+                        </TableCell>
+                        <TableCell align="right">{stock.symbol}</TableCell>
+                        <TableCell align="right">{stock.latestPrice}</TableCell>
+                        <TableCell align="right">{0}</TableCell>
+                      </TableRow>
+                    ))
+                  }
                 </TableBody>
               </Table>
             </Paper>
@@ -106,6 +107,8 @@ export default class StocksView extends React.Component {
   }
 
 }
+
+
 
 const styles = {
   root: {
