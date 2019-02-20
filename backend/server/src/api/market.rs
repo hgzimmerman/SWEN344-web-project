@@ -296,7 +296,7 @@ mod integration {
             let https = HttpsConnector::new(4).unwrap();
             let client = Client::builder().build::<_, hyper::Body>(https);
             get_current_prices(&["aapl", "fb"], &client)
-                .map(|prices| assert!(prices.len() == 2))
+                .map(|prices| assert_eq!(prices.len(), 2))
                 .map_err(|_| panic!("Could not get current prices"))
         }));
     }

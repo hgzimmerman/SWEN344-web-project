@@ -89,6 +89,23 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .and_then(util::json_or_reject);
 
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    struct TimeBoundaries {
+        start: NaiveDateTime,
+        stop: NaiveDateTime
+    }
+
+    // Events with time bounds
+    let events = warp::get2()
+        .and(path!("events"))
+        .and(warp::query())
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .map(|tb: TimeBoundaries, user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, diesel::result::Error> {
+            Event::events_from_n_to_n(user_uuid, tb.start, tb.stop, &conn)
+        })
+        .and_then(util::json_or_reject);
+
     let get_events_custom_month_and_year = warp::get2()
         .and(path!("events" / i32 / u32)) // "events", year, month
         .and(path::end())
@@ -157,6 +174,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let events = path!("event").and(
         export_events
             .or(import_events)
+            .or(events)
             .or(create_event)
             .or(events_today)
             .or(events_month)
