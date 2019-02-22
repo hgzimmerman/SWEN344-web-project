@@ -32,7 +32,7 @@ export default class Weather extends React.Component {
 	//	}
 
   getWeather(){
-    const url = 'api.openweathermap.org/data/2.5/weather?zip=14623,us'
+    const url = 'api.openweathermap.org/data/2.5/weather?zip=14623,us&APPID=2fe269f5d5f752aef9acf88ad1448cd'
     return fetch(url, { method: 'GET' })
       .then((res) => res.json())
         .then((res) => {
