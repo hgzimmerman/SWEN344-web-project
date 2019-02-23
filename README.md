@@ -6,9 +6,6 @@ Group project for RIT SWEN344
 
 To create the environment in which the project can build and run, you need both docker and docker-compose installed.
 
-First run `docker build --tag yeet . -f Dockerfile     `.
-Then run `docker build --tag `docker build --tag postgres-local . -f DockerfilePostgres`.
-Then ...
+Run `docker-compose -f docker-compose.yml up` to bring up the containers required by the project.
 
-Currently, the postgres db is ephemeral, if you redeploy, the db will be wiped out.
-This will ideally change
+
