@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE users (
     uuid UUID PRIMARY KEY NOT NULL Default gen_random_uuid(),
     client_id VARCHAR NOT NULL
