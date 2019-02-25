@@ -4,6 +4,8 @@ use clap::{App, Arg};
 
 use authorization::Secret;
 
+const DEFAULT_PORT: u16 = 8080;
+
 /// Configuration options for initializing the server.
 #[derive(Debug)]
 pub struct Config {
@@ -57,7 +59,7 @@ impl Config {
         let port: u16 = if let Some(port) = matches.value_of("port") {
             port.parse().expect("Port must be an integer")
         } else {
-            8080
+            DEFAULT_PORT
         };
 
         let tls_enabled = matches.is_present("tls");

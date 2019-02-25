@@ -2,9 +2,10 @@
 use crate::{api::API_STRING, error::Error};
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
+use apply::Apply;
 
 /// The directory that the webapp is stored in.
-const ASSETS_DIRECTORY: &str = "../../frontend/build/";
+const ASSETS_DIRECTORY: &str = "../frontend/build/"; // THIS ASSUMES THAT THE BINARY IS BUILT FROM THE ROOT DIRECTORY OF `backend/`
 
 /// Configuration object for setting up static files.
 pub struct FileConfig {
@@ -57,10 +58,11 @@ fn index_static_file_redirect(index_file_path: String) -> BoxedFilter<(impl Repl
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    return Err(Error::NotFound {
-                        type_name: "File".to_string(),
-                    }
-                    .reject());
+                    return warp::reject::not_found().apply(Err)
+//                    return Err(Error::NotFound {
+//                        type_name: "File".to_string(),
+//                    }
+//                    .reject());
                 }
             }
             Ok(file)
