@@ -1,16 +1,6 @@
-version: "2"
+version: "2" # The version of docker compose on the ubuntu vm is outdated and only supports v2
 
 services:
-#  frontend:
-#    build: ./frontend
-#    volumes:
-#      - ./frontend:/usr/src/app
-#    ports:
-#      - "3000:3000"
-#    command: bash -c "npm && npm start"
-#    command: bash -c "npm install && npm build"
-#    links:
-#      - backend
 
   app:
     build: ./
@@ -18,7 +8,7 @@ services:
       - "80:80"
     volumes:
       - ./:/usr/src/app
-    links:
+    links: # Links are deprecated, experiment in removing this line and still getting the whole thing to work.
       - db
     environment:
       DATABASE_URL: 'postgres://user:example@db:5432/web_engineering'
