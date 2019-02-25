@@ -17,3 +17,4 @@ WORKDIR /usr/src/app/backend
 EXPOSE 80
 
 VOLUME ["/usr/local/cargo"]
+
