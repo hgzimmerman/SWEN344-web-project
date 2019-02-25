@@ -1,43 +1,45 @@
 import React from 'react';
 import StocksView from '../components/StocksView.js';
+import Loader from 'react-loader-spinner';
 
 export default class Stocks extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      stocks: null,
+      stock: '',
       isLoading: true
     }
-    this.getStocks = this.getStocks.bind(this);
 
   }
 
-  componentDidMount(){
-    this.getStocks();
+  // componentDidMount(){
+  //   this.getStocks();
+  //
+  // }
 
-  }
+  getStock(stock){
+    const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
 
-  getStocks(){
-    const url = 'https://api.iextrading.com/1.0/stock/market/list/gainers'
     return fetch(url, { method: 'GET' })
       .then((res) => res.json())
         .then((res) => {
           this.setState({
-            stocks: res,
+            stock: res,
             isLoading: false
           });
-          console.log(res)
+          console.log(res[stock].quote.companyName);
         })
 
   }
 
   render(){
     return(
-      (!this.state.isLoading)
-      ? <StocksView
-          stocks={this.state.stocks}
-        />
-      : <p>Loading Stocks...</p>
+        <StocksView
+            stock={this.state.stock}
+            getStock={this.getStock}
+            isLoading={this.state.isLoading}
+          />
+
 
 
     );
