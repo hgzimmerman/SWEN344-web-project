@@ -1,23 +1,23 @@
 version: "3"
 
 services:
-  frontend:
-    build: ./frontend
-    volumes:
-      - ./frontend:/usr/src/app
+#  frontend:
+#    build: ./frontend
+#    volumes:
+#      - ./frontend:/usr/src/app
 #    ports:
 #      - "3000:3000"
 #    command: bash -c "npm && npm start"
-    command: bash -c "npm install && npm build"
-    links:
-      - backend
+#    command: bash -c "npm install && npm build"
+#    links:
+#      - backend
 
-  backend:
-    build: ./backend
+  app:
+    build: ./
     ports: 
-      - "8080:8080"
+      - "80:80"
     volumes:
-      - ./backend:/usr/src/app
+      - ./:/usr/src/app
     links:
       - db
     environment:
@@ -29,7 +29,7 @@ services:
     # diesel infer_schema macro gives warnings with this flag.
     # environment:
     #   - CARGO_INCREMENTAL=1
-    command: bash -c "bash ./wait_for_it.sh db:5432 -q -- diesel setup --migration-dir db/migrations && cargo run --release"
+    command: bash -c "bash ./wait_for_it.sh db:5432 -q -- diesel setup --migration-dir db/migrations && cargo run --release -- --port 80"
 
   db:
     image: "postgres:latest"

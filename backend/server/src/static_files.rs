@@ -4,7 +4,7 @@ use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
 
 /// The directory that the webapp is stored in.
-const ASSETS_DIRECTORY: &str = "../../frontend/build/";
+const ASSETS_DIRECTORY: &str = "../frontend/build/"; // THIS ASSUMES THAT THE BINARY IS BUILT FROM THE ROOT DIRECTORY OF `backend/`
 
 /// Configuration object for setting up static files.
 pub struct FileConfig {
