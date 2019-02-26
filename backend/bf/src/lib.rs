@@ -1,3 +1,7 @@
+//! You know what this web development project needs?
+//! It needs a minimal turing-complete language and interpreter embedded within it to obfuscate
+//! what would otherwise be trivially readable code.
+//! (Brainfuck)[https://en.wikipedia.org/wiki/Brainfuck] is just such a language.
 extern crate nom;
 
 use nom::*;
@@ -15,7 +19,7 @@ pub fn run_brainfuck(program: &[Token], tape: &mut [u8]) {
 }
 
 /// Parses a brainfuck program.
-pub fn parse_brainfuck(input: String) -> Option<Vec<Token>> {
+pub fn parse_brainfuck(input: &str) -> Option<Vec<Token>> {
     let input = Input::from(input.as_bytes());
     let (_,b) = brainfuck_parser(input).ok()?;
     Some(b)
@@ -267,7 +271,7 @@ fn hello_world_integration_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(bf).unwrap();
+    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
 
     let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "".chars());
     assert_eq!(output, "Hello World!\n");
@@ -282,7 +286,7 @@ fn multiplication_integration_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(bf).unwrap();
+    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
 
     let _ = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "".chars());
     assert_eq!(tape_pointer, 1);
@@ -297,7 +301,7 @@ fn read_input_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(bf).unwrap();
+    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
 
     let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
     assert_eq!(tape_pointer, 1);

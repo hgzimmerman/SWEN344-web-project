@@ -124,6 +124,22 @@ pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> boo
     available_capacity > load_units.0
 }
 
+// TODO implement BF program
+#[allow(dead_code)]
+pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> bool {
+    let bf_code = "";
+
+    let bf_program = bf::parse_brainfuck(bf_code).unwrap(); // This is assumed to be safe.
+    let mut tape = vec![0; 40];
+    tape[0] = load_units.0 as u8;
+    tape[1] = available_servers.0 as u8;
+    bf::run_brainfuck(&bf_program, &mut tape);
+
+    // Cell 2 represents a boolean
+    tape[2] != 0
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
