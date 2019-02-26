@@ -118,11 +118,53 @@ pub fn get_load() -> impl Future<Item = Load, Error = Error> {
 /// # Return
 /// * True indicates that the server can serve an add.
 /// * False indicates that the server cannot serve the add.
+#[cfg(test)]
 pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> bool {
     const UNITS_PER_SERVER: u32 = 10;
     let available_capacity = available_servers.0 * UNITS_PER_SERVER;
     available_capacity > load_units.0
 }
+
+/// Per the assignment:
+/// Each server can handle "10" load units
+/// If the current server load exceeds what can be "served", then activate the dimmer (don't display the advertisement)
+///
+/// # Arguments
+/// * load_units - The current load across the "servers"
+/// * available_servers - The number (out of 4) of servers that are available.
+///
+/// # Return
+/// * True indicates that the server can serve an add.
+/// * False indicates that the server cannot serve the add.
+///
+/// # Note
+/// Because of the obtuse nature of the implementation, this function is a likely source of bugs.
+pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> bool {
+    let bf_code = r###"
+    +                   // Increment cell 0 by 1, to make the comparison below change from an effective => to an >.
+    > // Shift to cell 1
+    [>++++++++++< -]    // Multiply cell 1 by 10, store in cell 2
+    <                   // Move ptr to cell 0
+    [>+< -]             // Shift contents of cell 0 left to cell 1
+    >                   // Move ptr to cell 1
+
+    // At this point, the load+1 is stored in cell 1, and the capacity is stored in cell 2
+
+    [->-[>]<<]         // Repeatedly ubtract 1 from cells 0,1 until either is 0.
+    // This will leave a value in cell 2 if the capacity > load. TODO check that
+    // If cell 2 is non-zero, the add should be served
+    "###;
+
+    let bf_program = bf::parse_brainfuck(bf_code).unwrap(); // This is assumed to be safe.
+    let mut tape = vec![0; 10];
+    tape[0] = load_units.0 as u8;
+    tape[1] = available_servers.0 as u8;
+    bf::run_brainfuck(&bf_program, &mut tape);
+
+    // Cell 2 represents a boolean
+    tape[2] != 0
+}
+
 
 #[cfg(test)]
 mod test {
@@ -143,10 +185,27 @@ mod test {
         let available_servers = NumServers(3);
         assert!(should_serve_adds(load, available_servers))
     }
+
+    #[test]
+    fn should_serve_bf_equivalent() {
+        let load = Load(27);
+        let available_servers = NumServers(3);
+        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
+    }
+
+
+
     #[test]
     fn should_not_serve() {
         let load = Load(30);
         let available_servers = NumServers(3);
         assert!(!should_serve_adds(load, available_servers))
+    }
+
+    #[test]
+    fn should_not_serve_bf_equivalent() {
+        let load = Load(30);
+        let available_servers = NumServers(3);
+        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
     }
 }

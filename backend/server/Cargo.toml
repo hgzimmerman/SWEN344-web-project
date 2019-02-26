@@ -31,4 +31,5 @@ hyper-tls = "0.3.1"
 tokio = "0.1.15"
 rand = "0.6.5"
 serde_urlencoded = "0.5.4"
+bf = {path="../bf"}
 

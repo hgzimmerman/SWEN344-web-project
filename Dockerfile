@@ -9,7 +9,7 @@ RUN apt install nodejs -y
 
 WORKDIR /usr/src/app/frontend
 RUN npm install
-RUN npm build
+RUN npm run-script build
 
 
 WORKDIR /usr/src/app/backend
