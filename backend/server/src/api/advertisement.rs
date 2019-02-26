@@ -1,6 +1,6 @@
 //! [Self adaptive instructions section](http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html)
 use crate::{
-    adaptive::{get_load, get_num_servers_up, should_serve_adds, Load, NumServers},
+    adaptive::{get_load, get_num_servers_up, should_serve_adds_bf, Load, NumServers},
     error::Error,
     state::State,
     util,
@@ -87,7 +87,7 @@ fn determine_and_record_ad_serving(
     load: Load,
     conn: &PooledConn,
 ) -> Result<(), Error> {
-    let should_send_advertisement = should_serve_adds(load, available_servers);
+    let should_send_advertisement = should_serve_adds_bf(load, available_servers);
 
     let hr = NewHealthRecord {
         available_servers: available_servers.0 as i32,
