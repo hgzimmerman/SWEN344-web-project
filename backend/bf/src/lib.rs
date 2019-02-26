@@ -8,6 +8,17 @@ use nom::*;
 
 use std::str::Chars;
 use nom::types::CompleteByteSlice as Input;
+use std::ops::Deref;
+
+pub struct BfProgram(Vec<Token>);
+
+impl Deref for BfProgram {
+    type Target = [Token];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 
 /// Runs a brainfuck program.
@@ -19,10 +30,10 @@ pub fn run_brainfuck(program: &[Token], tape: &mut [u8]) {
 }
 
 /// Parses a brainfuck program.
-pub fn parse_brainfuck(input: &str) -> Option<Vec<Token>> {
+pub fn parse_brainfuck(input: &str) -> Option<BfProgram> {
     let input = Input::from(input.as_bytes());
     let (_,b) = brainfuck_parser(input).ok()?;
-    Some(b)
+    Some(BfProgram(b))
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -44,10 +55,10 @@ fn consume_tokens(tokens: &[Token], tape: &mut [u8], tape_pointer: &mut usize, i
     for token in tokens {
         match *token {
             Token::Plus => {
-                tape[*tape_pointer] += 1;
+                tape[*tape_pointer] = tape[*tape_pointer].wrapping_add(1);
             },
             Token::Minus => {
-                tape[*tape_pointer] -= 1;
+                tape[*tape_pointer] = tape[*tape_pointer].wrapping_sub(1);
             },
             Token::ShiftRight => {
                 *tape_pointer += 1;
@@ -271,7 +282,7 @@ fn hello_world_integration_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
+    let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
 
     let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "".chars());
     assert_eq!(output, "Hello World!\n");
@@ -286,11 +297,41 @@ fn multiplication_integration_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
+    let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
 
     let _ = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "".chars());
     assert_eq!(tape_pointer, 1);
     assert_eq!(tape[tape_pointer], 21);
+}
+
+#[test]
+fn seek_right() {
+    let mut tape = [0; 30];
+    let mut tape_pointer: usize = 0;
+
+    let bf = "++++>+<[>]+".to_string();
+    let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
+    let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
+    assert_eq!(tape_pointer, 2);
+    assert_eq!(tape[0], 4);
+    assert_eq!(tape[1], 1);
+    assert_eq!(tape[2], 1);
+}
+
+#[test]
+fn compare() {
+    let mut tape = [0; 30];
+    let mut tape_pointer: usize = 0;
+
+    let bf = ">++++>+++<[- > -[>]<<]".to_string();
+    let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
+    let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
+    std::dbg!(&tape);
+    assert_eq!(tape_pointer, 0);
+    assert_eq!(tape[0], 0);
+    assert_eq!(tape[1], 1);
+    assert_eq!(tape[2], 0);
+
 }
 
 #[test]
@@ -301,7 +342,7 @@ fn read_input_test() {
     let mut tape = [0; TAPE_SIZE];
     let mut tape_pointer: usize = 0;
 
-    let tokens: Vec<Token> = parse_brainfuck(&bf).unwrap();
+    let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
 
     let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
     assert_eq!(tape_pointer, 1);

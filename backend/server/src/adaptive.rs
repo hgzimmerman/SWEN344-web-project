@@ -124,13 +124,25 @@ pub fn should_serve_adds(load_units: Load, available_servers: NumServers) -> boo
     available_capacity > load_units.0
 }
 
-// TODO implement BF program
 #[allow(dead_code)]
 pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> bool {
-    let bf_code = "";
+    let bf_code = r###"
+    +                   // Increment cell 0 by 1, to make the comparison below change from an effective => to an >.
+    > // Shift to cell 1
+    [>++++++++++< -]    // Multiply cell 1 by 10, store in cell 2
+    <                   // Move ptr to cell 0
+    [>+< -]             // Shift contents of cell 0 left to cell 1
+    >                   // Move ptr to cell 1
+
+    // At this point, the load+1 is stored in cell 1, and the capacity is stored in cell 2
+
+    [->-[>]<<]         // Repeatedly ubtract 1 from cells 0,1 until either is 0.
+    // This will leave a value in cell 2 if the capacity > load. TODO check that
+    // If cell 2 is non-zero, the add should be served
+    "###;
 
     let bf_program = bf::parse_brainfuck(bf_code).unwrap(); // This is assumed to be safe.
-    let mut tape = vec![0; 40];
+    let mut tape = vec![0; 10];
     tape[0] = load_units.0 as u8;
     tape[1] = available_servers.0 as u8;
     bf::run_brainfuck(&bf_program, &mut tape);
@@ -159,10 +171,27 @@ mod test {
         let available_servers = NumServers(3);
         assert!(should_serve_adds(load, available_servers))
     }
+
+    #[test]
+    fn should_serve_bf_equivalent() {
+        let load = Load(27);
+        let available_servers = NumServers(3);
+        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
+    }
+
+
+
     #[test]
     fn should_not_serve() {
         let load = Load(30);
         let available_servers = NumServers(3);
         assert!(!should_serve_adds(load, available_servers))
+    }
+
+    #[test]
+    fn should_not_serve_bf_equivalent() {
+        let load = Load(30);
+        let available_servers = NumServers(3);
+        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
     }
 }
