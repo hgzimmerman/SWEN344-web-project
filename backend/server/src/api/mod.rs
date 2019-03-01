@@ -3,6 +3,7 @@ mod advertisement;
 pub(crate) mod auth;
 mod calendar;
 mod market;
+mod user;
 
 use warp::{filters::BoxedFilter, Reply};
 
@@ -12,9 +13,10 @@ use warp::{path, Filter};
 use self::calendar::calendar_api;
 use crate::{
     api::{
-        advertisement::{add_api, health_api},
+        advertisement::{ad_api, health_api},
         auth::auth_api,
         market::market_api,
+        user::user_api
     },
     static_files::{static_files_handler, FileConfig},
 };
@@ -30,14 +32,16 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
             market_api(state)
                 .or(calendar_api(state))
                 .or(auth_api(state))
-                .or(add_api(state))
-                .or(health_api(state)),
+                .or(ad_api(state))
+                .or(health_api(state))
+                .or(user_api(state)),
         )
         .boxed()
 }
 
 /// A filter that is responsible for configuring everything that can be served.
 ///
+/// # Notes
 /// It is responsible for:
 /// * Routes the API
 /// * Handles file requests and redirections
@@ -70,24 +74,19 @@ mod integration_test {
     use super::*;
     use crate::{state::State, testing_fixtures::user::UserFixture};
     use pool::Pool;
-    //    use testing_common::fixture::Fixture;
     use testing_common::setup::setup_warp;
 
     use crate::{
-        api::{auth::LoginRequest, calendar::NewEventMessage},
+        api::{auth::LoginRequest, calendar::NewEventRequest},
         testing_fixtures::util::{deserialize, deserialize_string},
     };
-//    use ::auth::{ AUTHORIZATION_HEADER_KEY, BEARER};
     use db::{
         event::{Event, EventChangeset},
         user::User,
     };
 
     use crate::testing_fixtures::util::get_jwt;
-    use ::auth::Secret;
-    use ::auth::AUTHORIZATION_HEADER_KEY;
-    use ::auth::BEARER;
-
+    use authorization::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
 
     #[test]
     fn test_login_works() {
@@ -96,7 +95,7 @@ mod integration_test {
             let s = State::testing_init(pool, secret);
             let filter = routes(&s);
 
-            let login = auth::LoginRequest {
+            let login = LoginRequest {
                 oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
                     .to_string(),
             };
@@ -122,7 +121,7 @@ mod integration_test {
 
             let resp = warp::test::request()
                 .method("GET")
-                .path("/api/auth/user")
+                .path("/api/user")
                 .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                 .reply(&filter);
 
@@ -136,6 +135,7 @@ mod integration_test {
     mod events {
         use super::*;
         use chrono::Datelike;
+        use chrono::NaiveDateTime;
 
         #[test]
         fn create_event() {
@@ -146,7 +146,7 @@ mod integration_test {
 
                 let jwt = get_jwt(filter.clone());
 
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -178,11 +178,26 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
+                };
+
+                let start = chrono::Utc::now().naive_utc();
+                let stop = start + chrono::Duration::hours(4);
+
+                use serde::Serialize;
+                #[derive(Serialize)]
+                struct TimeBounds {
+                    start: NaiveDateTime,
+                    stop: NaiveDateTime
+                }
+
+                let tb = TimeBounds {
+                    start,
+                    stop
                 };
 
                 let resp = warp::test::request()
@@ -197,7 +212,7 @@ mod integration_test {
 
                 let resp = warp::test::request()
                     .method("GET")
-                    .path("/api/calendar/event/events")
+                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
@@ -220,7 +235,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -238,7 +253,7 @@ mod integration_test {
                 assert_eq!(resp.status(), 200);
 
                 // create another event in a week.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing a week from now".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
@@ -282,7 +297,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
@@ -302,7 +317,7 @@ mod integration_test {
                 assert_eq!(resp.status(), 200);
 
                 // create another event in a week.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing a week from now".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
@@ -347,7 +362,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
@@ -400,11 +415,27 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 // create an event first.
-                let request = NewEventMessage {
+                let request = NewEventRequest {
                     title: "Do a thing".to_string(),
                     text: "".to_string(),
                     start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
+                };
+
+                let start = chrono::Utc::now().naive_utc();
+                let stop = start + chrono::Duration::hours(4);
+
+
+                use serde::Serialize;
+                #[derive(Serialize)]
+                struct TimeBounds {
+                    start: NaiveDateTime,
+                    stop: NaiveDateTime
+                }
+
+                let tb = TimeBounds {
+                    start,
+                    stop
                 };
 
                 let resp = warp::test::request()
@@ -433,7 +464,7 @@ mod integration_test {
                 // verify it was deleted
                 let resp = warp::test::request()
                     .method("GET")
-                    .path("/api/calendar/event/events")
+                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
@@ -460,7 +491,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 let request = StockTransactionRequest {
-                    symbol: "APPL".to_string(),
+                    symbol: "AAPL".to_string(),
                     quantity: 1,
                 };
 
@@ -472,6 +503,7 @@ mod integration_test {
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
+                dbg!(&resp.body());
                 assert_eq!(resp.status(), 200);
             });
         }
@@ -486,7 +518,7 @@ mod integration_test {
                 let jwt = get_jwt(filter.clone());
 
                 let request = StockTransactionRequest {
-                    symbol: "APPL".to_string(),
+                    symbol: "AAPL".to_string(),
                     quantity: 1,
                 };
 

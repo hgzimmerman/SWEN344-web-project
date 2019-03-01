@@ -1,14 +1,12 @@
 pub mod user;
 
 pub mod util {
+    use crate::api::auth::LoginRequest;
     use bytes::Bytes;
     use serde::Deserialize;
     use serde_json::from_str;
     use std::ops::Deref;
-    use warp::http::Response;
-    use warp::filters::BoxedFilter;
-    use crate::api::auth::LoginRequest;
-    use warp::Reply;
+    use warp::{filters::BoxedFilter, http::Response, Reply};
 
     /// Used in testing, this function will try to deserialize a response generated from a typical
     /// warp::testing::request() invocation.
@@ -26,7 +24,6 @@ pub mod util {
         let body_string = std::str::from_utf8(bytes).expect("valid utf8 string");
         String::from(body_string)
     }
-
 
     /// Convenience function for requesting the JWT.
     /// In the testing environment, the login function will always work.

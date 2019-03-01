@@ -91,7 +91,6 @@ where
 /// The guarantee that this function provides is that the test database will be in a default
 /// state, without any run migrations after this ran.
 fn reset_database(conn: &PgConnection) {
-    // TODO instead of dropping, I could instead just revert all migrations.
     drop_database(&conn).expect("Could not drop db");
     create_database(&conn).expect("Could not create Database");
 }

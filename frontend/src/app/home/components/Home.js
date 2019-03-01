@@ -6,7 +6,11 @@ export default class Home extends React.Component {
     return (
       <div className="App">
         <header className="App-header">
+<<<<<<< HEAD
           <p style={{color: 'blue'}}>
+=======
+          <p>
+>>>>>>> 8260ea595b66949fe44859d17a7afb5ae07d1fa8
             Home Page
           </p>
 

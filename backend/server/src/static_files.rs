@@ -1,9 +1,11 @@
 //! Responsible for serving static files and redirecting non-'/api/' requests to index.html.
-use crate::api::API_STRING;
+use crate::{api::API_STRING, error::Error};
 use log::info;
 use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
+use apply::Apply;
 
-const ASSETS_DIRECTORY: &str = "../../frontend/app/static/"; // TODO Point this at the build directory for the frontend.
+/// The directory that the webapp is stored in.
+const ASSETS_DIRECTORY: &str = "../frontend/build/"; // THIS ASSUMES THAT THE BINARY IS BUILT FROM THE ROOT DIRECTORY OF `backend/`
 
 /// Configuration object for setting up static files.
 pub struct FileConfig {
@@ -56,8 +58,11 @@ fn index_static_file_redirect(index_file_path: String) -> BoxedFilter<(impl Repl
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    //                    return Error::NotFound.reject()
-                    return Err(warp::reject::not_found()); // TODO maybe keep this in the Error Type
+                    return warp::reject::not_found().apply(Err)
+//                    return Err(Error::NotFound {
+//                        type_name: "File".to_string(),
+//                    }
+//                    .reject());
                 }
             }
             Ok(file)
@@ -117,9 +122,7 @@ mod unit_test {
             Ok(_) => panic!("Error was expected, found valid Reply"),
             Err(e) => e,
         };
-        assert!(err.is_not_found())
-        //    let err = *err.into_cause::<Error>().expect("Should be a cause.");
-        //    assert_eq!(err, Error::NotFound)
+        let cause = err.find_cause::<Error>().unwrap();
+        assert_eq!(*cause, Error::NotFound {type_name: "File".to_string()})
     }
 }
-

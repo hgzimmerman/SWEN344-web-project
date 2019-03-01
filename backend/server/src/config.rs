@@ -1,8 +1,13 @@
-use auth::Secret;
+//! Configuration for the server.
 use apply::Apply;
 use clap::{App, Arg};
 
+use authorization::Secret;
+
+const DEFAULT_PORT: u16 = 8080;
+
 /// Configuration options for initializing the server.
+#[derive(Debug)]
 pub struct Config {
     /// The port to start the server on.
     pub port: u16,
@@ -54,7 +59,7 @@ impl Config {
         let port: u16 = if let Some(port) = matches.value_of("port") {
             port.parse().expect("Port must be an integer")
         } else {
-            8080
+            DEFAULT_PORT
         };
 
         let tls_enabled = matches.is_present("tls");
@@ -64,7 +69,7 @@ impl Config {
         let max_pool_size: u32 = if let Some(size) = matches.value_of("max_pool_size") {
             size.parse().expect("Pool size must be an integer.")
         } else {
-            10
+            10 // There should be, by default, 10 database connections in the pool.
         };
         let max_pool_size = max_pool_size.apply(Some);
 

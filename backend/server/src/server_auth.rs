@@ -8,35 +8,23 @@
 //!
 //!
 
-use auth::{
-    Secret,
-    AuthError
-};
-use warp::filters::BoxedFilter;
-use crate::state::State;
-use serde::Serialize;
-use serde::Deserialize;
-use warp::Rejection;
-use crate::error::Error;
+use crate::{error::Error, state::State};
+use authorization::{JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use warp::Filter;
-use auth::JwtPayload;
-use auth::AUTHORIZATION_HEADER_KEY;
-
+use warp::{filters::BoxedFilter, Filter, Rejection};
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 ///
-pub fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
+fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
 where
-    for <'de> T: Serialize + Deserialize<'de> + Send
+    for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| {
-            Error::AuthError(AuthError::NotAuthorized {
-                reason: "token required",
-            })
-            .reject_result()
+            Error::not_authorized("Token Required")
+                .reject_result()
         })
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
@@ -50,18 +38,30 @@ where
 
 /// Brings the secret into scope.
 /// The secret is used to create and verify JWTs.
+///
+/// # Arguments
+/// * secret - The secret to be made available by the returned Filter.
 pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
     warp::any().map(move || secret.clone()).boxed()
 }
 
 /// If the user has a JWT, then the user has basic user privileges.
+///
+/// # Arguments
+/// * s - The state used to validate the JWT
 pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
-    warp::any().and(jwt_filter(s)).map(JwtPayload::subject).boxed()
+    warp::any()
+        .and(jwt_filter(s))
+        .map(JwtPayload::subject)
+        .boxed()
 }
 
 #[allow(dead_code)]
 /// Gets an Option<UserUuid> from the request.
 /// Returns Some(user_uuid) if the user has a valid JWT, and None otherwise.
+///
+/// # Arguments
+/// * s - The state used to validate the JWT.
 pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
     user_filter(s)
         .map(Some)
@@ -74,7 +74,7 @@ pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
 mod unit_test {
     use super::*;
     use crate::state::StateConfig;
-    use auth::BEARER;
+    use authorization::BEARER;
     use chrono::Duration;
 
     #[test]
@@ -82,7 +82,7 @@ mod unit_test {
         let secret = Secret::new("yeet");
         let conf = StateConfig {
             secret: Some(secret.clone()),
-            max_pool_size: None
+            max_pool_size: None,
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
@@ -91,11 +91,9 @@ mod unit_test {
 
         let filter = jwt_filter::<Uuid>(&state);
 
-        assert!(
-            warp::test::request()
-                .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                .matches(&filter)
-        )
+        assert!(warp::test::request()
+            .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+            .matches(&filter))
     }
 
     #[test]
@@ -103,15 +101,12 @@ mod unit_test {
         let secret = Secret::new("yeet");
         let conf = StateConfig {
             secret: Some(secret.clone()),
-            max_pool_size: None
+            max_pool_size: None,
         };
 
         let state = State::new(conf);
         let filter = jwt_filter::<Uuid>(&state);
-        assert!(
-            !warp::test::request()
-                .matches(&filter)
-        )
+        assert!(!warp::test::request().matches(&filter))
     }
 
 }

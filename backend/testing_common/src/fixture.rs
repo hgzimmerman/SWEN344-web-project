@@ -1,3 +1,4 @@
+//! Fixture abstraction.
 use diesel::pg::PgConnection;
 
 /// The Fixture trait should be implemented for collections of data used in testing.

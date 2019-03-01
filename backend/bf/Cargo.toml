@@ -1,0 +1,10 @@
+[package]
+name = "bf"
+version = "0.1.0"
+authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+nom = "4.2.0"
+
+
