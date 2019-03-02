@@ -29,6 +29,8 @@ use crate::{
 use env_logger::Builder as LoggerBuilder;
 use log::{info, LevelFilter};
 
+extern crate selenium_rs;
+
 /// parses the command line arguments and starts the server.
 pub fn start() {
     LoggerBuilder::new().filter_level(LevelFilter::Info).init();
