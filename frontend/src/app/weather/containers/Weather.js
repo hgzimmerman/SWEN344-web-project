@@ -37,7 +37,6 @@ export default class Weather extends React.Component {
         />
       : <p>Loading Weather...</p>
     );
-
   }
 
 }
