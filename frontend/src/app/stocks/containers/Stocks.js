@@ -6,9 +6,25 @@ export default class Stocks extends React.Component {
     super(props);
     this.state = {
       stock: '',
+      data: '',
       isLoading: true,
       error: false
     }
+
+  }
+
+  getChart(stock){
+    const url = `https://api.iextrading.com/1.0/stock/${stock}/chart`;
+    return fetch(url, { method: 'GET' })
+      .then((res) => res.json())
+        .then((res) => {
+            this.setState({
+              data: res,
+              isLoading: false,
+              error: false,
+            });
+
+        });
 
   }
 
@@ -27,9 +43,8 @@ export default class Stocks extends React.Component {
           else {
             this.setState({
               stock: res,
-              isLoading: false,
-              error: false,
             });
+            this.getChart(stock);
           }
         });
 
@@ -39,7 +54,9 @@ export default class Stocks extends React.Component {
     return(
       <StocksView
         stock={this.state.stock}
+        data={this.state.data}
         getStock={this.getStock}
+        getChart={this.getChart}
         isLoading={this.state.isLoading}
         error={this.state.error}
       />

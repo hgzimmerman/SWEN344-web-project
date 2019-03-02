@@ -1,5 +1,4 @@
 import React from 'react';
-<<<<<<< HEAD
 import FacebookLogin from 'react-facebook-login';
 import { Redirect } from 'react-router-dom';
 import '../../../App.css';
@@ -36,23 +35,6 @@ export default class Login extends React.Component {
       </div>
     );
 
-=======
-import '../../../App.css';
-
-export default class Login extends React.Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <p>
-            Login Page
-          </p>
-
-        </header>
-      </div>
-    );
-    
->>>>>>> 8260ea595b66949fe44859d17a7afb5ae07d1fa8
   }
 
 }

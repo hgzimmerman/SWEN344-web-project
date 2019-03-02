@@ -2,6 +2,7 @@ import React from 'react';
 import StockTable from './StockTable.js';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import StockChart from './StockChart.js';
 import '../../../App.css';
 
 export default class StocksView extends React.Component {
@@ -11,11 +12,13 @@ export default class StocksView extends React.Component {
       stock: this.props.stock,
       stockInfo: this.props.stock,
       stockName: '',
+      data: this.props.data,
       isLoading: this.props.isLoading,
       error: this.props.error
     }
     this.onSearchStock = this.onSearchStock.bind(this);
     this.getStock = this.props.getStock.bind(this);
+    this.getChart = this.props.getChart.bind(this);
 
   }
 
@@ -50,6 +53,9 @@ export default class StocksView extends React.Component {
         >
           Search
         </Button>
+        <div style={{textAlign: 'center'}} >
+
+        </div>
         <div>
           {
             (!this.state.isLoading)
@@ -60,9 +66,14 @@ export default class StocksView extends React.Component {
                     does not exist
                   </p>
                 : (this.state.stock !== undefined)
-                  ? <StockTable
-                      stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
-                    />
+                  ? <div>
+                      <StockTable
+                        stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
+                      />
+                      <StockChart
+                        data={this.state.data}
+                      />
+                    </div>
                   : <div></div>
               : <div></div>
 
