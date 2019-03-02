@@ -42,6 +42,11 @@ export default class CustomNavbar extends React.Component {
                 Calendar
               </Typography>
             </Link>
+            <Link to="/weather" style={styles.tab}>
+              <Typography variant="h6" color="inherit">
+                Weather
+              </Typography>
+            </Link>
             <div>
               <IconButton
                 aria-owns={open ? 'menu-appbar' : undefined}
