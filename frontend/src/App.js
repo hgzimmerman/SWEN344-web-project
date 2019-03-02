@@ -5,6 +5,7 @@ import Home from './app/home/components/Home.js';
 import CalendarView from './app/calendar/components/CalendarView.js';
 import Stocks from './app/stocks/containers/Stocks.js';
 import Login from './app/auth/components/Login.js';
+import Weather from './app/weather/containers/Weather.js';
 import './App.css';
 
 const Main = () => (
@@ -15,6 +16,7 @@ const Main = () => (
       <Route exact path='/login' component={Login}/>
       <Route exact path='/calendar' component={CalendarView}/>
       <Route exact path='/stocks' component={Stocks}/>
+      <Route exact path='/weather' component={Weather}/>
     </Switch>
   </main>
 );
