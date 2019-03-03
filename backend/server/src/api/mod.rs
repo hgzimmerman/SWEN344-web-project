@@ -225,6 +225,8 @@ mod integration_test {
             });
         }
 
+        // TODO This test is dumb because it will fail or pass depending on when the test is run.
+        // TODO delete it and its associated backing api
         #[test]
         fn get_events_today() {
             setup_warp(|_fixture: &UserFixture, pool: Pool| {
