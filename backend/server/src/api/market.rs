@@ -26,6 +26,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::future::Either;
 use apply::Apply;
+use db::stock::StockTransaction;
+use crate::util::json_or_reject;
+use diesel::result::Error as DieselError;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -64,7 +67,8 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         .untuple_one()
         .and(user_filter(s))
         .and(s.db.clone())
-        .and_then(transact); // Store the purchase/sale in the db
+        .map(transact) // Store the purchase/sale in the db
+        .and_then(json_or_reject);
 
     let owned_stocks = warp::get2().and(user_filter(s)).and(s.db.clone()).and_then(
         |user_uuid: Uuid, conn: PooledConn| {
@@ -152,10 +156,9 @@ fn transact(
     request: StockTransactionRequest,
     user_uuid: Uuid,
     conn: PooledConn,
-) -> Result<impl Reply, Rejection> {
+) -> Result<StockTransaction, Error> {
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
-    use diesel::result::Error as DieselError;
 
     let stock = stock.or_else(|e| match e {
         DieselError::NotFound => {
@@ -163,13 +166,13 @@ fn transact(
                 symbol: request.symbol.clone(),
                 stock_name: "VOID - This field is slated for removal".to_string(),
             };
-            Stock::create_stock(new_stock, &conn).map_err(Error::from_reject)
+            Stock::create_stock(new_stock, &conn).map_err(Error::from)
         }
-        e => Error::from(e).reject_result(),
+        e => Error::from(e).apply(Err),
     })?;
 
     let transactions = Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
-        .map_err(Error::from_reject)?;
+        .map_err(Error::from)?;
     let quantity = transactions.into_iter().fold(0, |acc, t| acc + t.quantity);
 
     // Users can't sell more than they have.
@@ -178,7 +181,7 @@ fn transact(
             "Can't sell more stocks than you have. Owned: {}, Transaction: {}",
             quantity, request.quantity
         );
-        Error::bad_request(err).reject_result()?;
+        Error::bad_request(err).apply(Err)?;
     }
 
     let new_stock_transaction = NewStockTransaction {
@@ -190,9 +193,7 @@ fn transact(
     };
 
     // Record that the stock was purchased for the user
-    Stock::create_transaction(new_stock_transaction, &conn)
-        .map_err(Error::from_reject)
-        .map(util::json)
+    Stock::create_transaction(new_stock_transaction, &conn).map_err(Error::from)
 }
 
 fn get_current_price(
