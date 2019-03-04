@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import CustomNavbar from './app/layout/components/CustomNavbar.js';
-import Home from './app/home/components/Home.js';
+import Home from './app/home/containers/Home.js';
 import CalendarView from './app/calendar/components/CalendarView.js';
 import Stocks from './app/stocks/containers/Stocks.js';
 import Login from './app/auth/components/Login.js';
