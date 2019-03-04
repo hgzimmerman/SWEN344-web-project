@@ -97,7 +97,7 @@ const styles = {
     backgroundColor: '#00A6DD',
     color: 'white',
     height: 50,
-    width: 150
+    width: 200
   },
   table: {
     minWidth: 700,

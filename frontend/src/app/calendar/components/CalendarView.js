@@ -23,7 +23,7 @@ export default class CalendarView extends React.Component {
           value={this.state.date}
           className="calendar"
         />
-        </div>
+      </div>
 
     );
 
