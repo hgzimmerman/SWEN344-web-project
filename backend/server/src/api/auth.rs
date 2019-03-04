@@ -12,7 +12,8 @@ use futures::{stream::Stream, Future};
 use hyper::{Chunk, Uri};
 use log::info;
 use pool::PooledConn;
-use warp::{path, Filter, Rejection};
+use warp::{path, Filter};
+use crate::error::err_to_rejection;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -33,13 +34,12 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(util::json_body_filter(3))
         .and(state.https.clone())
         .and_then(|request: LoginRequest, client: HttpsClient| {
-            // Resolve the client id using the login request
-            info!("Getting user id from oauth provider");
-            get_user_id(&request.oauth_token, client).map_err(Error::reject)
+            get_user_id(request, client).map_err(Error::reject)
         })
         .and(state.secret.clone())
         .and(state.db.clone())
-        .and_then(get_or_create_user);
+        .map(get_or_create_user)
+        .and_then(err_to_rejection);
 
 
     path!("auth").and(login).boxed()
@@ -50,12 +50,14 @@ pub const TEST_CLIENT_ID: &str = "test client id";
 /// Shim for the get_user_id_from_facebook function.
 /// The shim allows tests to always have the auth process succeed succeed.
 fn get_user_id(
-    oauth_token: &str,
+    request: LoginRequest,
     client: HttpsClient,
 ) -> impl Future<Item = String, Error = Error> {
     // If this runs in a test environment, it will work without question.
     // Otherwise, it will attempt to acquire the user_id from facebook.
     use futures::future::Either;
+    info!("Getting user id from oauth provider");
+    let oauth_token = &request.oauth_token;
     if cfg!(test) {
         futures::future::ok::<String, Error>(TEST_CLIENT_ID.to_string()).apply(Either::A) // Automatic user login for testing
     } else {
@@ -111,7 +113,7 @@ fn get_or_create_user(
     client_id: String,
     secret: Secret,
     conn: PooledConn,
-) -> Result<impl Reply, Rejection> {
+) -> Result<String, Error> {
     // take token, go to platform, get client id.
     info!("Resolved OAuth token to client_id: {}", client_id);
     // search DB for user with client id.
@@ -130,7 +132,6 @@ fn get_or_create_user(
                 .map_err(Error::AuthError)
                 .map(|a| a)
         }) //dbg!(a)))
-        .map_err(Error::reject)
 }
 
 #[cfg(test)]

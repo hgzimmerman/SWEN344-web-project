@@ -48,6 +48,7 @@ export default class CustomNavbar extends React.Component {
                 Weather
               </Typography>
             </Link>
+
             {fakeAuth.isAuthenticated && (
               <div style={{float: 'right'}}>
                 <IconButton

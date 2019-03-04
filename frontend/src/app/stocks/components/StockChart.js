@@ -13,7 +13,7 @@ export default class StockChart extends React.Component {
   feedData(){
     let arr = [];
     this.state.data.map((item) => {
-      console.log(new Date(parseInt(item.date.substr(0,4)), parseInt(item.date.substr(5,2)-1), parseInt(item.date.substr(8,2))))
+      console.log(new Date(parseInt(item.date.substr(0,4)), parseInt(item.date.substr(5,2)-1), parseInt(item.date.substr(8,2))));
       arr.push({x: new Date(parseInt(item.date.substr(0,4)), parseInt(item.date.substr(5,2)-1), parseInt(item.date.substr(8,2))), y: item.close})
     });
     return arr;

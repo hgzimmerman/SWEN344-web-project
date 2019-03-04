@@ -11,9 +11,10 @@ use futures::future::Future;
 use pool::PooledConn;
 use warp::{
     filters::BoxedFilter,
-    path, Filter, Rejection, Reply,
+    path, Filter, Reply,
 };
 use log::info;
+use crate::error::err_to_rejection;
 
 /// Api for serving the advertisement.
 ///
@@ -32,15 +33,8 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .untuple_one() // converts `(NumServers, Load)` to `NumServers, Load`
         .and(state.db.clone())
-        .and_then(
-            |servers: NumServers,
-             load: Load,
-             conn: PooledConn|
-             -> Result<(), Rejection> {
-                determine_and_record_ad_serving(servers, load, &conn)
-                    .map_err(|e| e.reject())
-            },
-        )
+        .map(determine_and_record_ad_serving)
+        .and_then(err_to_rejection)
         .untuple_one() // converts `()` to ``
         .and(warp::fs::file(".static/ad/rit_ad.png")) // TODO, verify that this is correct
         .boxed()
@@ -85,18 +79,18 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 fn determine_and_record_ad_serving(
     available_servers: NumServers,
     load: Load,
-    conn: &PooledConn,
+    conn: PooledConn,
 ) -> Result<(), Error> {
     let should_send_advertisement = should_serve_adds_bf(load, available_servers);
 
-    let hr = NewHealthRecord {
+    let new_health_record = NewHealthRecord {
         available_servers: available_servers.0 as i32,
         load: load.0 as i32,
         did_serve: should_send_advertisement,
         time_recorded: Utc::now().naive_utc(),
     };
 
-    HealthRecord::create(hr, conn).map_err(Error::from)?;
+    HealthRecord::create(new_health_record, &conn).map_err(Error::from)?;
 
     if should_send_advertisement {
         Ok(())
