@@ -23,16 +23,15 @@ export default class HomeView extends React.Component {
                   </p>
                 </Paper>
 
+                <Paper style={styles.events}>
+                  <h2>Events</h2>
+                  <p style={styles.text}>No events scheduled for today</p>
+                </Paper>
                 <div>
                   <HomeStocksTable
                     stocks={this.props.stocks}
                   />
                 </div>
-
-                <Paper style={styles.events}>
-                  <h2>Events</h2>
-                  <p style={styles.text}>No events scheduled for today</p>
-                </Paper>
               </div>
             </div>
           : <div style={{marginTop: 50}}>
@@ -59,14 +58,14 @@ const styles = {
     padding: 10
   },
   stocks: {
-    width: '30%',
+    width: '40%',
     height: 300,
     marginTop: 20,
     textAlign: 'center',
     color: 'black'
   },
   feed: {
-    width: '30%',
+    width: '40%',
     height: 700,
     marginTop: 20,
     textAlign: 'center',

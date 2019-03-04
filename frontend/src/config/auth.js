@@ -1,5 +1,6 @@
 import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import MenuItem from '@material-ui/core/MenuItem';
+import { Route, Redirect, withRouter } from 'react-router-dom';
 
 export const PrivateRoute = function PrivateRoute({ component: Component, ...rest }) {
   if (!fakeAuth.isAuthenticated){
@@ -35,3 +36,13 @@ export const fakeAuth = {
     setTimeout(cb, 100);
   }
 };
+
+export const AuthButton = withRouter(
+  ({ history }) => (
+      <MenuItem
+        onClick={() => {fakeAuth.signout(() => history.push("/"))}}
+      >
+        Logout
+      </MenuItem>
+    )
+);
