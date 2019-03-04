@@ -102,7 +102,7 @@ impl StdError for Error {
 ///
 pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let not_found = Error::NotFound {
-        type_name: "route not found".to_string(),
+        type_name: "resource not found".to_string(),
     };
     let internal_server = Error::InternalServerError(None);
 
@@ -244,6 +244,11 @@ impl From<diesel::result::Error> for Error {
             }
         }
     }
+}
+
+/// Convenience function that allows terse error handling in and_then combinators.
+pub fn err_to_rejection<T>(result: Result<T, Error>) -> Result<T,Rejection> {
+    result.map_err(Error::reject)
 }
 
 /// Error response template for when the errors are rewritten.
