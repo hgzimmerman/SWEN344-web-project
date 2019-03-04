@@ -8,7 +8,7 @@ import TableRow from '@material-ui/core/TableRow';
 import ArrowDropUp from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
-export default class StocksView extends React.Component {
+export default class HomeStocksTable extends React.Component {
   render(){
     return(
       <div className="App">
@@ -23,19 +23,19 @@ export default class StocksView extends React.Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {this.props.stocks.map(row => (
-                    <TableRow key={row.id}>
+                  {this.props.stocks.map(stock => (
+                    <TableRow key={stock.quote.symbol}>
                       <TableCell align="right">
-                        {row.quote.symbol}
+                        {stock.quote.symbol}
                       </TableCell>
                       <TableCell align="right">
-                        ${Math.round(row.quote.open * 100) / 100}
+                        ${Math.round(stock.quote.open * 100) / 100}
                         {
-                          (row.quote.changePercent > 0)
+                          (stock.quote.changePercent > 0)
                           ? <ArrowDropUp style={{color: '#45f442'}} />
                           : <ArrowDropDown style={{color: 'red'}} />
                         }
-                        {row.quote.changePercent.toFixed(3)}%
+                        {stock.quote.changePercent.toFixed(3)}%
                       </TableCell>
                     </TableRow>
                   ))}

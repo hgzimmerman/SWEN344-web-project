@@ -4,7 +4,7 @@ import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import '../../../App.css';
 
-export default class Home extends React.Component {
+export default class HomeView extends React.Component {
   render() {
     return (
       <div className="App">

@@ -29,7 +29,7 @@ export default class Home extends React.Component {
   }
 
   getStocks(){
-    const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=amzn,aapl,googlfb&types=quote`;
+    const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=amzn,aapl,googl,fb&types=quote`;
     let stocksArr = [];
     let i = 0;
 
@@ -44,6 +44,7 @@ export default class Home extends React.Component {
             stocks: stocksArr,
             isLoading: false
           });
+          console.log(this.state.stocks)
 
         });
 
