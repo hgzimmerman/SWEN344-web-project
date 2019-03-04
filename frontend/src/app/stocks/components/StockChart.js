@@ -1,48 +1,56 @@
 import React from "react";
-import { Chart } from "react-charts";
+import CanvasJSReact from '../../../assets/canvasjs.react';
+var CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 export default class StockChart extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      open: this.props.data
+      data: this.props.data
     }
   }
 
-  feedAxis(){
+  feedData(){
     let arr = [];
-    this.state.open.map((item) => (
-      arr.push({x: item.date, y: item.high})
-    ));
+    this.state.data.map((item) => {
+
+      // console.log((item.date.substr(0,4)), (item.date.substr(5,2)), (item.date.substr(8,2)))
+      console.log(new Date(parseInt(item.date.substr(0,4)), parseInt(item.date.substr(5,2)-1), parseInt(item.date.substr(8,2))))
+      arr.push({x: new Date(parseInt(item.date.substr(0,4)), parseInt(item.date.substr(5,2)-1), parseInt(item.date.substr(8,2))), y: item.close});
+    });
     return arr;
   }
 
-  render(){
-    const axis = this.feedAxis();
-    const data = [
-  {
-    label: "Series 1",
-    data: this.feedAxis()
-  }
-];
-    return (
-      // A react-chart hyper-responsively and continuusly fills the available
-      // space of its parent element automatically
-      <div
-        style={{
-          width: "400px",
-          height: "300px"
-        }}
-      >
-        <Chart
-          data={data}
-          axes={[
-            { primary: true, type: "time", position: "bottom" },
-            { type: "linear", position: "left" }
-          ]}
-        />
-        <button onClick={() => console.log(axis)}>test</button>
-      </div>
-    );
-  }
+
+  render() {
+    const dataPoints = this.feedData();
+		const options = {
+			animationEnabled: true,
+			title: {
+				text: `${this.props.stock} Interactive Chart (Month)`
+			},
+			axisY: {
+				title: "Closed Price",
+				includeZero: false,
+				prefix: "$"
+			},
+			data: [{
+				type: "splineArea",
+				xValueFormatString: "MM DD",
+				yValueFormatString: "#,$##0.##",
+				showInLegend: false,
+				legendText: "Date",
+				dataPoints: dataPoints
+			}]
+		}
+
+		return (
+		<div>
+			<CanvasJSChart options = {options}
+				/* onRef={ref => this.chart = ref} */
+			/>
+			{/*You can get reference to the chart instance as shown above using onRef. This allows you to access all chart properties and methods*/}
+		</div>
+		);
+	}
 }

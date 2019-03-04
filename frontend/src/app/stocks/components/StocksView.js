@@ -71,6 +71,7 @@ export default class StocksView extends React.Component {
                         stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
                       />
                       <StockChart
+                        stock={this.state.stockName.toUpperCase()}
                         data={this.state.data}
                       />
                     </div>
