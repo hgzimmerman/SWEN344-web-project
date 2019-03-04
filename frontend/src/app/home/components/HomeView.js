@@ -1,7 +1,6 @@
 import React from 'react';
 import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
-import CalendarView from '../../calendar/components/CalendarView.js';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import '../../../App.css';
 
@@ -9,40 +8,42 @@ export default class Home extends React.Component {
   render() {
     return (
       <div className="App">
-      {
-        (!this.props.isLoading)
-        ? <div style={styles.container}>
-          <Paper style={styles.feed}>
-            <h2>Feed</h2>
-          </Paper>
-            <div style={{padding: 30}}>
-              <Paper style={styles.weather}>
-                <h2>RIT's temperature</h2>
-                <p style={styles.temp}>{this.props.weather.main.temp} F</p>
+        {
+          (!this.props.isLoading)
+          ? <div style={styles.container}>
+              <Paper style={styles.feed}>
+                <h2>Feed</h2>
               </Paper>
-              <div>
-              <HomeStocksTable />
+
+              <div style={{padding: 30}}>
+                <Paper style={styles.weather}>
+                  <h2>RIT's Temperature</h2>
+                  <p style={styles.temp}>
+                    {this.props.weather.main.temp} F
+                  </p>
+                </Paper>
+
+                <div>
+                  <HomeStocksTable
+                    stocks={this.props.stocks}
+                  />
+                </div>
+
+                <Paper style={styles.events}>
+                  <h2>Events</h2>
+                  <p style={styles.text}>No events scheduled for today</p>
+                </Paper>
               </div>
-
-              <Paper style={styles.events}>
-                <h2>Events</h2>
-                <p style={styles.text}>No events scheduled for today</p>
-              </Paper>
-
             </div>
-
-          </div>
-        : <div style={{marginTop: 50}}>
-            <Loader
-               type="Oval"
-               color="#00BFFF"
-               height="100"
-               width="100"
-            />
-          </div>
-      }
-
-
+          : <div style={{marginTop: 50}}>
+              <Loader
+                 type="Oval"
+                 color="#00BFFF"
+                 height="100"
+                 width="100"
+              />
+            </div>
+        }
       </div>
     );
 
@@ -66,13 +67,14 @@ const styles = {
   },
   feed: {
     width: '30%',
-    height: 600,
+    height: 700,
     marginTop: 20,
     textAlign: 'center',
     color: 'black'
   },
   weather: {
-    height: 150
+    height: 150,
+    marginTop: 20,
   },
   temp: {
     color: '#00A6DD',

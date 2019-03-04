@@ -5,41 +5,14 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-
-const rows = {
-  Items: [
-    {
-      "id": "1",
-      "name": "Apple",
-      "symbol": "AAPL",
-      "price": "170.92",
-      "owned": "2",
-      "change": "+0.5%"
-    },
-    {
-      "id": "2",
-      "name": "Neopets",
-      "symbol": "NEO",
-      "price": "1970.92",
-      "owned": "99",
-      "change": "+99.5%"
-    }
-  ]
-}
+import ArrowDropUp from '@material-ui/icons/ArrowDropUp';
+import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
 export default class StocksView extends React.Component {
-  constructor(props){
-    super(props);
-
-  }
-
-
   render(){
     return(
       <div className="App">
         <div className="tables">
-
-
           <div style={{float:'left', margin: 10}}>
             <Paper style={styles.root}>
               <Table style={styles.table}>
@@ -50,18 +23,26 @@ export default class StocksView extends React.Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.Items.map(row => (
+                  {this.props.stocks.map(row => (
                     <TableRow key={row.id}>
-                      <TableCell align="right">{row.symbol}</TableCell>
-                      <TableCell align="right">{row.price}</TableCell>
+                      <TableCell align="right">
+                        {row.quote.symbol}
+                      </TableCell>
+                      <TableCell align="right">
+                        ${Math.round(row.quote.open * 100) / 100}
+                        {
+                          (row.quote.changePercent > 0)
+                          ? <ArrowDropUp style={{color: '#45f442'}} />
+                          : <ArrowDropDown style={{color: 'red'}} />
+                        }
+                        {row.quote.changePercent.toFixed(3)}%
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </Paper>
-            </div>
-
-
+          </div>
         </div>
       </div>
     );
