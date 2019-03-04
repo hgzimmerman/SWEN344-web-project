@@ -32,5 +32,4 @@ tokio = "0.1.15"
 rand = "0.6.5"
 serde_urlencoded = "0.5.4"
 bf = {path="../bf"}
-selenium-rs = "0.1.0"
 
