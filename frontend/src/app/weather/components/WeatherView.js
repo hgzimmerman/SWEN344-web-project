@@ -48,19 +48,10 @@ export default class WeatherView extends React.Component {
 
     return(
       <div className="App">
-        <Paper levation={1} >
-        <div style={{float:'left', margin: 10}}>
+        <div style={{float:'center', margin: 10}} className="tables">
           <Paper style={styles.root}>
+            <h1>RIT Weather</h1>
             <Table style={styles.table}>
-        			<TableHead>
-								<TableRow>
-									<TableCell>
-										<b>
-											RIT Weather
-										</b>
-									</TableCell>
-								</TableRow>
-							</TableHead>
               <TableHead>
                 <TableRow>
 									<TableCell align="center">Current Temp</TableCell>
@@ -91,8 +82,7 @@ export default class WeatherView extends React.Component {
               </TableBody>
             </Table>
           </Paper>
-          </div>
-        </Paper>
+        </div>
       </div>
     );
   }
