@@ -15,11 +15,13 @@ export default class PostForm extends React.Component {
   }
 
   handleSubmit(event) {
-    // ToDo: The needful     POST https://graph.facebook.com/546349135390552/feed?message=Hello Fans!&access_token=your-access-token
+    if (accessToken !== '') {
+    // POST https://graph.facebook.com/546349135390552/feed?message=Hello Fans!&access_token=your-access-token
     const url = `https://graph.facebook.com/546349135390552/feed?message=${event.target.value}&access_token=${accessToken}`;
     return fetch(url, { method: 'POST' })
       .then((res) => res.json())
         .then((res) => {
+          console.log(res);
           if (res.id !== null) {
             alert("Post successfully made!");
           } else {
@@ -27,6 +29,9 @@ export default class PostForm extends React.Component {
           }
         }
       )
+    } else {
+      alert("Login to Facebook to post");
+    }
   }
 
   render() {
@@ -35,7 +40,7 @@ export default class PostForm extends React.Component {
         <label>
           Create Post
           <br/>
-          <textArea value={this.state.value} onChange={this.handleChange} width="95%"/>
+          <textarea value={this.state.value} onChange={this.handleChange}/>
         </label>
         <br/>
         <input type="submit" value="Submit" />
