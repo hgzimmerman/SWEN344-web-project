@@ -1,6 +1,7 @@
+import React from 'react';
 import {accessToken} from '../../auth/components/Login.js';
 
-class PostForm extends React.Component {
+export default class PostForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {value: ''};
@@ -18,10 +19,12 @@ class PostForm extends React.Component {
     const url = `https://graph.facebook.com/546349135390552/feed?message=${event.target.value}&access_token=${accessToken}`;
     return fetch(url, { method: 'POST' })
       .then((res) => res.json())
-        if (res.id !== null) {
-          alert("Post successfully made!");
-        } else {
-          alert("Failed to post");
+        .then((res) => {
+          if (res.id !== null) {
+            alert("Post successfully made!");
+          } else {
+            alert("Failed to post");
+          }
         }
       )
   }
@@ -31,8 +34,10 @@ class PostForm extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <label>
           Create Post
-          <input type="text" value={this.state.value} onChange={this.handleChange} />
+          <br/>
+          <textArea value={this.state.value} onChange={this.handleChange} width="95%"/>
         </label>
+        <br/>
         <input type="submit" value="Submit" />
       </form>
     );
