@@ -2,6 +2,7 @@ import React from 'react';
 import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
+import PostForm from '../containers/PostForm.js';
 import '../../../App.css';
 
 export default class HomeView extends React.Component {
@@ -13,6 +14,7 @@ export default class HomeView extends React.Component {
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
                 <h2>Feed</h2>
+                <PostForm/>
               </Paper>
 
               <div style={{padding: 30}}>

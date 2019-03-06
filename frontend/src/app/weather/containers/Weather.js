@@ -16,7 +16,7 @@ export default class Weather extends React.Component {
   }
 
   getWeather(){
-    const url = 'http://api.openweathermap.org/data/2.5/weather?zip=14623,us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial'
+    const url = 'https://api.openweathermap.org/data/2.5/weather?zip=14623,us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial'
     return fetch(url, { method: 'GET' })
       .then((res) => res.json())
         .then((res) => {
