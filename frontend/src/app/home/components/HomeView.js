@@ -3,6 +3,7 @@ import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import '../../../App.css';
+import {accessToken} from '../../auth/components/Login.js';
 
 export default class HomeView extends React.Component {
   render() {
@@ -13,6 +14,7 @@ export default class HomeView extends React.Component {
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
                 <h2>Feed</h2>
+
               </Paper>
 
               <div style={{padding: 30}}>

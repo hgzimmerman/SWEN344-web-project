@@ -1,5 +1,6 @@
 import React from 'react';
 import HomeView from '../components/HomeView.js';
+import {accessToken} from '../../auth/components/Login.js';
 
 export default class Home extends React.Component {
   constructor(props){
@@ -13,7 +14,6 @@ export default class Home extends React.Component {
 
   componentDidMount(){
     this.getWeather().then(() => this.getStocks());
-
   }
 
   getWeather(){
