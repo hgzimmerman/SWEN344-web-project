@@ -4,7 +4,6 @@ import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import PostForm from '../containers/PostForm.js';
 import '../../../App.css';
-import {accessToken} from '../../auth/components/Login.js';
 
 export default class HomeView extends React.Component {
   render() {
