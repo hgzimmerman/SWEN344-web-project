@@ -7,9 +7,17 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt update -y
 RUN apt install nodejs -y
 
+
 WORKDIR /usr/src/app/frontend
-RUN npm install
-RUN npm run-script build
+
+#RUN ls
+#RUN ls
+#WORKDIR /usr/src/app
+#RUN ls
+#
+#
+#RUN npm install
+#RUN npm run-script build
 
 
 WORKDIR /usr/src/app/backend

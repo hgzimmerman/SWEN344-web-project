@@ -19,7 +19,7 @@ services:
     # diesel infer_schema macro gives warnings with this flag.
     # environment:
     #   - CARGO_INCREMENTAL=1
-    command: bash -c "bash ./wait_for_it.sh db:5432 -q -- diesel setup --migration-dir db/migrations && cargo run --release -- --port 80"
+    command: bash -c "bash ./build.sh"
 
   db:
     image: "postgres:latest"

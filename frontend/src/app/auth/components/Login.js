@@ -2,6 +2,7 @@ import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import FacebookLogin from 'react-facebook-login';
+import { fakeAuth } from '../../../config/auth.js'
 import { Redirect } from 'react-router-dom';
 import '../../../App.css';
 
@@ -10,7 +11,8 @@ export default class Login extends React.Component {
     super(props);
     this.state = {
       username: null,
-      password: null
+      password: null,
+      redirectToReferrer: false
     }
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
@@ -33,7 +35,9 @@ export default class Login extends React.Component {
 
   authenticate(){
     if (this.state.username === 'test' && this.state.password === 'test'){
-      return (this.props.history.push("/"));
+      fakeAuth.authenticate(() => {
+        this.setState({ redirectToReferrer: true });
+      });
     }
     else {
       alert('Could not authenticate')
@@ -44,13 +48,19 @@ export default class Login extends React.Component {
   render() {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
-        return (this.props.history.push("/"));
+        fakeAuth.authenticate(() => {
+          this.setState({ redirectToReferrer: true });
+        });
       }
       else {
         alert('Could not authenticate')
       }
 
     }
+    let { from } = this.props.location.state || { from: { pathname: "/" } };
+    let { redirectToReferrer } = this.state;
+
+    if (redirectToReferrer) return <Redirect to={from} />;
 
     return (
       <div className="App">
