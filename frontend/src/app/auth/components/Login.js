@@ -7,6 +7,7 @@ import { Redirect } from 'react-router-dom';
 import '../../../App.css';
 
 export var accessToken = '';
+export var userID = '';
 export default class Login extends React.Component {
   constructor(props){
     super(props);
@@ -49,6 +50,7 @@ export default class Login extends React.Component {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
         accessToken = response.accessToken;
+        userID = response.id;
         fakeAuth.authenticate(() => {
           this.setState({ redirectToReferrer: true });
         });

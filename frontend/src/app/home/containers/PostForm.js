@@ -1,5 +1,5 @@
 import React from 'react';
-import {accessToken} from '../../auth/components/Login.js';
+import {accessToken, userID} from '../../auth/components/Login.js';
 
 export default class PostForm extends React.Component {
   constructor(props) {
@@ -17,7 +17,8 @@ export default class PostForm extends React.Component {
   handleSubmit(event) {
     if (accessToken !== '') {
     // POST https://graph.facebook.com/546349135390552/feed?message=Hello Fans!&access_token=your-access-token
-    const url = `https://graph.facebook.com/546349135390552/feed?message=${event.target.value}&access_token=${accessToken}`;
+    console.log(accessToken);
+    const url = `https://graph.facebook.com/${userID}/feed?message=${event.target.value}&access_token=${accessToken}`;
     return fetch(url, { method: 'POST' })
       .then((res) => res.json())
         .then((res) => {
