@@ -21,7 +21,7 @@ services:
   app:
     build: ./
     ports: 
-      - "80:80"
+      - "8080:8080"
     volumes:
       - ./:/usr/src/app
     links: # Links are deprecated, experiment in removing this line and still getting the whole thing to work.
