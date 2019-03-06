@@ -38,7 +38,7 @@ services:
     command: bash -c "bash ./build.sh"
 
   db:
-    image: "postgres:latest"
+    image: "postgres:11"
     ports: 
       - "5432:5432"
     volumes:
