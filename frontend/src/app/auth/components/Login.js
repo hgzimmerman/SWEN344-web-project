@@ -5,9 +5,8 @@ import FacebookLogin from 'react-facebook-login';
 import { fakeAuth } from '../../../config/auth.js'
 import { Redirect } from 'react-router-dom';
 import '../../../App.css';
+export var fbData = '';
 
-export var accessToken = '';
-export var userID = '';
 export default class Login extends React.Component {
   constructor(props){
     super(props);
@@ -18,6 +17,7 @@ export default class Login extends React.Component {
     }
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
+
   }
 
   onChangeUsername(e){
@@ -49,8 +49,8 @@ export default class Login extends React.Component {
   render() {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
-        accessToken = response.accessToken;
-        userID = response.id;
+        fbData = response;
+
         fakeAuth.authenticate(() => {
           this.setState({ redirectToReferrer: true });
         });

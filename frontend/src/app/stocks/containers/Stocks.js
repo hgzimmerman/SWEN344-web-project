@@ -37,8 +37,7 @@ export default class Stocks extends React.Component {
             this.setState({
               error: true,
               isLoading: false
-            })
-
+            });
           }
           else {
             this.setState({
