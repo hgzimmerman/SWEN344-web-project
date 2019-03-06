@@ -1,11 +1,27 @@
 version: "2" # The version of docker compose on the ubuntu vm is outdated and only supports v2
 
 services:
+  # https://medium.com/@pentacent/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
+  nginx:
+    image: nginx:1.15-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   app:
     build: ./
     ports: 
-      - "80:80"
+      - "8080:8080"
     volumes:
       - ./:/usr/src/app
     links: # Links are deprecated, experiment in removing this line and still getting the whole thing to work.
@@ -22,7 +38,7 @@ services:
     command: bash -c "bash ./build.sh"
 
   db:
-    image: "postgres:latest"
+    image: "postgres:11"
     ports: 
       - "5432:5432"
     volumes:
