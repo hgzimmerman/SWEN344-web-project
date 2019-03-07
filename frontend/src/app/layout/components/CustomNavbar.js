@@ -27,59 +27,62 @@ export default class CustomNavbar extends React.Component {
     return(
       <div>
         <AppBar position="static" style={styles.navbar}>
-          <Toolbar>
-            <Link to="/" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Home
-              </Typography>
-            </Link>
-            <Link to="/stocks" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Stocks
-              </Typography>
-            </Link>
-            <Link to="/calendar" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Calendar
-              </Typography>
-            </Link>
-            <Link to="/weather" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Weather
-              </Typography>
-            </Link>
+          {
+            (fakeAuth.isAuthenticated)
+            ? <Toolbar>
+                <Link to="/" style={styles.tab}>
+                  <Typography variant="h6" color="inherit">
+                    Home
+                  </Typography>
+                </Link>
+                <Link to="/stocks" style={styles.tab}>
+                  <Typography variant="h6" color="inherit">
+                    Stocks
+                  </Typography>
+                </Link>
+                <Link to="/calendar" style={styles.tab}>
+                  <Typography variant="h6" color="inherit">
+                    Calendar
+                  </Typography>
+                </Link>
+                <Link to="/weather" style={styles.tab}>
+                  <Typography variant="h6" color="inherit">
+                    Weather
+                  </Typography>
+                </Link>
 
-            {fakeAuth.isAuthenticated && (
-              <div style={{float: 'right'}}>
-                <IconButton
-                  aria-owns={open ? 'menu-appbar' : undefined}
-                  aria-haspopup="true"
-                  onClick={this.handleMenu}
-                  color="inherit"
-                >
-                  <AccountCircle />
-                </IconButton>
-                <Menu
-                  id="menu-appbar"
-                  anchorEl={anchorEl}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  open={open}
-                  onClose={this.handleClose}
-                  style={{marginTop: 40}}
-                >
-                  <AuthButton />
-                </Menu>
-              </div>
-            )}
+                <div style={{float: 'right'}}>
+                  <IconButton
+                    aria-owns={open ? 'menu-appbar' : undefined}
+                    aria-haspopup="true"
+                    onClick={this.handleMenu}
+                    color="inherit"
+                  >
+                    <AccountCircle />
+                  </IconButton>
+                  <Menu
+                    id="menu-appbar"
+                    anchorEl={anchorEl}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    open={open}
+                    onClose={this.handleClose}
+                    style={{marginTop: 40}}
+                  >
+                    <AuthButton />
+                  </Menu>
+                </div>
 
-          </Toolbar>
+
+              </Toolbar>
+            : <Toolbar></Toolbar>
+          }
         </AppBar>
       </div>
     );

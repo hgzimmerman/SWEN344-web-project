@@ -9,11 +9,12 @@ export default class Home extends React.Component {
       isLoading: true
     }
     this.getWeather = this.getWeather.bind(this);
+
   }
 
   componentDidMount(){
     this.getWeather().then(() => this.getStocks());
-
+    
   }
 
   getWeather(){
