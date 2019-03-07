@@ -104,7 +104,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let not_found = Error::NotFound {
         type_name: "resource not found".to_string(),
     };
-    let internal_server = Error::InternalServerError(None);
+    let internal_err = Error::InternalServerError(None);
 
     let cause = match err.find_cause::<Error>() {
         Some(ok) => ok,
@@ -112,7 +112,10 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
             if err.is_not_found() {
                 &not_found
             } else {
-                &internal_server
+                match err.status() {
+                    StatusCode::INTERNAL_SERVER_ERROR =>  &internal_err,
+                    _ => return Err(err)
+                }
             }
         }
     };
