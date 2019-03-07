@@ -5,25 +5,18 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Loader from 'react-loader-spinner';
 
 export default class WeatherView extends React.Component {
-  constructor(props){
-    super(props);
-		this.state={
-			weather: this.props.weather
-		}
-
-  }
-
 	getPrecip() {
 		var prec = '';
 		var i;
-		for (i = 0; i < this.state.weather.weather.length; i++) {
-			if (i === this.state.weather.weather.length-1) {
-				prec += this.state.weather.weather[i].main;
+		for (i = 0; i < this.props.weather.weather.length; i++) {
+			if (i === this.props.weather.weather.length-1) {
+				prec += this.props.weather.weather[i].main;
 			}
 			else {
-				prec += (this.state.weather.weather[i].main + ', ');
+				prec += (this.props.weather.weather[i].main + ', ');
 			}
 		}
 		console.log("prec: " + prec);
@@ -31,64 +24,60 @@ export default class WeatherView extends React.Component {
 	}
 
   render(){
-		const prec = this.getPrecip();
-		//	{
-		//		"coord":{"lon":-122.09,"lat":37.39},
-		//		"sys":{"type":3,"id":168940,"message":0.0297,"country":"US","sunrise":1427723751,"sunset":1427768967},
-		//		"weather":[{"id":800,"main":"Clear","description":"Sky is Clear","icon":"01n"}],
-		//		"base":"stations",
-		//		"main":{"temp":285.68,"humidity":74,"pressure":1016.8,"temp_min":284.82,"temp_max":286.48},
-		//		"wind":{"speed":0.96,"deg":285.001},
-		//		"clouds":{"all":0},
-		//		"dt":1427700245,
-		//		"id":0,
-		//		"name":"Mountain View",
-		//		"cod":200
-		//	}
-
-    return(
+    return (
       <div className="App">
-        <div style={{float:'center', margin: 10}} className="tables">
-          <Paper style={styles.root}>
-            <h1>RIT Weather</h1>
-            <Table style={styles.table}>
-              <TableHead>
-                <TableRow>
-									<TableCell align="center">Current Temp</TableCell>
-                  <TableCell align="center">High Temp</TableCell>
-									<TableCell align="center">Low Temp</TableCell>
-									<TableCell align="center">Precipitation</TableCell>
-									<TableCell align="center">Winds</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-								<TableRow>
-									<TableCell>
-										{this.state.weather.main.temp} Fahr
-									</TableCell>
-									<TableCell>
-										{this.state.weather.main.temp_max} Fahr
-									</TableCell>
-									<TableCell>
-										{this.state.weather.main.temp_min} Fahr
-									</TableCell>
-									<TableCell>
-										{prec}
-									</TableCell>
-									<TableCell>
-										{this.state.weather.wind.speed} MPH
-									</TableCell>
-								</TableRow>
-              </TableBody>
-            </Table>
-          </Paper>
-        </div>
+        {
+          (!this.props.isLoading)
+          ? <div style={{float:'center', margin: 10}} className="tables">
+              <Paper style={styles.root}>
+                <h1>RIT Weather</h1>
+                <Table style={styles.table}>
+                  <TableHead>
+                    <TableRow>
+    									<TableCell align="center">Current Temp</TableCell>
+                      <TableCell align="center">High Temp</TableCell>
+    									<TableCell align="center">Low Temp</TableCell>
+    									<TableCell align="center">Precipitation</TableCell>
+    									<TableCell align="center">Winds</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+    								<TableRow>
+    									<TableCell>
+    										{this.props.weather.main.temp} Fahr
+    									</TableCell>
+    									<TableCell>
+    										{this.props.weather.main.temp_max} Fahr
+    									</TableCell>
+    									<TableCell>
+    										{this.props.weather.main.temp_min} Fahr
+    									</TableCell>
+    									<TableCell>
+    										{this.getPrecip()}
+    									</TableCell>
+    									<TableCell>
+    										{this.props.weather.wind.speed} MPH
+    									</TableCell>
+    								</TableRow>
+                  </TableBody>
+                </Table>
+              </Paper>
+            </div>
+          : <div style={{marginTop: 50}}>
+              <Loader
+                 type="Oval"
+                 color="#00BFFF"
+                 height="100"
+                 width="100"
+              />
+            </div>
+        }
       </div>
     );
+
   }
 
 }
-
 
 
 const styles = {

@@ -9,10 +9,12 @@ export default class Weather extends React.Component {
       isLoading: true
     }
     this.getWeather = this.getWeather.bind(this);
+
   }
 
   componentDidMount(){
     this.getWeather();
+
   }
 
   getWeather(){
@@ -24,19 +26,18 @@ export default class Weather extends React.Component {
             weather: res,
             isLoading: false
           });
-          console.log(res)
-        })
+        });
 
   }
 
   render(){
     return(
-      (!this.state.isLoading)
-      ? <WeatherView
-          weather={this.state.weather}
-        />
-      : <p>Loading Weather...</p>
+      <WeatherView
+        isLoading={this.state.isLoading}
+        weather={this.state.weather}
+      />
     );
+
   }
 
 }
