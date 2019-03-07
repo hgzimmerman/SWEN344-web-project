@@ -1,9 +1,9 @@
 ## Submission Readme
-##### Site URL
+#### Site URL
 [Site URL](https://vm344c.se.rit.edu/login)
 
-##### Login Information
-###### For R1 release the following applies:
+#### Login Information
+##### For R1 release the following applies:
 
 ###### Test User:
 
@@ -20,7 +20,7 @@ A compile time variable is used to switch between using a future that contacts F
 This aids in integration testing.
 
 
-##### Readme
+#### Readme
 As per R1 specifications, the project at the moment supports at least the following:
 * Sign in via OAuth provider.
 * Stock visualization.
