@@ -17,6 +17,7 @@ export default class Login extends React.Component {
     }
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
+    
   }
 
   onChangeUsername(e){
@@ -49,6 +50,7 @@ export default class Login extends React.Component {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
         fbData = response;
+
         fakeAuth.authenticate(() => {
           this.setState({ redirectToReferrer: true });
         });

@@ -12,7 +12,6 @@ extern crate lazy_static;
 #[macro_use]
 extern crate diesel;
 extern crate migrations_internals;
-
 //extern crate pool;
 //extern crate rocket;
 //extern crate server;

@@ -3,4 +3,4 @@
 cd ../frontend;
 npm install && npm run-script build
 cd ../backend
-bash ./wait_for_it.sh db:5432 -q -- diesel setup --migration-dir db/migrations && cargo run --release -- --port 80
+bash ./wait_for_it.sh db:5432 -q -- diesel setup --migration-dir db/migrations && cargo run --bin server_bin --release -- --port 8080
