@@ -25,7 +25,7 @@ export default class CustomNavbar extends React.Component {
   render(){
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-    if (loggedIn) {
+    if (fakeAuth.isAuthenticated) {
       return(
         <div>
           <AppBar position="static" style={styles.navbar}>
