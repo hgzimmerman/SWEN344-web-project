@@ -36,14 +36,8 @@ The arrangement is good for separating code into distinct, manageable sections.
 ### Deployment Plan
 1. Provision VM.
 2. Clone/Copy the repository to the VM.
-3. Install `rustup` to install cargo and rust.
-4. Install `nix` package manager.
-5. Install `npm`.
-6. Run `nix-shell` to set up the db and the shell scripts.
-7. Install `cargo install diesel` to install the db management utility.
-8. Run `diesel migration run` to run the sql scripts in the migrations directory.
-8. Build the frontend using `npm run build`.
-9. Build and run the backend with `cargo run --release` in the `/backend/server` directory.
+3. Install docker and docker-compose.
+4. Run docker-compose up -d to build, configure, and deploy the application.
 
 ### Test Plan
 * Mostly integration tests on the backend. Unit tests where applicable.
