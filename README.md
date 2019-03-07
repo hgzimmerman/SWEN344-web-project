@@ -22,6 +22,6 @@ Once running, you can inspect a container by running `docker container list`, fi
 ### Bootstraping
 
 To get SSL to work in the first place, you need to be able to expose some files via `nginx` to verify the authenticity of the server, but because the `nginx` container won't start without the SSL creds, you get stuck in a chicken and egg problem.
-There is a (script)[https://github.com/hgzimmerman/SWEN344-web-project/blob/master/init-letsencrypt.sh] that you need to run initially to circumvent this problem, which will do all the initial verification. 
+There is a [script](https://github.com/hgzimmerman/SWEN344-web-project/blob/master/init-letsencrypt.sh) that you need to run initially to circumvent this problem, which will do all the initial verification. 
 It didn't work for me on the first few attempts, and then, under some circumstances that I don't remember, it did.
 We will just hope that we don't need to re-bootstrap this project.
