@@ -7,6 +7,7 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import Menu from '@material-ui/core/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import { AuthButton, fakeAuth } from '../../../config/auth.js';
+import { loggedIn } from '../../auth/components/Login.js';
 
 export default class CustomNavbar extends React.Component {
   state = {
@@ -24,65 +25,71 @@ export default class CustomNavbar extends React.Component {
   render(){
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-    return(
-      <div>
-        <AppBar position="static" style={styles.navbar}>
-          <Toolbar>
-            <Link to="/" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Home
-              </Typography>
-            </Link>
-            <Link to="/stocks" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Stocks
-              </Typography>
-            </Link>
-            <Link to="/calendar" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Calendar
-              </Typography>
-            </Link>
-            <Link to="/weather" style={styles.tab}>
-              <Typography variant="h6" color="inherit">
-                Weather
-              </Typography>
-            </Link>
+    if (loggedIn) {
+      return(
+        <div>
+          <AppBar position="static" style={styles.navbar}>
+            <Toolbar>
+              <Link to="/" style={styles.tab}>
+                <Typography variant="h6" color="inherit">
+                  Home
+                </Typography>
+              </Link>
+              <Link to="/stocks" style={styles.tab}>
+                <Typography variant="h6" color="inherit">
+                  Stocks
+                </Typography>
+              </Link>
+              <Link to="/calendar" style={styles.tab}>
+                <Typography variant="h6" color="inherit">
+                  Calendar
+                </Typography>
+              </Link>
+              <Link to="/weather" style={styles.tab}>
+                <Typography variant="h6" color="inherit">
+                  Weather
+                </Typography>
+              </Link>
 
-            {fakeAuth.isAuthenticated && (
-              <div style={{float: 'right'}}>
-                <IconButton
-                  aria-owns={open ? 'menu-appbar' : undefined}
-                  aria-haspopup="true"
-                  onClick={this.handleMenu}
-                  color="inherit"
-                >
-                  <AccountCircle />
-                </IconButton>
-                <Menu
-                  id="menu-appbar"
-                  anchorEl={anchorEl}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  open={open}
-                  onClose={this.handleClose}
-                  style={{marginTop: 40}}
-                >
-                  <AuthButton />
-                </Menu>
-              </div>
-            )}
+              {fakeAuth.isAuthenticated && (
+                <div style={{float: 'right'}}>
+                  <IconButton
+                    aria-owns={open ? 'menu-appbar' : undefined}
+                    aria-haspopup="true"
+                    onClick={this.handleMenu}
+                    color="inherit"
+                  >
+                    <AccountCircle />
+                  </IconButton>
+                  <Menu
+                    id="menu-appbar"
+                    anchorEl={anchorEl}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    open={open}
+                    onClose={this.handleClose}
+                    style={{marginTop: 40}}
+                  >
+                    <AuthButton />
+                  </Menu>
+                </div>
+              )}
 
-          </Toolbar>
-        </AppBar>
-      </div>
-    );
+            </Toolbar>
+          </AppBar>
+        </div>
+      );
+    } else {
+      return (
+        <div></div>
+      );
+    }
 
   }
 
