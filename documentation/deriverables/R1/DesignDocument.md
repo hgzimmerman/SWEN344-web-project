@@ -3,15 +3,21 @@ Team 3
 
 
 ### UML Class Diagram
-![class diagram](../../diagrams/Relations.png)
+![Class Diagram](../../diagrams/Relations.png)
 
 ### Sequence diagrams
+
 ##### Authentication
-![auth](../../diagrams/AuthenticationFlow.png)
+
+![Auth](../../diagrams/AuthenticationFlow.png)
+
 ##### Stock Trading
-![stock](../../diagrams/StockTrading.png)
+
+![Stock](../../diagrams/StockTrading.png)
+
 ##### Stock Trading Display
-![stock dispay](../../diagrams/StockTradingDisplay.png)
+
+![Stock Display](../../diagrams/StockTradingDisplay.png)
 
 ### Component Architecture
 
