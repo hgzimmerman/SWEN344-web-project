@@ -20,6 +20,32 @@ export default class Login extends React.Component {
 
   }
 
+  componentDidMount() {
+    var oauth_nonce = function(length) {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for(var i = 0; i < length; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+
+    var status = "Log In";
+    var include_entities = "true";
+    var oauth_signature_method = "HMAC-SHA1";
+    var oauth_timestamp = (new Date).getTime();
+    var oauth_token = "1103913649654001669-h84acKV147pk2QP2WK44uJ2eGsmVet";
+    var oauth_version = "1.0";
+    var oauth_consumer_key = "Pq2sA4Lfbovd4SLQhSQ6UPEVg";
+
+    var parameter_string = "include_entities=" + encodeURIComponent(include_entities)
+      + "&oauth_consumer_key=" + encodeURIComponent(oauth_consumer_key) + "&oauth_nonce="
+      + encodeURIComponent(oauth_nonce) + "&oauth_timestamp=" + encodeURIComponent(oauth_timestamp)
+      + "&oauth_token=" + encodeURIComponent(oauth_token) + "&oauth_version="
+      + encodeURIComponent(oauth_version) + "&status=" + encodeURIComponent(status);
+
+  }
+
   onChangeUsername(e){
     this.setState({
       username: e.target.value,
