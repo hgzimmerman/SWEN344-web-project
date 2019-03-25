@@ -3,15 +3,21 @@ Team 3
 
 
 ### UML Class Diagram
-![class diagram](../../diagrams/Relations.png)
+![Class Diagram](../../diagrams/Relations.png)
 
 ### Sequence diagrams
+
 ##### Authentication
-![auth](../../diagrams/AuthenticationFlow.png)
+
+![Auth](../../diagrams/AuthenticationFlow.png)
+
 ##### Stock Trading
-![stock](../../diagrams/StockTrading.png)
+
+![Stock](../../diagrams/StockTrading.png)
+
 ##### Stock Trading Display
-![stock dispay](../../diagrams/StockTradingDisplay.png)
+
+![Stock Display](../../diagrams/StockTradingDisplay.png)
 
 ### Component Architecture
 
@@ -24,26 +30,27 @@ The `db` crate and the `server` crate are these primary components.
 The `db` crate is responsible for defining the types that will be inserted into the database, as well as the ORM code for querying the database.
 There is often one type that represents all columns of a table, and then specialized smaller types used for inserting or changing rows in the table.
 ORM functions are statically tied to these big types.
-The `server` crate is responsible for defining the routes that will match requests, and piping those requests to the ORM functions.
-The `testing_common` (name pending) crate is responsible for handling the logic for resetting databases for every integration test, as well as defining the fixture abstraction used for integration tests.
-The `pool` crate is responsible for configuring the connection pool used both by the server and testing common crates.
+
+The `server` crate is responsible for defining the routes that will match requests, and piping those requests through business logic and into the ORM functions. 
+`server_bin` is the binary that explicitly relies on the `server` crate/lib.
+
+The `testing_common` (name pending) crate is responsible for handling the logic for resetting databases for every integration test, as well as defining the `Fixture` abstraction used for integration tests.
+
+The `auth` crate is responsible for authentication tasks, like issuing and verifying JWT tokens, as well as handling the keys that make this possible.
+It was small and uncoupled enough to be broken into its own library.
+
+The `pool` crate is responsible for configuring the database connection pool used both by the server and testing common crates.
 `pool` is its own crate instead of being in `db` to avoid a circular dependencies when `db` needs to rely on `testing_common` when integration testing.
 
-The arrangement is good for separating code into distinct, manageable sections.
+The multi-library arrangement is good for separating code into distinct, manageable sections.
 `db` ends up being responsible for database calls, while `server` is responsible for business logic, error handling, and request routing.
 
 
 ### Deployment Plan
 1. Provision VM.
 2. Clone/Copy the repository to the VM.
-3. Install `rustup` to install cargo and rust.
-4. Install `nix` package manager.
-5. Install `npm`.
-6. Run `nix-shell` to set up the db and the shell scripts.
-7. Install `cargo install diesel` to install the db management utility.
-8. Run `diesel migration run` to run the sql scripts in the migrations directory.
-8. Build the frontend using `npm run build`.
-9. Build and run the backend with `cargo run --release` in the `/backend/server` directory.
+3. Install docker and docker-compose.
+4. Run docker-compose up -d to build, configure, and deploy the application.
 
 ### Test Plan
 * Mostly integration tests on the backend. Unit tests where applicable.
