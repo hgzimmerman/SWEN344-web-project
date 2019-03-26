@@ -60,10 +60,6 @@ pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers
         "https://adaptive-server.herokuapp.com/availability/2",
         "https://adaptive-server.herokuapp.com/availability/3",
         "https://adaptive-server.herokuapp.com/availability/4",
-//        "http://129.21.208.2:3000/availability/1",
-//        "http://129.21.208.2:3000/availability/2",
-//        "http://129.21.208.2:3000/availability/3",
-//        "http://129.21.208.2:3000/availability/4"
     ]
         .into_iter()
         .map(|s| s.parse::<Uri>().map_err(|e| Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))))
