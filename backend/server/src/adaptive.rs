@@ -11,27 +11,67 @@ use hyper::{
 use futures::future::join_all;
 use apply::Apply;
 use futures::future::Either;
+use serde::{Serialize,Deserialize};
+use crate::state::HttpsClient;
 
 /// The fictional load encountered by the servers.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Load(pub u32);
 /// The fictional number of servers currently available.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct NumServers(pub u32);
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct AvailabilityResponse {
+    availability: u32
+}
+
+
+
+/// Checks to see if a given server is available.
+///
+/// It resolves any error in making the connection or deserializing the value to a false.
+fn server_is_available(uri: Uri, client: &HttpsClient) -> Box<Future<Item=bool, Error=()> + 'static + Send> {
+    server_is_available_core(uri, client)
+        .map(|resp| {
+            match resp {
+                Ok(resp) => match resp.availability {
+                    1 => true,  // One indicates that the server is up
+                    _ => false,
+                }
+                Err(_) => false // Request deserialization failed
+            }
+        })
+        .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
+        .apply(Box::new) // This needs to be boxed in order for multiple different futures to be joined
+}
+
+/// Checks if the server is available.
+fn server_is_available_core(uri: Uri, client: &HttpsClient) -> impl Future<Item=Result<AvailabilityResponse, serde_json::Error>, Error=hyper::Error> {
+        client
+            .get(uri.clone())
+            .and_then(|res| res.into_body().concat2()) // Get the whole body.
+            .map(|chunk| {
+                let v: Vec<u8> = chunk.to_vec();
+                serde_json::from_slice::<AvailabilityResponse>(&v)
+            })
+            .apply(Box::new)
+}
+
+
 
 /// Get the number of available servers.
 ///
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
-pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
-    let client = Client::new();
+pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers, Error = Error> {
 
     let uris = vec![
-        "http://129.21.208.2:3000/availability/1",
-        "http://129.21.208.2:3000/availability/2",
-        "http://129.21.208.2:3000/availability/3",
-        "http://129.21.208.2:3000/availability/4"
+        "https://adaptive-server.herokuapp.com/availability/1",
+        "https://adaptive-server.herokuapp.com/availability/2",
+        "https://adaptive-server.herokuapp.com/availability/3",
+        "https://adaptive-server.herokuapp.com/availability/4",
     ]
         .into_iter()
         .map(|s| s.parse::<Uri>().map_err(|e| Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))))
@@ -42,27 +82,9 @@ pub fn get_num_servers_up() -> impl Future<Item = NumServers, Error = Error> {
         Err(e) => return Either::A(futures::future::err(e)) // Return early with the parse error.
     };
 
-    // The Type has to include `static and Send in order for the compiler to accept this.
-    // For some reason, it can't deduce these automatically.
-    let request_is_up = |uri: Uri| -> Box<Future<Item=bool, Error=()> + 'static + Send> {
-        client
-            .get(uri.clone())
-            .and_then(|res| res.into_body().concat2()) // Get the whole body.
-            .map(|chunk| {
-                let v = chunk.to_vec();
-                let body = String::from_utf8_lossy(&v).to_string();
-                match body.as_str() {
-                    "1" => true, // If the response is just "1" then the service is online.
-                    _ => false,
-                }
-            })
-            .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
-            .apply(Box::new) // This needs to be boxed in order for multiple different futures to be joined
-    };
-
     let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris
         .into_iter()
-        .map(request_is_up)
+        .map(|uri|server_is_available(uri, &client))
         .collect();
 
     join_all(servers) // Wait for all requests to finish.
@@ -169,9 +191,31 @@ pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> 
 #[cfg(test)]
 mod test {
     use super::*;
+    use hyper_tls::HttpsConnector;
+    use futures::future::lazy;
+
+    #[test]
+    fn check_if_server_is_available() {
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder().build::<_, _>(https);
+        tokio::runtime::current_thread::Runtime::new().unwrap().block_on(
+            server_is_available_core("https://adaptive-server.herokuapp.com/availability/1".parse().unwrap(), &client)
+                .and_then(|resp| {
+                    dbg!(&resp);
+                    let availability = resp.expect("could not parse").availability;
+                    assert!(availability == 1 || availability == 0);
+                    Ok(())
+                })
+                .map_err(|_|())
+        )
+            .expect("future should finish")
+    }
+
     #[test]
     fn num_servers_up() {
-        assert!(get_num_servers_up().wait().is_ok())
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder().build::<_, _>(https);
+        assert!(get_num_servers_up(&client).wait().is_ok())
     }
 
     #[test]
