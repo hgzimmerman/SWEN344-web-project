@@ -57,7 +57,7 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 | `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | |
 | `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
 | `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code               | |
-| `/api/user/zip`                     | POST   | String             | String              | yes           | Sets the user's zip code                         | |
+| `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code                         | |
 | `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              | |
 | `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user | |
 | `/api/calendar/event/events?start=:datetime,stop=:datetime`  | GET| \[Event\]|          | yes           | Gets events for user within the time bounds| |

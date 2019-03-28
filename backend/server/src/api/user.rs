@@ -29,7 +29,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .and_then(util::json_or_reject);
     let set_zip_code = path!("zip")
-        .and(warp::post2())
+        .and(warp::put2())
         .and(json_body_filter(1))
         .and(user_filter(state))
         .and(state.db.clone())
