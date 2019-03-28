@@ -110,18 +110,18 @@ fn get_user_id_from_facebook(
 /// secret - The secret used for signing JWTs.
 /// conn - The connection to the database.
 fn get_or_create_user(
-    client_id: String,
+    twitter_user_id: String,
     secret: Secret,
     conn: PooledConn,
 ) -> Result<String, Error> {
     // take token, go to platform, get client id.
-    info!("Resolved OAuth token to client_id: {}", client_id);
+    info!("Resolved OAuth token to twitter_user_id: {}", twitter_user_id);
     // search DB for user with client id.
-    User::get_user_by_client_id(&client_id, &conn)
+    User::get_user_by_twitter_id(&twitter_user_id, &conn)
         .or_else(|_| {
             info!("Could not find user, creating new one");
             // If user does not exist, create one.
-            let new_user = NewUser { client_id };
+            let new_user = NewUser { twitter_user_id };
             User::create_user(new_user, &conn)
         })
         .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
