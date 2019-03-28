@@ -1,6 +1,7 @@
 CREATE TABLE users (
     uuid UUID PRIMARY KEY NOT NULL Default gen_random_uuid(),
-    client_id VARCHAR NOT NULL
+    twitter_user_id VARCHAR NOT NULL,
+    zip_code VARCHAR
 );
 
 CREATE TABLE events (
@@ -28,7 +29,7 @@ CREATE TABLE stock_transactions (
     record_time TIMESTAMP NOT NULL
 );
 
-CREATE TABLE health (
+CREATE TABLE adaptive_health (
     uuid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     available_servers INTEGER NOT NULL CHECK (available_servers > 0),
     load INTEGER NOT NULL CHECK (load > 0),

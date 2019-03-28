@@ -1,5 +1,5 @@
 //! All database queries directly related to health metrics related to advertisement serving are contained within this module.
-use crate::schema::health;
+use crate::schema::adaptive_health;
 use chrono::NaiveDateTime;
 use diesel::{
     pg::PgConnection,
@@ -15,7 +15,7 @@ use uuid::Uuid;
     Clone, Copy, Debug, PartialEq, PartialOrd, Identifiable, Queryable, Serialize, Deserialize,
 )]
 #[primary_key(uuid)]
-#[table_name = "health"]
+#[table_name = "adaptive_health"]
 pub struct HealthRecord {
     /// Unique identifier
     uuid: Uuid,
@@ -31,7 +31,7 @@ pub struct HealthRecord {
 
 /// A struct that facilitates the creation of `health` rows.
 #[derive(Clone, Copy, Insertable, Debug, Serialize, Deserialize)]
-#[table_name = "health"]
+#[table_name = "adaptive_health"]
 pub struct NewHealthRecord {
     /// The number of available servers.
     pub available_servers: i32,
@@ -49,12 +49,12 @@ impl HealthRecord {
         new_health_record: NewHealthRecord,
         conn: &PgConnection,
     ) -> QueryResult<HealthRecord> {
-        crate::util::create_row(health::table, new_health_record, conn)
+        crate::util::create_row(adaptive_health::table, new_health_record, conn)
     }
 
     /// Gets all the health records.
     pub fn get_all(conn: &PgConnection) -> QueryResult<Vec<HealthRecord>> {
-        health::table.load(conn)
+        adaptive_health::table.load(conn)
     }
 
     /// Gets the last 7 days of server health data.
@@ -62,8 +62,8 @@ impl HealthRecord {
         let now = chrono::Utc::now().naive_utc();
         let a_week_ago = now - chrono::Duration::days(7);
 
-        health::table
-            .filter(health::time_recorded.gt(a_week_ago))
+        adaptive_health::table
+            .filter(adaptive_health::time_recorded.gt(a_week_ago))
             .load(conn)
     }
 }

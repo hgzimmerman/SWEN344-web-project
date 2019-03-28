@@ -6,7 +6,7 @@ use crate::{
     util,
 };
 use chrono::Utc;
-use db::health::{HealthRecord, NewHealthRecord};
+use db::adaptive_health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
 use pool::PooledConn;
 use warp::{

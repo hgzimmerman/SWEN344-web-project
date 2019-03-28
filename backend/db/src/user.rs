@@ -45,7 +45,9 @@ pub struct User {
     /// The user's unique identifier within the application.
     pub uuid: Uuid,
     /// The user's unique identifier within facebook.
-    pub client_id: String, // TODO change name to user_id
+    pub twitter_user_id: String,
+    /// Zip code that the user resides within
+    pub zip_code: Option<String>
 }
 
 /// Struct used to create new users.
@@ -53,7 +55,7 @@ pub struct User {
 #[table_name = "users"]
 pub struct NewUser {
     /// The user's unique identifier within facebook.
-    pub client_id: String,
+    pub twitter_user_id: String,
 }
 
 impl User {
@@ -68,9 +70,27 @@ impl User {
     }
 
     /// Gets a user by the client id.
-    pub fn get_user_by_client_id(client_id: &str, conn: &PgConnection) -> QueryResult<User> {
+    pub fn get_user_by_twitter_id(client_id: &str, conn: &PgConnection) -> QueryResult<User> {
         users::table
-            .filter(users::dsl::client_id.eq(client_id))
+            .filter(users::dsl::twitter_user_id.eq(client_id))
             .first::<User>(conn)
+    }
+
+    /// Sets the zip code for the user.
+    pub fn set_zip_code(user_uuid: Uuid, zip: String, conn: &PgConnection) -> QueryResult<User> {
+        diesel::update(
+            users::table
+                .find(user_uuid)
+        )
+            .set(users::zip_code.eq(zip))
+            .get_result(conn)
+    }
+
+    /// Gets the user's zip code.
+    pub fn get_zip_code(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Option<String>> {
+        users::table
+            .find(user_uuid)
+            .select(users::zip_code)
+            .get_result(conn)
     }
 }
