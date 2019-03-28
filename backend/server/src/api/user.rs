@@ -47,9 +47,9 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     path!("user")
         .and(
-           get_zip_code
+            get_user
                .or(set_zip_code)
-               .or(get_user)
+               .or(get_zip_code)
         )
         .boxed()
 
