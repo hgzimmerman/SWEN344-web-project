@@ -2,6 +2,7 @@ import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import FacebookLogin from 'react-facebook-login';
+import TwitterLogin from 'react-twitter-auth';
 import { fakeAuth } from '../../../config/auth.js'
 import { Redirect } from 'react-router-dom';
 import '../../../App.css';
@@ -69,6 +70,16 @@ export default class Login extends React.Component {
 
   }
 
+  onFailed(){
+    alert('Could not authenticate')
+  }
+
+  onSuccess(){
+    fakeAuth.authenticate(() => {
+      this.setState({ redirectToReferrer: true });
+    });
+  }
+
   render() {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
@@ -122,6 +133,14 @@ export default class Login extends React.Component {
               fields="name,email,picture"
               callback={responseFacebook}
             />
+            <div style={{marginTop: 20}}>
+              <TwitterLogin
+                loginUrl="http://localhost:8000/login"
+                onFailure={this.onFailed}
+                onSuccess={this.onSuccess}
+                requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
+              />
+            </div>
           </div>
         </div>
       </div>

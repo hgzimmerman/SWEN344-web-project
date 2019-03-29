@@ -1,5 +1,7 @@
 import React from 'react';
-import Calendar from 'react-calendar';
+// import Calendar from 'react-calendar';
+import BigCalendar from 'react-big-calendar'
+import moment from 'moment'
 import '../../../App.css';
 
 export default class CalendarView extends React.Component {
@@ -16,15 +18,16 @@ export default class CalendarView extends React.Component {
   }
 
   render() {
+    const localizer = BigCalendar.momentLocalizer(moment)
     return (
-      <div className="App">
-        <Calendar
-          onChange={this.onChange}
-          value={this.state.date}
-          className="calendar"
-        />
-      </div>
-
+        <div>
+          <BigCalendar
+            localizer={localizer}
+            events={['test']}
+            startAccessor="start"
+            endAccessor="end"
+          />
+        </div>
     );
 
   }

@@ -3,6 +3,7 @@ import StockTable from './StockTable.js';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import StockChart from './StockChart.js';
+import BuyStockModal from './BuyStockModal.js';
 import '../../../App.css';
 
 export default class StocksView extends React.Component {
@@ -14,7 +15,8 @@ export default class StocksView extends React.Component {
       stockName: '',
       data: this.props.data,
       isLoading: this.props.isLoading,
-      error: this.props.error
+      error: this.props.error,
+      visible: false
     }
     this.onSearchStock = this.onSearchStock.bind(this);
     this.getStock = this.props.getStock.bind(this);
@@ -27,6 +29,15 @@ export default class StocksView extends React.Component {
       stockName: e.target.value,
       isLoading: true
     });
+
+  }
+
+  openModal(){
+    this.setState({ visible: true })
+  }
+
+  closeModal(){
+    this.setState({ visible: false })
 
   }
 
@@ -70,10 +81,26 @@ export default class StocksView extends React.Component {
                       <StockTable
                         stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
                       />
+                      <Button
+                        onClick={() => this.openModal()}
+                        variant="contained"
+                        style={styles.buyButton}
+                      >
+                        {`Buy ${this.state.stockName} shares`}
+                      </Button>
                       <StockChart
                         stock={this.state.stockName.toUpperCase()}
                         data={this.state.data}
                       />
+                      {this.state.visible && (
+                        <BuyStockModal
+                          visible={this.state.visible}
+                          stock={this.state.stockName.toUpperCase()}
+                          price={this.state.stock[this.state.stockName.toUpperCase()].quote.latestPrice}
+                          buyStock={this.props.buyStock}
+                          closeModal={() => this.closeModal()}
+                        />
+                      )}
                     </div>
                   : <div></div>
               : <div></div>
@@ -98,6 +125,13 @@ const styles = {
     color: 'white',
     height: 50,
     width: 200
+  },
+  buyButton: {
+    backgroundColor: '#1C0F13',
+    color: 'white',
+    height: 50,
+    width: 200,
+    marginBottom: 20
   },
   table: {
     minWidth: 700,

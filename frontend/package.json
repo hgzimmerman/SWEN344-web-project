@@ -10,14 +10,15 @@
     "moment": "^2.24.0",
     "npm": "^6.7.0",
     "react": "^16.7.0",
-    "react-big-calendar": "^0.20.3",
+    "react-big-calendar": "^0.20.4",
     "react-calendar": "^2.18.1",
     "react-charts": "^2.0.0-alpha.12",
     "react-dom": "^16.7.0",
     "react-facebook-login": "^4.1.1",
     "react-loader-spinner": "^2.3.0",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "^2.1.5"
+    "react-scripts": "^2.1.5",
+    "react-twitter-auth": "0.0.13"
   },
   "scripts": {
     "start": "react-scripts start",
