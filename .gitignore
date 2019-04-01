@@ -7,3 +7,4 @@ backend/pgsql
 **/DS_Store
 **/.DS_Store
 frontend/build
+frontend_backup/build
