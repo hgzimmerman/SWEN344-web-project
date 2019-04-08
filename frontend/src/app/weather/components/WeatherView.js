@@ -7,78 +7,75 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Loader from 'react-loader-spinner';
 
-export default class WeatherView extends React.Component {
-	getPrecip() {
-		var prec = '';
-		var i;
-		for (i = 0; i < this.props.weather.weather.length; i++) {
-			if (i === this.props.weather.weather.length-1) {
-				prec += this.props.weather.weather[i].main;
-			}
-			else {
-				prec += (this.props.weather.weather[i].main + ', ');
-			}
-		}
-		console.log("prec: " + prec);
-		return prec;
-	}
-
-  render(){
-    return (
-      <div className="App">
-        {
-          (!this.props.isLoading)
-          ? <div style={{float:'center', margin: 10}} className="tables">
-              <Paper style={styles.root}>
-                <h1>RIT Weather</h1>
-                <Table style={styles.table}>
-                  <TableHead>
-                    <TableRow>
-    									<TableCell align="center">Current Temp</TableCell>
-                      <TableCell align="center">High Temp</TableCell>
-    									<TableCell align="center">Low Temp</TableCell>
-    									<TableCell align="center">Precipitation</TableCell>
-    									<TableCell align="center">Winds</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-    								<TableRow>
-    									<TableCell>
-    										{this.props.weather.main.temp} Fahr
-    									</TableCell>
-    									<TableCell>
-    										{this.props.weather.main.temp_max} Fahr
-    									</TableCell>
-    									<TableCell>
-    										{this.props.weather.main.temp_min} Fahr
-    									</TableCell>
-    									<TableCell>
-    										{this.getPrecip()}
-    									</TableCell>
-    									<TableCell>
-    										{this.props.weather.wind.speed} MPH
-    									</TableCell>
-    								</TableRow>
-                  </TableBody>
-                </Table>
-              </Paper>
-            </div>
-          : <div style={{marginTop: 50}}>
-              <Loader
-                 type="Oval"
-                 color="#00BFFF"
-                 height="100"
-                 width="100"
-              />
-            </div>
-        }
-      </div>
-    );
-
+export default class WeatherView extends React.component {
+  constructor(props){
+    super(props);
+    this.state = {
+      weather: this.props.weather,
+      zipCode: '',
+      isLoading: this.props.isLoading
+    }
+    this.onSearchWeather = this.onSearchWeather.bind(this);
+    this.getWeather = this.props.getWeather.bind(this);
   }
 
-}
+    onSearchWeather(e) {
+      this.setState({
+        zipCode: e.target.value,
+        isLoading: true
+      });
+    }
 
+    render() {
+      return {
+        <div className="App">
+          <div style={styles.searchBar}>
+            <TextField
+              id="outlined-with-placeholder"
+              label="Search"
+              placeholder="ZIP Code..."
+              margin="normal"
+              variant="outlined"
+              onChange={this.onSearchWeather}
+              style={{width: '50%'}}
+            />
+          </div>
+
+          <Button
+            onClick={() => this.getWeather(this.state.zipCode)}
+            variant="contained"
+            style={styles.button}
+          >
+            Search
+          </Button>
+          <div style={{textAlign: 'center'}} >
+
+          </div>
+          <div>
+            {
+              (!this.state.isLoading)
+                ? (this.state.error)
+                  ? <p>
+                      ZIP Code
+                      <span style={styles.bold}> "{this.state.zipCode}" </span>
+                      does not exist
+                    </p>
+                  : (this.state.weather !== undefined)
+                    ? <div>
+                        <WeatherTable
+                          weather={this.state.weather}
+
+                        />
+                      </div>
+                    : <div></div>
+                : <div></div>
+
+            }
+          </div>
+        </div>
+      );
+    }
+}
 
 const styles = {
   root: {
@@ -86,10 +83,22 @@ const styles = {
     marginTop: 20,
     overflowX: 'auto',
   },
+  button: {
+    backgroundColor: '#00A6DD',
+    color: 'white',
+    height: 50,
+    width: 200
+  },
   table: {
     minWidth: 700,
   },
   panel: {
     padding: 30
+  },
+  searchBar: {
+    marginTop: 40,
+    marginBottom: 10
+  },
+  bold: {
+    fontWeight: 'bold'
   }
-}

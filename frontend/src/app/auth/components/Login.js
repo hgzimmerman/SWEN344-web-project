@@ -134,12 +134,12 @@ export default class Login extends React.Component {
               callback={responseFacebook}
             />
             <div style={{marginTop: 20}}>
-              <TwitterLogin
+              /*<TwitterLogin
                 loginUrl="http://localhost:8000/login"
                 onFailure={this.onFailed}
                 onSuccess={this.onSuccess}
                 requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-              />
+              />*/
             </div>
           </div>
         </div>
