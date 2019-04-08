@@ -4,7 +4,7 @@ import TextField from '@material-ui/core/TextField';
 import Modal from '@material-ui/core/Modal';
 
 
-export default class BuyStockModal extends React.Component {
+export default class SellStockModal extends React.Component {
   constructor(props){
     super(props);
     this.state = {
@@ -14,7 +14,7 @@ export default class BuyStockModal extends React.Component {
     }
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
-    this.buyStock = this.props.buyStock.bind(this);
+    this.sellStock = this.props.sellStock.bind(this);
 
   }
 
@@ -22,7 +22,6 @@ export default class BuyStockModal extends React.Component {
     this.setState({ quantity: e.target.value });
 
   }
-
 
   render(){
     return (
@@ -39,7 +38,7 @@ export default class BuyStockModal extends React.Component {
             <TextField
               id="outlined-with-placeholder"
               label="Quantity"
-              placeholder="Buy shares…"
+              placeholder="Sell shares…"
               margin="normal"
               variant="outlined"
               onChange={this.handleChangeQuantity}
@@ -48,14 +47,14 @@ export default class BuyStockModal extends React.Component {
             <Button
               onClick={() => {
                 this.closeModal();
-                this.buyStock(
+                this.sellStock(
                   this.props.stock, this.state.quantity, this.props.price
                 )
               }}
               variant="contained"
               style={styles.button}
             >
-              {`Buy ${this.state.quantity} shares`}
+              {`Sell ${this.state.quantity} shares`}
             </Button>
           </div>
         </Modal>
