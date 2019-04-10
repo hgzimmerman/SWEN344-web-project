@@ -12,6 +12,7 @@ use warp::{filters::BoxedFilter, Filter, Rejection};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use apply::Apply;
+use egg_mode::KeyPair;
 
 /// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
@@ -29,6 +30,10 @@ pub struct State {
     pub secret: BoxedFilter<(Secret,)>,
     /// Https client
     pub https: BoxedFilter<(HttpsClient,)>,
+    /// Twitter connection token
+    pub twitter_con_token: BoxedFilter<(KeyPair,)>,
+    /// Twitter key pair for the auth token
+    pub twitter_request_token: BoxedFilter<(KeyPair,)>
 }
 
 /// Configuration object for creating the state.
@@ -64,10 +69,15 @@ impl State {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, _>(https);
 
+        let twitter_con_token = get_twitter_con_token();
+        let twitter_request_token = get_twitter_request_token(&twitter_con_token);
+
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
+            twitter_con_token: twitter_key_pair_filter(twitter_con_token),
+            twitter_request_token: twitter_key_pair_filter(twitter_request_token)
         }
     }
 
@@ -81,10 +91,15 @@ impl State {
             .keep_alive_timeout(Some(Duration::new(12, 0)))
             .build::<_, Body>(https);
 
+        let twitter_con_token = get_twitter_con_token();
+        let twitter_request_token = get_twitter_request_token(&twitter_con_token);
+
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
+            twitter_con_token: twitter_con_token_filter(twitter_con_token),
+            twitter_request_token: twitter_key_pair_filter(twitter_request_token)
         }
     }
 }
@@ -106,3 +121,28 @@ pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
         .and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
         .boxed()
 }
+
+/// Gets the connection key pair for the serer.
+/// This represents the authenticity of the application
+fn get_twitter_con_token() -> KeyPair {
+    // TODO move getting these into a config object, or get them directly from the filesystem.
+    // These definitely shouldn't be in source code, but I don't care,
+    // I just want this to work right now. Also, this is a school project.
+    const KEY: &str = "Pq2sA4Lfbovd4SLQhSQ6UPEVg";
+    const SECRET: &str = "uK6U7Xqj2QThlm6H3y8dKSH3itZgpo9AVhR5or80X9umZc62ln";
+
+    let con_token = egg_mode::KeyPair::new(KEY, SECRET);
+    con_token
+}
+
+/// Gets the request token.
+fn get_twitter_request_token(con_token: &KeyPair) -> KeyPair {
+    tokio::runtime::current_thread::block_on_all(
+        egg_mode::request_token(con_token, "https://vm344c.se.rit.edu/api/auth/callback")
+    ).expect("Couldn't authenticate to twitter")
+}
+
+pub fn twitter_key_pair_filter(twitter_key_pair: KeyPair) -> BoxedFilter<(KeyPair,)> {
+    warp::any().map(move || twitter_key_pair.clone()).boxed()
+}
+
