@@ -16,6 +16,7 @@ use warp::{path, Filter};
 use crate::error::err_to_rejection;
 use egg_mode::KeyPair;
 use egg_mode::Token;
+use askama::Template;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -32,6 +33,7 @@ pub struct LoginRequest {
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     info!("Attaching Auth api");
+    // TODO deprecate me, this involves rewriting some tests likely
     let login = path!("login")
         .and(warp::post2())
         .and(util::json_body_filter(3))
@@ -71,8 +73,8 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.twitter_request_token.clone())
         .and(warp::query::query())
         .and_then(|con_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
-            use log::error;
-            error!("{:?}", q_params); // TODO remove this format after tests indicate this works
+            use log::info;
+            info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
             egg_mode::access_token((&con_token).clone(), &key_pair, q_params.oauth_verifier)
                 .map_err(|_| Error::InternalServerError(Some("could not get access token.".to_owned())).reject())
         })
@@ -80,27 +82,27 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.secret.clone())
         .and(state.db.clone())
         .and_then(|token: Token, id: u64, _screen_name: String, secret: Secret, conn: PooledConn| -> Result<String, warp::reject::Rejection> {
-            let jwt = get_or_create_user(format!("{}", id), secret, conn).map_err(Error::reject)?;
-            login_template(jwt, token).apply(Ok)
+            let jwt = get_or_create_user(format!("{}", id), secret, conn)
+                .map_err(Error::reject)?;
+            login_template_render(jwt, token).apply(Ok)
         })
         .with(warp::reply::with::header("content-type","text/html"));
 
     // TODO remove me, this is for testing only
     let test_redirect = path!("test_redirect.html")
         .map(||{
-                use askama::Template;
-    #[derive(Template)]
-    #[template(path = "login.html")]
-    struct LoginTemplate<'a> {
-        jwt: &'a str,
-        target_url: &'a str,
-    }
-    let login = LoginTemplate {
-        jwt: "yeet",
-        target_url: "/"
-    };
-    login.render()
-        .unwrap_or_else(|e| e.to_string())
+            #[derive(Template)]
+            #[template(path = "login.html")]
+            struct LoginTemplate<'a> {
+                jwt: &'a str,
+                target_url: &'a str,
+            }
+            let login = LoginTemplate {
+                jwt: "yeet",
+                target_url: "/"
+            };
+            login.render()
+                .unwrap_or_else(|e| e.to_string())
         })
         .with(warp::reply::with::header("content-type","text/html"));
 
@@ -128,8 +130,12 @@ pub struct TwitterCallbackQueryParams {
 }
 
 
-fn login_template(jwt: String, _token: Token) -> String {
-    use askama::Template;
+/// Login by sending a small html page that inserts the JWT into localstorage
+/// and then redirects to the main page.
+///
+/// # Note
+/// The JWT is stored in window.localstorage under the key: 'jwt'
+fn login_template_render(jwt: String, _token: Token) -> String {
     #[derive(Template)]
     #[template(path = "login.html")]
     struct LoginTemplate<'a> {
@@ -138,7 +144,7 @@ fn login_template(jwt: String, _token: Token) -> String {
     }
     let login = LoginTemplate {
         jwt: &jwt,
-        target_url: ""
+        target_url: "/"
     };
     login.render()
         .unwrap_or_else(|e| e.to_string())
