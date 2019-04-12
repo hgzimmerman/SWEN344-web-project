@@ -6,7 +6,7 @@ use crate::{
     util,
 };
 use chrono::Utc;
-use db::health::{HealthRecord, NewHealthRecord};
+use db::adaptive_health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
 use pool::PooledConn;
 use warp::{
@@ -15,6 +15,7 @@ use warp::{
 };
 use log::info;
 use crate::error::err_to_rejection;
+use crate::state::HttpsClient;
 
 /// Api for serving the advertisement.
 ///
@@ -25,9 +26,10 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Ad Api");
     path("advertisement")
         .and(warp::get2())
-        .and_then(|| {
+        .and(state.https.clone())
+        .and_then(|client: HttpsClient| {
             // Get the stats asynchronously as a precondition to serving the request.
-            let servers = get_num_servers_up().map_err(Error::reject);
+            let servers = get_num_servers_up(&client).map_err(Error::reject);
             let load = get_load().map_err(Error::reject);
             servers.join(load)
         })

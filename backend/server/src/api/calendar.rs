@@ -77,6 +77,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let import_events = warp::post2()
         .and(path!("events" / "import"))
         .and(path::end())
+        .and(warp::post2())
         .and(json_body_filter(350)) // you can import a bunch 'o events
         .and(user_filter(state))
         .and(state.db.clone())

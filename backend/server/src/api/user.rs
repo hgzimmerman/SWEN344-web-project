@@ -9,6 +9,8 @@ use uuid::Uuid;
 use db::user::User;
 use crate::util;
 use log::info;
+use crate::util::json_body_filter;
+use diesel::result::QueryResult;
 
 /// The user api.
 ///
@@ -18,14 +20,39 @@ use log::info;
 pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Auth api");
 
-
-    path!("user")
+    let get_zip_code = path!("zip")
+        .and(warp::get2())
         .and(user_filter(state))
         .and(state.db.clone())
-        .map(|user_uuid: Uuid, conn: PooledConn| {
+        .map(|user_uuid: Uuid, conn: PooledConn| -> QueryResult<Option<String>> {
+            User::get_zip_code(user_uuid, &conn)
+        })
+        .and_then(util::json_or_reject);
+
+    let set_zip_code = path!("zip")
+        .and(warp::put2())
+        .and(json_body_filter(1))
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .map(|zip_code: String, user_uuid: Uuid, conn: PooledConn| {
+            User::set_zip_code(user_uuid, zip_code, &conn)
+        })
+        .and_then(util::json_or_reject);
+
+    let get_user = warp::get2()
+        .and(user_filter(state))
+        .and(state.db.clone())
+        .map(|user_uuid: Uuid, conn: PooledConn| -> QueryResult<User> {
             User::get_user(user_uuid, &conn)
         })
-        .and_then(util::json_or_reject)
+        .and_then(util::json_or_reject);
+
+    path!("user")
+        .and(
+            get_user
+               .or(set_zip_code)
+               .or(get_zip_code)
+        )
         .boxed()
 
 }

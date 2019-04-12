@@ -15,7 +15,7 @@
 extern crate diesel;
 
 pub mod event;
-pub mod health;
+pub mod adaptive_health;
 mod schema;
 pub mod stock;
 pub mod user;
