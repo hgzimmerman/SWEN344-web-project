@@ -77,8 +77,11 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(|_| Error::InternalServerError(Some("could not get access token.".to_owned())).reject())
         })
         .untuple_one()
-        .map(|token: Token, id: u64, screen_name: String| {
-           Ok("hi")
+        .and(state.secret.clone())
+        .and(state.db.clone())
+        .and_then(|token: Token, id: u64, _screen_name: String, secret: Secret, conn: PooledConn| -> Result<String, warp::reject::Rejection> {
+            let jwt = get_or_create_user(format!("{}", id), secret, conn).map_err(Error::reject)?;
+            login_template(jwt, token).apply(Ok)
         });
 
 
@@ -103,6 +106,22 @@ pub struct TwitterCallbackQueryParams {
     oauth_verifier: String
 }
 
+
+fn login_template(jwt: String, _token: Token) -> String {
+    use askama::Template;
+    #[derive(Template)]
+    #[template(path = "login.html")]
+    struct LoginTemplate<'a> {
+        jwt: &'a str,
+        target_url: &'a str,
+    }
+    let login = LoginTemplate {
+        jwt: &jwt,
+        target_url: ""
+    };
+    login.render()
+        .unwrap_or_else(|e| e.to_string())
+}
 
 
 /// Shim for the get_user_id_from_facebook function.
@@ -189,7 +208,7 @@ fn get_or_create_user(
                 .encode_jwt_string(&secret)
                 .map_err(Error::AuthError)
                 .map(|a| a)
-        }) //dbg!(a)))
+        })
 }
 
 #[cfg(test)]

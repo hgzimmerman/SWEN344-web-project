@@ -137,8 +137,9 @@ fn get_twitter_con_token() -> KeyPair {
 
 /// Gets the request token.
 fn get_twitter_request_token(con_token: &KeyPair) -> KeyPair {
+    const CALLBACK_URL: &str = "https://vm344c.se.rit.edu/api/auth/callback";
     tokio::runtime::current_thread::block_on_all(
-        egg_mode::request_token(con_token, "https://vm344c.se.rit.edu/api/auth/callback")
+        egg_mode::request_token(con_token, CALLBACK_URL)
     ).expect("Couldn't authenticate to twitter")
 }
 
