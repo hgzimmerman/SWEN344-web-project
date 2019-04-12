@@ -13,6 +13,57 @@ use authorization::{JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{filters::BoxedFilter, Filter, Rejection};
+use std::convert::TryFrom;
+use egg_mode::Token;
+use egg_mode::KeyPair;
+use apply::Apply;
+
+/// A serializeable variant of Egg-mode's Token::Access variant
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TwitterToken {
+    consumer_key: String,
+    consumer_secret: String,
+    access_key: String,
+    access_secret: String
+}
+
+impl TryFrom<Token> for TwitterToken {
+    type Error = ();
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
+        match value {
+            Token::Access {consumer, access} => Ok(TwitterToken {
+                consumer_key: consumer.key.to_string(),
+                consumer_secret: consumer.secret.to_string(),
+                access_key: access.key.to_string(),
+                access_secret: access.secret.to_string()
+            }),
+            _ => Err(())
+        }
+    }
+}
+
+impl Into<Token> for TwitterToken {
+    fn into(self) -> Token {
+        Token::Access {
+            consumer: KeyPair {
+                key: self.consumer_key.into(),
+                secret: self.consumer_secret.into()
+            },
+            access: KeyPair {
+                key: self.access_key.into(),
+                secret: self.access_secret.into()
+            }
+        }
+    }
+}
+
+/// An application-specific subject section for use within a JWT
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Subject {
+    user_uuid: Uuid,
+    twitter_token: TwitterToken
+}
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
@@ -53,6 +104,7 @@ pub fn user_filter(s: &State) -> BoxedFilter<(Uuid,)> {
     warp::any()
         .and(jwt_filter(s))
         .map(JwtPayload::subject)
+        .map(|subject: Subject| subject.user_uuid)
         .boxed()
 }
 
@@ -67,6 +119,14 @@ pub fn optional_user_filter(s: &State) -> BoxedFilter<(Option<Uuid>,)> {
         .map(Some)
         .or(warp::any().map(|| None))
         .unify::<(Option<Uuid>,)>()
+        .boxed()
+}
+
+pub fn twitter_token_filter(s: &State) -> BoxedFilter<(Token,)> {
+    warp::any()
+        .and(jwt_filter(s))
+        .map(JwtPayload::<Subject>::subject)
+        .map(|subject: Subject| subject.twitter_token.apply(TwitterToken::into))
         .boxed()
 }
 

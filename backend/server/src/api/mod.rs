@@ -4,10 +4,10 @@ pub(crate) mod auth;
 mod calendar;
 mod market;
 mod user;
+mod twitter_proxy;
 
 use warp::{filters::BoxedFilter, Reply};
 
-use crate::state::State;
 use warp::{path, Filter};
 
 use self::calendar::calendar_api;
@@ -19,6 +19,8 @@ use crate::{
         user::user_api
     },
     static_files::{static_files_handler, FileConfig},
+    state::State,
+    api::twitter_proxy::twitter_proxy_api
 };
 
 /// The initial segment in the uri path.
@@ -34,7 +36,8 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .or(auth_api(state))
                 .or(ad_api(state))
                 .or(health_api(state))
-                .or(user_api(state)),
+                .or(user_api(state))
+                .or(twitter_proxy_api(state)),
         )
         .boxed()
 }
