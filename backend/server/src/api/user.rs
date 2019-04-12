@@ -28,6 +28,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             User::get_zip_code(user_uuid, &conn)
         })
         .and_then(util::json_or_reject);
+
     let set_zip_code = path!("zip")
         .and(warp::put2())
         .and(json_body_filter(1))
@@ -37,6 +38,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             User::set_zip_code(user_uuid, zip_code, &conn)
         })
         .and_then(util::json_or_reject);
+
     let get_user = warp::get2()
         .and(user_filter(state))
         .and(state.db.clone())

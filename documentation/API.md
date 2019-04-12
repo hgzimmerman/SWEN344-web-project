@@ -54,7 +54,9 @@ The 'Requires Auth' column indicates if the request needs the JWT attached to th
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            | Deprecated |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |------------|
 | `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 | |
-| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | |
+| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | Deprecated |
+| `/api/auth/callback/`               | GET    | HTML               |                     |(Twitter token)| Logs the user in when the user is redirected from twitter auth | |
+| `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth |  |
 | `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
 | `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code               | |
 | `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code                         | |
