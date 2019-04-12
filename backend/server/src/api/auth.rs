@@ -17,6 +17,8 @@ use crate::error::err_to_rejection;
 use egg_mode::KeyPair;
 use egg_mode::Token;
 use askama::Template;
+use crate::server_auth::Subject;
+use std::convert::TryInto;
 
 /// A request to log in to the system.
 /// This only requires the oauth_token, as the server can resolve other details from that.
@@ -34,17 +36,17 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     info!("Attaching Auth api");
     // TODO deprecate me, this involves rewriting some tests likely
-    let login = path!("login")
-        .and(warp::post2())
-        .and(util::json_body_filter(3))
-        .and(state.https.clone())
-        .and_then(|request: LoginRequest, client: HttpsClient| {
-            get_user_id(request, client).map_err(Error::reject)
-        })
-        .and(state.secret.clone())
-        .and(state.db.clone())
-        .map(get_or_create_user)
-        .and_then(err_to_rejection);
+//    let login = path!("login")
+//        .and(warp::post2())
+//        .and(util::json_body_filter(3))
+//        .and(state.https.clone())
+//        .and_then(|request: LoginRequest, client: HttpsClient| {
+//            get_user_id(request, client).map_err(Error::reject)
+//        })
+//        .and(state.secret.clone())
+//        .and(state.db.clone())
+//        .map(get_or_create_user)
+//        .and_then(err_to_rejection);
 
 
     let link = path!("link")
@@ -82,9 +84,9 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.secret.clone())
         .and(state.db.clone())
         .and_then(|token: Token, id: u64, _screen_name: String, secret: Secret, conn: PooledConn| -> Result<String, warp::reject::Rejection> {
-            let jwt = get_or_create_user(format!("{}", id), secret, conn)
+            let jwt = get_or_create_user(token, format!("{}", id), secret, conn)
                 .map_err(Error::reject)?;
-            login_template_render(jwt, token).apply(Ok)
+            login_template_render(jwt ).apply(Ok)
         })
         .with(warp::reply::with::header("content-type","text/html"));
 
@@ -108,8 +110,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 
     path!("auth")
-        .and(login
-            .or(link)
+        .and(link
             .or(callback)
             .or(test_redirect)
         )
@@ -135,7 +136,7 @@ pub struct TwitterCallbackQueryParams {
 ///
 /// # Note
 /// The JWT is stored in window.localstorage under the key: 'jwt'
-fn login_template_render(jwt: String, _token: Token) -> String {
+fn login_template_render(jwt: String) -> String {
     #[derive(Template)]
     #[template(path = "login.html")]
     struct LoginTemplate<'a> {
@@ -214,6 +215,7 @@ fn get_user_id_from_facebook(
 /// secret - The secret used for signing JWTs.
 /// conn - The connection to the database.
 fn get_or_create_user(
+    twitter_token: Token,
     twitter_user_id: String,
     secret: Secret,
     conn: PooledConn,
@@ -228,7 +230,13 @@ fn get_or_create_user(
             let new_user = NewUser { twitter_user_id };
             User::create_user(new_user, &conn)
         })
-        .map(|user| JwtPayload::new(user.uuid, Duration::weeks(5)))
+        .map(|user| {
+            let subject = Subject {
+                user_uuid: user.uuid,
+                twitter_token: twitter_token.try_into().expect("For purposes as used by this project, this conversion should be infallible")
+            };
+            JwtPayload::new(subject, Duration::weeks(5))
+        })
         .map_err(Error::from)
         .and_then(|payload| {
             payload
