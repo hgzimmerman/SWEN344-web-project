@@ -61,8 +61,8 @@ impl Into<Token> for TwitterToken {
 /// An application-specific subject section for use within a JWT
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Subject {
-    user_uuid: Uuid,
-    twitter_token: TwitterToken
+    pub user_uuid: Uuid,
+    pub twitter_token: TwitterToken
 }
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
