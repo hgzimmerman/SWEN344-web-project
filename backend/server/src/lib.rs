@@ -21,21 +21,18 @@ mod static_files;
 mod testing_fixtures;
 mod util;
 
+pub use config::Config;
+
 use crate::{
     api::routes,
-    config::Config,
     state::{State, StateConfig},
 };
-use env_logger::Builder as LoggerBuilder;
-use log::{info, LevelFilter};
+use log::info;
 
 /// parses the command line arguments and starts the server.
-pub fn start() {
-    LoggerBuilder::new().filter_level(LevelFilter::Info).init();
+pub fn start(config: Config) {
 
-    let config = Config::parse_command_line_arguments();
     info!("{:#?}", config);
-
     let localhost = [0, 0, 0, 0];
     let addr = (localhost, config.port);
 
@@ -55,3 +52,4 @@ pub fn start() {
         warp::serve(routes).run(addr);
     }
 }
+
