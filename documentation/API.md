@@ -56,7 +56,7 @@ Deprecated indicates that it should not be used, or if documentation falls behin
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            | Deprecated |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |------------|
 | `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 | |
-| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | Deprecated |
+| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | removed |
 | `/api/auth/callback/`               | GET    | HTML               |                     |(Twitter token)| Logs the user in when the user is redirected from twitter auth | |
 | `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth   |  |
 | `/api/twitter_proxy/tweet/`         | POST   |                    | TweetRequest        | yes           | Creates a new tweet                   |  |
