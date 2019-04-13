@@ -67,6 +67,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
             // If its compiled for production, redirect to the release URL, otherwise, localhost.
             let callback_link = if cfg!(feature = "production") {
+                // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
                 "https://vm344c.se.rit.edu/api/auth/callback"
             } else {
                 "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
