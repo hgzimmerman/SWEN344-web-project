@@ -68,7 +68,7 @@ pub struct Subject {
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
 /// It will then attempt to transform the JWT into a usable JwtPayload that can be used by the app.
 ///
-fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
+pub(crate) fn jwt_filter<T>(s: &State) -> BoxedFilter<(JwtPayload<T>,)>
 where
     for<'de> T: Serialize + Deserialize<'de> + Send,
 {
