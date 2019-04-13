@@ -27,7 +27,11 @@ use crate::server_auth::jwt_filter;
 #[cfg(test)]
 pub static TEST_CLIENT_ID: &str = "yeet";
 
-/// Gets a basic JWT from the state for use in testing
+/// Gets a basic JWT from the state for use in testing.
+///
+/// # Note
+/// This JWT will not work with any twitter-related apis,
+/// this is because the keys are empty.
 #[cfg(test)]
 pub fn get_jwt(state: &State) -> String {
     use std::borrow::Cow;
@@ -54,15 +58,26 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     info!("Attaching Auth api");
 
+
+
     let link = path!("link")
         .and(warp::get2())
         .and(state.twitter_con_token.clone())
-        .and_then(|con_token| {
-            egg_mode::request_token(&con_token, "https://vm344c.se.rit.edu/api/auth/callback")
+        .and_then(move |con_token| {
+
+            // If its compiled for production, redirect to the release URL, otherwise, localhost.
+            let callback_link = if cfg!(feature = "production") {
+                // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
+                "https://vm344c.se.rit.edu/api/auth/callback"
+            } else {
+                "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
+            };
+
+            egg_mode::request_token(&con_token, callback_link)
                 .map_err(|e| {
                     use log::error;
                     error!("{}", e);
-                    Error::InternalServerError(Some("getting key pair failed".to_string())).reject()
+                    Error::InternalServerError(Some("Getting key pair failed".to_string())).reject()
                 })
         })
         .map(|key_pair| {
@@ -140,15 +155,17 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
 }
 
+/// The JSON returned by the /api/auth/link route.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Link {
     authentication_url: String
 }
 
+/// Query parameters for use in the twitter login callback.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TwitterCallbackQueryParams {
-    oauth_token: String,
-    oauth_verifier: String
+    pub oauth_token: String,
+    pub oauth_verifier: String
 }
 
 
