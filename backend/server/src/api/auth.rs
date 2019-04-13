@@ -133,6 +133,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .or(test_redirect)
         .or(refresh);
 
+
     let api_root = path!("auth");
 
     api_root.and(subroutes).boxed()
