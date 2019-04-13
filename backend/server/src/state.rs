@@ -98,7 +98,7 @@ impl State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
-            twitter_con_token: twitter_con_token_filter(twitter_con_token),
+            twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token)
         }
     }

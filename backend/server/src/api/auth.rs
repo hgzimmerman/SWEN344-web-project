@@ -20,17 +20,34 @@ use askama::Template;
 use crate::server_auth::Subject;
 use std::convert::TryInto;
 use warp::Rejection;
+use std::borrow::Cow;
 
-/// A request to log in to the system.
-/// This only requires the oauth_token, as the server can resolve other details from that.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct LoginRequest {
-    pub oauth_token: String,
+
+/// Meaningless id for testing purposes
+pub static TEST_CLIENT_ID: &str = "yeet";
+
+// TODO make #[cfg(test)]
+pub fn get_jwt(state: &State) -> String {
+//    use std::borrow::Cow;
+    let secret: Secret = warp::test::request()
+        .filter(&state.secret.clone())
+        .unwrap();
+    let conn: PooledConn = warp::test::request()
+        .filter(&state.db.clone())
+        .unwrap();
+    let token = egg_mode::Token::Access {
+        consumer: KeyPair { key: Cow::from(""), secret: Cow::from("") },
+        access: KeyPair { key: Cow::from(""), secret: Cow::from("")}
+    };
+    let id = String::from(TEST_CLIENT_ID);
+    get_or_create_user(token, id, secret, conn).expect("Should get or create user")
 }
 
+// TODO remove this and associated nonsense.
 #[cfg(test)]
 /// Get a jwt, with dummy data only for testing.
 fn login_test_fn(state: &State) -> BoxedFilter<(impl Reply,)> {
+    use crate::error::err_to_rejection;
     path!("login")
         .and(warp::post2())
         .map(|| {
@@ -278,26 +295,26 @@ mod test {
 
     use authorization::{AUTHORIZATION_HEADER_KEY, BEARER};
 
-    #[test]
-    fn login_works() {
-        setup_warp(|_fixture: &UserFixture, pool: Pool| {
-            let secret = Secret::new("test");
-            let s = State::testing_init(pool, secret);
-            let filter = auth_api(&s);
-
-            let login = LoginRequest {
-                oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
-                    .to_string(),
-            };
-            let resp = warp::test::request()
-                .method("POST")
-                .path("/auth/login")
-                .json(&login)
-                .header("content-length", "300")
-                .reply(&filter);
-
-            assert_eq!(resp.status(), 200)
-        });
-    }
+//    #[test]
+//    fn login_works() {
+//        setup_warp(|_fixture: &UserFixture, pool: Pool| {
+//            let secret = Secret::new("test");
+//            let s = State::testing_init(pool, secret);
+//            let filter = auth_api(&s);
+//
+//            let login = LoginRequest {
+//                oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
+//                    .to_string(),
+//            };
+//            let resp = warp::test::request()
+//                .method("POST")
+//                .path("/auth/login")
+//                .json(&login)
+//                .header("content-length", "300")
+//                .reply(&filter);
+//
+//            assert_eq!(resp.status(), 200)
+//        });
+//    }
 
 }
