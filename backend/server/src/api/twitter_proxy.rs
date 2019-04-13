@@ -31,8 +31,31 @@ pub struct TweetRequest {
 pub struct TweetResponse {
     pub text: String,
     pub id: u64,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub favorited: Option<bool>,
+    pub favorite_count: i32,
     pub user: Option<TwitterUser>
 }
+
+impl From<Tweet> for TweetResponse {
+    fn from(t: Tweet) -> Self {
+        TweetResponse {
+            text: t.text,
+            id: t.id,
+            created_at: t.created_at,
+            favorited: t.favorited,
+            favorite_count: t.favorite_count,
+            user: t.user.map(|u| {
+                let u = *u;
+                TwitterUser {
+                    name: u.name,
+                    id: u.id
+                }
+            })
+        }
+    }
+}
+
 
 /// Twitter user
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -55,8 +78,9 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .send(&twitter_token)
                 .map_err(|_| Error::InternalServerError(Some("Tweet failed to send".to_owned())).reject())
         })
-        .map(|_tw_yeet: Response<Tweet>| {
-            warp::reply() // TODO consider sending the tweet back to the client
+        .map(|tweet: Response<Tweet>| {
+            TweetResponse::from(tweet.response)
+                .apply(|x| warp::reply::json(&x))
         });
 
     let get_feed = path!("feed")
@@ -72,19 +96,7 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .map(|_timeline: Timeline, feed_responses: Response<Vec<Tweet>>| {
             feed_responses.response
                 .into_iter()
-                .map(|t| {
-                    TweetResponse {
-                        text: t.text,
-                        id: t.id,
-                        user: t.user.map(|u| {
-                            let u = *u;
-                            TwitterUser {
-                                name: u.name,
-                                id: u.id
-                            }
-                        })
-                    }
-                })
+                .map(TweetResponse::from)
                 .collect::<Vec<_>>()
                 .apply(|x| warp::reply::json(&x))
         });
