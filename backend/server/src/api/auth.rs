@@ -20,15 +20,16 @@ use askama::Template;
 use crate::server_auth::Subject;
 use std::convert::TryInto;
 use warp::Rejection;
-use std::borrow::Cow;
 
 
 /// Meaningless id for testing purposes
+#[cfg(test)]
 pub static TEST_CLIENT_ID: &str = "yeet";
 
-// TODO make #[cfg(test)]
+/// Gets a basic JWT from the state for use in testing
+#[cfg(test)]
 pub fn get_jwt(state: &State) -> String {
-//    use std::borrow::Cow;
+    use std::borrow::Cow;
     let secret: Secret = warp::test::request()
         .filter(&state.secret.clone())
         .unwrap();
@@ -41,39 +42,6 @@ pub fn get_jwt(state: &State) -> String {
     };
     let id = String::from(TEST_CLIENT_ID);
     get_or_create_user(token, id, secret, conn).expect("Should get or create user")
-}
-
-// TODO remove this and associated nonsense.
-#[cfg(test)]
-/// Get a jwt, with dummy data only for testing.
-fn login_test_fn(state: &State) -> BoxedFilter<(impl Reply,)> {
-    use crate::error::err_to_rejection;
-    path!("login")
-        .and(warp::post2())
-        .map(|| {
-            (
-                egg_mode::Token::Access {
-                    consumer: KeyPair { key: Cow::from(""), secret: Cow::from("") },
-                    access: KeyPair { key: Cow::from(""), secret: Cow::from("")}
-                },
-                String::from("1")
-            )
-        })
-        .untuple_one()
-        .and(state.secret.clone())
-        .and(state.db.clone())
-        .map(get_or_create_user)
-        .and_then(err_to_rejection)
-        .boxed()
-}
-
-/// Empty implementation for test login function
-#[cfg(not(test))]
-fn login_test_fn(_state: &State) -> BoxedFilter<(impl Reply,)> {
-    path!("login")
-        .and(warp::post2())
-        .and_then(|| -> Result<String, Rejection> {Err(warp::reject::not_found())})
-        .boxed()
 }
 
 /// The authentication api.
@@ -147,8 +115,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let subroutes = link
         .or(callback)
-        .or(test_redirect)
-        .or(login_test_fn(state));
+        .or(test_redirect);
 
     let api_root = path!("auth");
 
@@ -282,18 +249,18 @@ fn get_or_create_user(
                 .map(|a| a)
         })
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::{state::State, testing_fixtures::user::UserFixture};
-    use pool::Pool;
-    use testing_common::setup::setup_warp;
-    use std::option::Option;
-
-    use crate::testing_fixtures::util::{deserialize, deserialize_string};
-
-    use authorization::{AUTHORIZATION_HEADER_KEY, BEARER};
+//
+//#[cfg(test)]
+//mod test {
+//    use super::*;
+//    use crate::{state::State, testing_fixtures::user::UserFixture};
+//    use pool::Pool;
+//    use testing_common::setup::setup_warp;
+//    use std::option::Option;
+//
+//    use crate::testing_fixtures::util::{deserialize, deserialize_string};
+//
+//    use authorization::{AUTHORIZATION_HEADER_KEY, BEARER};
 
 //    #[test]
 //    fn login_works() {
@@ -317,4 +284,4 @@ mod test {
 //        });
 //    }
 
-}
+//}

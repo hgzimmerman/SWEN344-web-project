@@ -192,7 +192,7 @@ pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> 
 mod test {
     use super::*;
     use hyper_tls::HttpsConnector;
-    use futures::future::lazy;
+//    use futures::future::lazy;
 
     #[test]
     fn check_if_server_is_available() {

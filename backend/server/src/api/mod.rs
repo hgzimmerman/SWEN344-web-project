@@ -81,7 +81,7 @@ mod integration_test {
 
     use crate::{
         api::{calendar::NewEventRequest},
-        testing_fixtures::util::{deserialize, deserialize_string},
+        testing_fixtures::util::{deserialize},
     };
     use db::{
         event::{Event, EventChangeset},
@@ -485,7 +485,11 @@ mod integration_test {
     mod market {
         use super::*;
         use crate::api::market::StockTransactionRequest;
-        use db::stock::{Stock, StockTransaction, UserStockResponse};
+        use db::stock::{
+//            Stock,
+//            StockTransaction,
+            UserStockResponse
+        };
 
         #[test]
         fn buy_stock() {
