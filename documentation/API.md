@@ -60,7 +60,7 @@ Deprecated indicates that it should not be used, or if documentation falls behin
 | `/api/auth/callback/`               | GET    | HTML               |                     |(Twitter token)| Logs the user in when the user is redirected from twitter auth | |
 | `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth   |  |
 | `/api/twitter_proxy/tweet/`         | POST   |                    | TweetRequest        | yes           | Creates a new tweet                   |  |
-| `/api/twitter_proxy/feed/`          | GET    | Vec<TweetResponse> |                     | yes           | Gets the last 50 tweets in your feed  |  |
+| `/api/twitter_proxy/feed/`          | GET    | \[TweetResponse\]  |                     | yes           | Gets the last 50 tweets in your feed  |  |
 | `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
 | `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code              | |
 | `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code              | |
