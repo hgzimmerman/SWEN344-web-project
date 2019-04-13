@@ -20,6 +20,7 @@ use askama::Template;
 use crate::server_auth::Subject;
 use std::convert::TryInto;
 use warp::Rejection;
+use crate::server_auth::jwt_filter;
 
 
 /// Meaningless id for testing purposes
@@ -94,6 +95,20 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .with(warp::reply::with::header("content-type","text/html"));
 
+    // Refreshes the JWT
+    let refresh = path!("refresh")
+        .and(warp::post2())
+        .and(jwt_filter(&state))
+        .and(state.secret.clone())
+        .and_then(|payload: JwtPayload<Subject>, secret: Secret| {
+            let subject = payload.subject();
+            let payload = JwtPayload::new(subject, chrono::Duration::weeks(5));
+            payload
+                .encode_jwt_string(&secret)
+                .map_err(Error::AuthError)
+                .map_err(warp::reject::custom)
+                .map(|a| warp::reply::json(&a))
+        });
 
     // TODO remove me, this is for testing only
     let test_redirect = path!("test_redirect.html")
@@ -115,7 +130,9 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let subroutes = link
         .or(callback)
-        .or(test_redirect);
+        .or(test_redirect)
+        .or(refresh);
+
 
     let api_root = path!("auth");
 
