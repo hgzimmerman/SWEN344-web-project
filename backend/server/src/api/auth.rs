@@ -18,7 +18,6 @@ use egg_mode::KeyPair;
 use egg_mode::Token;
 use askama::Template;
 use crate::server_auth::Subject;
-use std::convert::TryInto;
 use warp::Rejection;
 use crate::server_auth::jwt_filter;
 
@@ -214,7 +213,7 @@ fn get_or_create_user(
         .map(|user| {
             let subject = Subject {
                 user_uuid: user.uuid,
-                twitter_token: twitter_token.try_into().expect("For purposes as used by this project, this conversion should be infallible")
+                twitter_token: twitter_token.into()
             };
             JwtPayload::new(subject, Duration::weeks(5))
         })
