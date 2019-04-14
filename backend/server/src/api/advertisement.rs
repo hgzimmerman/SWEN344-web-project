@@ -16,8 +16,6 @@ use warp::{
 use log::info;
 use crate::error::err_to_rejection;
 use crate::state::HttpsClient;
-use std::path::PathBuf;
-use futures::stream::Stream;
 
 /// Api for serving the advertisement.
 ///

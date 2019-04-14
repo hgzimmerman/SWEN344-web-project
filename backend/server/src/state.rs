@@ -13,7 +13,6 @@ use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use apply::Apply;
 use egg_mode::KeyPair;
-use std::path::Path;
 use std::path::PathBuf;
 
 /// Simplified type for representing a HttpClient.
@@ -156,8 +155,4 @@ fn get_twitter_request_token(con_token: &KeyPair) -> KeyPair {
 
 pub fn twitter_key_pair_filter(twitter_key_pair: KeyPair) -> BoxedFilter<(KeyPair,)> {
     warp::any().map(move || twitter_key_pair.clone()).boxed()
-}
-
-pub fn server_lib_root_filter(path: PathBuf) -> BoxedFilter<(PathBuf,)> {
-    warp::any().map(move || path.clone()).boxed()
 }

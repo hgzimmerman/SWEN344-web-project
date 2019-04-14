@@ -13,7 +13,6 @@ use authorization::{JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{filters::BoxedFilter, Filter, Rejection};
-use std::convert::TryFrom;
 use egg_mode::Token;
 use egg_mode::KeyPair;
 use apply::Apply;
@@ -27,18 +26,16 @@ pub struct TwitterToken {
     access_secret: String
 }
 
-impl TryFrom<Token> for TwitterToken {
-    type Error = ();
-
-    fn try_from(value: Token) -> Result<Self, Self::Error> {
+impl From<Token> for TwitterToken {
+    fn from(value: Token) -> Self {
         match value {
-            Token::Access {consumer, access} => Ok(TwitterToken {
+            Token::Access {consumer, access} => TwitterToken {
                 consumer_key: consumer.key.to_string(),
                 consumer_secret: consumer.secret.to_string(),
                 access_key: access.key.to_string(),
                 access_secret: access.secret.to_string()
-            }),
-            _ => Err(())
+            },
+            _ => panic!("No support for non-access tokens")
         }
     }
 }
