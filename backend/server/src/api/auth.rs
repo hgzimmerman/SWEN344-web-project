@@ -95,7 +95,6 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(state.twitter_request_token.clone())
         .and(warp::query::query())
         .and_then(|con_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
-            use log::info;
             info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
             egg_mode::access_token((&con_token).clone(), &key_pair, q_params.oauth_verifier)
                 .map_err(|_| Error::InternalServerError(Some("could not get access token.".to_owned())).reject())

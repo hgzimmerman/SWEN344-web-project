@@ -143,6 +143,7 @@ mod unit_test {
         let conf = StateConfig {
             secret: Some(secret.clone()),
             max_pool_size: None,
+            server_lib_root: None
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
@@ -162,6 +163,7 @@ mod unit_test {
         let conf = StateConfig {
             secret: Some(secret.clone()),
             max_pool_size: None,
+            server_lib_root: None
         };
 
         let state = State::new(conf);

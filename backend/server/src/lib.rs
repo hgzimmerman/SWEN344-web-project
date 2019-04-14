@@ -29,7 +29,7 @@ use crate::{
 };
 use log::info;
 
-/// parses the command line arguments and starts the server.
+/// Starts the server.
 pub fn start(config: Config) {
 
     info!("{:#?}", config);
@@ -39,6 +39,8 @@ pub fn start(config: Config) {
     let state_config = StateConfig {
         secret: config.secret,
         max_pool_size: config.max_pool_size,
+
+        server_lib_root: config.server_lib_root
     };
 
     let state = State::new(state_config);

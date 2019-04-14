@@ -3,6 +3,7 @@ use apply::Apply;
 use clap::{App, Arg};
 
 use authorization::Secret;
+use std::path::PathBuf;
 
 const DEFAULT_PORT: u16 = 8080;
 
@@ -18,6 +19,10 @@ pub struct Config {
     /// The maximum size of the connection pool.
     /// If left unspecified, it will be left to the pool's discretion (At the time of writing, it defaults to 10)
     pub max_pool_size: Option<u32>,
+    /// The root of the server lib.
+    /// This is used to find static assets with and around the server crate.
+    /// If the binary is launched from somewhere other than .../server, then this parameter needs to be supplied.
+    pub server_lib_root: Option<PathBuf>
 }
 
 impl Config {
@@ -54,6 +59,13 @@ impl Config {
                     .help("Number of connections the database pool supports. Defaults to 10.")
                     .takes_value(true)
             )
+            .arg(
+                Arg::with_name("server_lib_root")
+                    .long("server-lib-root")
+                    .value_name("PATH")
+                    .help("The root of the server crate. Defaults to './'. Needs to be changed if the server is launched from somewhere other than '.../server'.")
+                    .takes_value(true)
+            )
             .get_matches();
 
         let port: u16 = if let Some(port) = matches.value_of("port") {
@@ -73,11 +85,14 @@ impl Config {
         };
         let max_pool_size = max_pool_size.apply(Some);
 
+        let server_lib_root = matches.value_of("server_lib_root").map(PathBuf::from);
+
         Config {
             port,
             tls_enabled,
             secret,
             max_pool_size,
+            server_lib_root
         }
     }
 }
