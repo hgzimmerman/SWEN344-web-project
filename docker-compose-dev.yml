@@ -2,6 +2,7 @@ version: "2" # The version of docker compose on the ubuntu vm is outdated and on
 
 services:
   app:
+    image: "rust:latest"
     build: ./
     ports:
       - "8080:8080"
