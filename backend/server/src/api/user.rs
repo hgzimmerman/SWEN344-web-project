@@ -23,7 +23,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let get_zip_code = path!("zip")
         .and(warp::get2())
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|user_uuid: Uuid, conn: PooledConn| -> QueryResult<Option<String>> {
             User::get_zip_code(user_uuid, &conn)
         })
@@ -33,7 +33,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::put2())
         .and(json_body_filter(1))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|zip_code: String, user_uuid: Uuid, conn: PooledConn| {
             User::set_zip_code(user_uuid, zip_code, &conn)
         })
@@ -41,7 +41,7 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let get_user = warp::get2()
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|user_uuid: Uuid, conn: PooledConn| -> QueryResult<User> {
             User::get_user(user_uuid, &conn)
         })
