@@ -62,7 +62,7 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]);
 
-    let file_config = FileConfig::default();
+    let file_config = FileConfig::new(state.server_lib_root.clone());
 
     api(state)
         .or(static_files_handler(file_config))

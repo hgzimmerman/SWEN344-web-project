@@ -13,6 +13,8 @@ use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use apply::Apply;
 use egg_mode::KeyPair;
+use std::path::Path;
+use std::path::PathBuf;
 
 /// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
@@ -33,7 +35,10 @@ pub struct State {
     /// Twitter connection token
     pub twitter_con_token: BoxedFilter<(KeyPair,)>,
     /// Twitter key pair for the auth token
-    pub twitter_request_token: BoxedFilter<(KeyPair,)>
+    pub twitter_request_token: BoxedFilter<(KeyPair,)>,
+    /// The path to the server directory.
+    /// This allows file resources to have a common reference point when determining from where to serve assets.
+    pub server_lib_root: PathBuf
 }
 
 /// Configuration object for creating the state.
@@ -43,6 +48,7 @@ pub struct State {
 pub struct StateConfig {
     pub secret: Option<Secret>,
     pub max_pool_size: Option<u32>,
+    pub server_lib_root: Option<PathBuf>
 }
 
 impl State {
@@ -72,12 +78,16 @@ impl State {
         let twitter_con_token = get_twitter_con_token();
         let twitter_request_token = get_twitter_request_token(&twitter_con_token);
 
+        let root = conf.server_lib_root.unwrap_or_else(||PathBuf::from("./"));
+
+
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
             twitter_con_token: twitter_key_pair_filter(twitter_con_token),
-            twitter_request_token: twitter_key_pair_filter(twitter_request_token)
+            twitter_request_token: twitter_key_pair_filter(twitter_request_token),
+            server_lib_root: root
         }
     }
 
@@ -99,7 +109,8 @@ impl State {
             secret: secret_filter(secret),
             https: http_filter(client),
             twitter_con_token: twitter_key_pair_filter(twitter_con_token),
-            twitter_request_token: twitter_key_pair_filter(twitter_request_token)
+            twitter_request_token: twitter_key_pair_filter(twitter_request_token),
+            server_lib_root: PathBuf::from("./") // THIS makes the assumption that the tests are run from the backend/server dir.
         }
     }
 }
@@ -147,3 +158,6 @@ pub fn twitter_key_pair_filter(twitter_key_pair: KeyPair) -> BoxedFilter<(KeyPai
     warp::any().map(move || twitter_key_pair.clone()).boxed()
 }
 
+pub fn server_lib_root_filter(path: PathBuf) -> BoxedFilter<(PathBuf,)> {
+    warp::any().map(move || path.clone()).boxed()
+}

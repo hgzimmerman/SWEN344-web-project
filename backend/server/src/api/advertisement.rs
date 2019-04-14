@@ -16,6 +16,8 @@ use warp::{
 use log::info;
 use crate::error::err_to_rejection;
 use crate::state::HttpsClient;
+use std::path::PathBuf;
+use futures::stream::Stream;
 
 /// Api for serving the advertisement.
 ///
@@ -24,13 +26,17 @@ use crate::state::HttpsClient;
 /// and other stateful constructs.
 pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Ad Api");
+
+    let root = state.server_lib_root.clone();
+    let ad_path = root.join("static/ad/rit_ad.png");
+
     path("advertisement")
         .and(warp::get2())
         .and(state.https.clone())
         .and_then(|client: HttpsClient| {
             // Get the stats asynchronously as a precondition to serving the request.
             let servers = get_num_servers_up(&client).map_err(Error::reject);
-            let load = get_load().map_err(Error::reject);
+            let load = get_load(&client).map_err(Error::reject);
             servers.join(load)
         })
         .untuple_one() // converts `(NumServers, Load)` to `NumServers, Load`
@@ -38,7 +44,7 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .map(determine_and_record_ad_serving)
         .and_then(err_to_rejection)
         .untuple_one() // converts `()` to ``
-        .and(warp::fs::file(".static/ad/rit_ad.png")) // TODO, verify that this is correct
+        .and(warp::fs::file(ad_path))
         .boxed()
 }
 
@@ -83,7 +89,9 @@ fn determine_and_record_ad_serving(
     load: Load,
     conn: PooledConn,
 ) -> Result<(), Error> {
+
     let should_send_advertisement = should_serve_adds_bf(load, available_servers);
+    info!("Add serving, load: {}, available_servers: {}, serving: {}", load.0, available_servers.0, should_send_advertisement);
 
     let new_health_record = NewHealthRecord {
         available_servers: available_servers.0 as i32,
