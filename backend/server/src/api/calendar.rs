@@ -55,7 +55,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("events" / "export"))
         .and(path::end())
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|user_uuid: Uuid, conn: PooledConn| -> Result<Vec<NewEventRequest>, diesel::result::Error> {
             Event::events(user_uuid, &conn)
                 .map(|events| {
@@ -80,7 +80,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::post2())
         .and(json_body_filter(350)) // you can import a bunch 'o events
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|events: Vec<NewEventRequest>, user_uuid: Uuid, conn: PooledConn| -> Result<(), diesel::result::Error>{
             let events = events
                 .into_iter()
@@ -102,7 +102,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("events"))
         .and(warp::query())
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|tb: TimeBoundaries, user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, diesel::result::Error> {
             Event::events_from_n_to_n(user_uuid, tb.start, tb.stop, &conn)
         })
@@ -113,7 +113,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(path!("events" / i32 / u32)) // "events", year, month
         .and(path::end())
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|year: i32, month_index: u32, user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, Error> {
             let month_index = MonthIndex::from_1_indexed_u32(month_index)
                 .ok_or_else(|| Error::bad_request("Month index is out of bounds (needs 1-12)"))?;
@@ -130,7 +130,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let events_today = warp::get2()
         .and(path!("events" / "today"))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Event::events_today(user_uuid, &conn)
                 .map_err(Error::from_reject)
@@ -142,7 +142,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let events_month = warp::get2()
         .and(path!("events" / "month"))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, diesel::result::Error>{
             Event::events_month(user_uuid, &conn)
         })
@@ -151,7 +151,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let create_event = warp::post2()
         .and(json_body_filter(50))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .map(|e: NewEventRequest, user_uuid: Uuid, conn: PooledConn| {
             let new_event = e.into_new_event(user_uuid);
             // check logical ordering of start and stop times
@@ -167,13 +167,13 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let delete_event = warp::delete2()
         .and(path!(Uuid))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .and_then(delete_event);
 
     let modify_event = warp::put2()
         .and(json_body_filter(50))
         .and(user_filter(state))
-        .and(state.db.clone())
+        .and(state.db())
         .and_then(modify_event);
 
     let events = path!("event").and(

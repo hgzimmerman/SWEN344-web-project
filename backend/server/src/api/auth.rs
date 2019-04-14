@@ -35,10 +35,10 @@ pub static TEST_CLIENT_ID: &str = "yeet";
 pub fn get_jwt(state: &State) -> String {
     use std::borrow::Cow;
     let secret: Secret = warp::test::request()
-        .filter(&state.secret.clone())
+        .filter(&state.secret())
         .unwrap();
     let conn: PooledConn = warp::test::request()
-        .filter(&state.db.clone())
+        .filter(&state.db())
         .unwrap();
     let token = egg_mode::Token::Access {
         consumer: KeyPair { key: Cow::from(""), secret: Cow::from("") },
@@ -99,8 +99,8 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map_err(|_| Error::InternalServerError(Some("could not get access token.".to_owned())).reject())
         })
         .untuple_one()
-        .and(state.secret.clone())
-        .and(state.db.clone())
+        .and(state.secret())
+        .and(state.db())
         .and_then(|token: Token, id: u64, _screen_name: String, secret: Secret, conn: PooledConn| -> Result<String, Rejection> {
             let jwt = get_or_create_user(token, format!("{}", id), secret, conn)
                 .map_err(Error::reject)?;
@@ -112,7 +112,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let refresh = path!("refresh")
         .and(warp::post2())
         .and(jwt_filter(&state))
-        .and(state.secret.clone())
+        .and(state.secret())
         .and_then(|payload: JwtPayload<Subject>, secret: Secret| {
             let subject = payload.subject();
             let payload = JwtPayload::new(subject, chrono::Duration::weeks(5));

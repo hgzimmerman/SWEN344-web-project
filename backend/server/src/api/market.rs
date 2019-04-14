@@ -56,7 +56,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
-        .and(s.https.clone())
+        .and(s.https_client())
         .and(json_body_filter(10))
         .and_then(|client: HttpsClient, request: StockTransactionRequest| {
             // Get the current price from a remote source
@@ -66,11 +66,11 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .untuple_one()
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .map(transact) // Store the purchase/sale in the db
         .and_then(json_or_reject);
 
-    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db.clone()).and_then(
+    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db()).and_then(
         |user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
@@ -81,7 +81,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let user_transactions_for_stock = warp::get2()
         .and(path!("transactions" / String)) // The string is a symbol
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .and_then(|symbol: String, user_uuid: Uuid, conn: PooledConn| {
             let stock = Stock::get_stock_by_symbol(symbol, &conn).map_err(Error::from_reject)?;
             Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
@@ -95,13 +95,13 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let portfolio_performance = warp::get2()
         .and(path!("performance"))
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .and_then(
             |user_uuid: Uuid, conn: PooledConn| -> Result<Vec<UserStockResponse>, Rejection> {
                 Stock::get_stocks_belonging_to_user(user_uuid, &conn).map_err(Error::from_reject)
             },
         )
-        .and(s.https.clone())
+        .and(s.https_client())
         .and_then(|stocks: Vec<UserStockResponse>, client: HttpsClient| {
             let symbols: Vec<&str> = stocks.iter().map(|s| s.stock.symbol.as_str()).collect();
             get_current_prices(&symbols, &client)
