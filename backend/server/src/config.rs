@@ -22,7 +22,7 @@ pub struct Config {
     /// The root of the server lib.
     /// This is used to find static assets with and around the server crate.
     /// If the binary is launched from somewhere other than .../server, then this parameter needs to be supplied.
-    pub server_lib_root: Option<PathBuf>
+    pub server_lib_root: Option<PathBuf>,
 }
 
 impl Config {
@@ -92,7 +92,7 @@ impl Config {
             tls_enabled,
             secret,
             max_pool_size,
-            server_lib_root
+            server_lib_root,
         }
     }
 }

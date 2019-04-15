@@ -1,19 +1,18 @@
 //! Represents the shared server resources that all requests may utilize.
 use crate::{error::Error, server_auth::secret_filter};
 
+use apply::Apply;
 use authorization::Secret;
+use egg_mode::KeyPair;
 use hyper::{
     client::{connect::dns::GaiResolver, HttpConnector},
     Body, Client,
 };
 use hyper_tls::HttpsConnector;
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
-use warp::{filters::BoxedFilter, Filter, Rejection};
-use rand::{thread_rng, Rng};
-use rand::distributions::Alphanumeric;
-use apply::Apply;
-use egg_mode::KeyPair;
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::path::PathBuf;
+use warp::{filters::BoxedFilter, Filter, Rejection};
 
 /// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
@@ -37,7 +36,7 @@ pub struct State {
     pub twitter_request_token: BoxedFilter<(KeyPair,)>,
     /// The path to the server directory.
     /// This allows file resources to have a common reference point when determining from where to serve assets.
-    pub server_lib_root: PathBuf
+    pub server_lib_root: PathBuf,
 }
 
 /// Configuration object for creating the state.
@@ -47,23 +46,21 @@ pub struct State {
 pub struct StateConfig {
     pub secret: Option<Secret>,
     pub max_pool_size: Option<u32>,
-    pub server_lib_root: Option<PathBuf>
+    pub server_lib_root: Option<PathBuf>,
 }
 
 impl State {
     /// Creates a new state.
     pub fn new(conf: StateConfig) -> Self {
         const RANDOM_KEY_LENGTH: usize = 200;
-        let secret = conf
-            .secret
-            .unwrap_or_else(|| {
-                // Generate a new random key if none is provided.
-                thread_rng()
-                    .sample_iter(&Alphanumeric)
-                    .take(RANDOM_KEY_LENGTH)
-                    .collect::<String>()
-                    .apply(|s| Secret::new(&s))
-            });
+        let secret = conf.secret.unwrap_or_else(|| {
+            // Generate a new random key if none is provided.
+            thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(RANDOM_KEY_LENGTH)
+                .collect::<String>()
+                .apply(|s| Secret::new(&s))
+        });
 
         let pool_conf = PoolConfig {
             max_connections: conf.max_pool_size,
@@ -77,8 +74,7 @@ impl State {
         let twitter_con_token = get_twitter_con_token();
         let twitter_request_token = get_twitter_request_token(&twitter_con_token);
 
-        let root = conf.server_lib_root.unwrap_or_else(||PathBuf::from("./"));
-
+        let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
 
         State {
             db: db_filter(pool),
@@ -86,7 +82,7 @@ impl State {
             https: http_filter(client),
             twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
-            server_lib_root: root
+            server_lib_root: root,
         }
     }
 
@@ -109,7 +105,7 @@ impl State {
             https: http_filter(client),
             twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
-            server_lib_root: PathBuf::from("./") // THIS makes the assumption that the tests are run from the backend/server dir.
+            server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
         }
     }
 }
@@ -148,9 +144,8 @@ fn get_twitter_con_token() -> KeyPair {
 /// Gets the request token.
 fn get_twitter_request_token(con_token: &KeyPair) -> KeyPair {
     const CALLBACK_URL: &str = "https://vm344c.se.rit.edu/api/auth/callback";
-    tokio::runtime::current_thread::block_on_all(
-        egg_mode::request_token(con_token, CALLBACK_URL)
-    ).expect("Couldn't authenticate to twitter")
+    tokio::runtime::current_thread::block_on_all(egg_mode::request_token(con_token, CALLBACK_URL))
+        .expect("Couldn't authenticate to twitter")
 }
 
 pub fn twitter_key_pair_filter(twitter_key_pair: KeyPair) -> BoxedFilter<(KeyPair,)> {

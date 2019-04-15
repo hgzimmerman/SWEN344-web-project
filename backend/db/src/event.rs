@@ -85,7 +85,7 @@ impl MonthIndex {
 
     /// Converts a 0 indexed u32 to a month index.
     pub fn from_0_indexed_u32(value: u32) -> Option<Self> {
-        if  value > 11 {
+        if value > 11 {
             None
         } else {
             Some(MonthIndex(value))
@@ -100,13 +100,13 @@ pub struct Year(i32);
 impl Year {
     /// Validates that the i32 is a valid year
     /// For lack of understanding of the chrono API, I'm limiting this to 10_000 bce/ce.
-   pub fn from_i32(value: i32) -> Option<Self> {
-      if value < -10_0000  || value > 10_000 {
-          None
-      } else {
-          Some(Year(value))
-      }
-   }
+    pub fn from_i32(value: i32) -> Option<Self> {
+        if value < -10_0000 || value > 10_000 {
+            None
+        } else {
+            Some(Year(value))
+        }
+    }
 }
 
 /// A type representing all the columns in the events table.
@@ -149,7 +149,8 @@ impl Event {
 
     /// Allows the creation of many events at a time.
     pub fn import_events(new_events: Vec<NewEvent>, conn: &PgConnection) -> QueryResult<()> {
-        new_events.chunks(20_000)
+        new_events
+            .chunks(20_000)
             .map(move |chunk| {
                 diesel::insert_into(events::table)
                     .values(chunk)
@@ -164,10 +165,14 @@ impl Event {
         Self::user_events(user_uuid).load::<Event>(conn)
     }
 
-
     /// The month index is 0-indexed.
     /// So 0-11 are valid input values.
-    pub fn events_for_any_month(month_index: MonthIndex, year: Year, user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
+    pub fn events_for_any_month(
+        month_index: MonthIndex,
+        year: Year,
+        user_uuid: Uuid,
+        conn: &PgConnection,
+    ) -> QueryResult<Vec<Event>> {
         let start = chrono::Utc::now()
             .naive_utc()
             .with_year(year.0)

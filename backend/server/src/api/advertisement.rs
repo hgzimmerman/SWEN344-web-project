@@ -1,21 +1,16 @@
 //! [Self adaptive instructions section](http://www.se.rit.edu/~swen-344/projects/selfadaptive/selfadaptive.html)
 use crate::{
     adaptive::{get_load, get_num_servers_up, should_serve_adds_bf, Load, NumServers},
-    error::Error,
-    state::State,
+    error::{err_to_rejection, Error},
+    state::{HttpsClient, State},
     util,
 };
 use chrono::Utc;
 use db::adaptive_health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
-use pool::PooledConn;
-use warp::{
-    filters::BoxedFilter,
-    path, Filter, Reply,
-};
 use log::info;
-use crate::error::err_to_rejection;
-use crate::state::HttpsClient;
+use pool::PooledConn;
+use warp::{filters::BoxedFilter, path, Filter, Reply};
 
 /// Api for serving the advertisement.
 ///
@@ -61,6 +56,7 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(util::json)
         });
 
+    // requirements only ask for one week, so this isn't getting parameterized.
     let last_week_health = warp::get2()
         .and(path("week"))
         .and(state.db.clone())
@@ -87,9 +83,11 @@ fn determine_and_record_ad_serving(
     load: Load,
     conn: PooledConn,
 ) -> Result<(), Error> {
-
     let should_send_advertisement = should_serve_adds_bf(load, available_servers);
-    info!("Add serving, load: {}, available_servers: {}, serving: {}", load.0, available_servers.0, should_send_advertisement);
+    info!(
+        "Add serving, load: {}, available_servers: {}, serving: {}",
+        load.0, available_servers.0, should_send_advertisement
+    );
 
     let new_health_record = NewHealthRecord {
         available_servers: available_servers.0 as i32,

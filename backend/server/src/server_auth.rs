@@ -9,13 +9,12 @@
 //!
 
 use crate::{error::Error, state::State};
+use apply::Apply;
 use authorization::{JwtPayload, Secret, AUTHORIZATION_HEADER_KEY};
+use egg_mode::{KeyPair, Token};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{filters::BoxedFilter, Filter, Rejection};
-use egg_mode::Token;
-use egg_mode::KeyPair;
-use apply::Apply;
 
 /// A serializeable variant of Egg-mode's Token::Access variant
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -23,19 +22,19 @@ pub struct TwitterToken {
     consumer_key: String,
     consumer_secret: String,
     access_key: String,
-    access_secret: String
+    access_secret: String,
 }
 
 impl From<Token> for TwitterToken {
     fn from(value: Token) -> Self {
         match value {
-            Token::Access {consumer, access} => TwitterToken {
+            Token::Access { consumer, access } => TwitterToken {
                 consumer_key: consumer.key.to_string(),
                 consumer_secret: consumer.secret.to_string(),
                 access_key: access.key.to_string(),
-                access_secret: access.secret.to_string()
+                access_secret: access.secret.to_string(),
             },
-            _ => panic!("No support for non-access tokens")
+            _ => panic!("No support for non-access tokens"),
         }
     }
 }
@@ -45,12 +44,12 @@ impl Into<Token> for TwitterToken {
         Token::Access {
             consumer: KeyPair {
                 key: self.consumer_key.into(),
-                secret: self.consumer_secret.into()
+                secret: self.consumer_secret.into(),
             },
             access: KeyPair {
                 key: self.access_key.into(),
-                secret: self.access_secret.into()
-            }
+                secret: self.access_secret.into(),
+            },
         }
     }
 }
@@ -59,7 +58,7 @@ impl Into<Token> for TwitterToken {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Subject {
     pub user_uuid: Uuid,
-    pub twitter_token: TwitterToken
+    pub twitter_token: TwitterToken,
 }
 
 /// This filter will attempt to extract the JWT bearer token from the header Authorization field.
@@ -70,10 +69,7 @@ where
     for<'de> T: Serialize + Deserialize<'de> + Send,
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
-        .or_else(|_: Rejection| {
-            Error::not_authorized("Token Required")
-                .reject_result()
-        })
+        .or_else(|_: Rejection| Error::not_authorized("Token Required").reject_result())
         .and(s.secret.clone())
         .and_then(|bearer_string, secret| {
             JwtPayload::extract_jwt(bearer_string, &secret)
@@ -140,7 +136,7 @@ mod unit_test {
         let conf = StateConfig {
             secret: Some(secret.clone()),
             max_pool_size: None,
-            server_lib_root: None
+            server_lib_root: None,
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
@@ -160,7 +156,7 @@ mod unit_test {
         let conf = StateConfig {
             secret: Some(secret.clone()),
             max_pool_size: None,
-            server_lib_root: None
+            server_lib_root: None,
         };
 
         let state = State::new(conf);

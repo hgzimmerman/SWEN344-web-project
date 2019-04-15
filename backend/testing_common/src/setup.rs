@@ -24,16 +24,16 @@ pub const DATABASE_URL: &'static str = env!("TEST_DATABASE_URL");
 /// Should point to the base postgres account.
 const DROP_DATABASE_URL: &'static str = env!("DROP_DATABASE_URL");
 
-/// This creates a singleton of the base database connection.
-///
-/// The base database connection is required, because you cannot drop the other database from itself.
-///
-/// Because it is wrapped in a mutex, only one test at a time can access it.
-/// The setup method will lock it and use it to reset the database.
-///
-/// It is ok if a test fails and poisons the mutex, as the one place where it is used disregards the poison.
-/// Disregarding the poison is fine because code using the mutex-ed value never modifies the value,
-/// so there is no indeterminate state to contend with if a prior test has panicked.
+// This creates a singleton of the base database connection.
+//
+// The base database connection is required, because you cannot drop the other database from itself.
+//
+// Because it is wrapped in a mutex, only one test at a time can access it.
+// The setup method will lock it and use it to reset the database.
+//
+// It is ok if a test fails and poisons the mutex, as the one place where it is used disregards the poison.
+// Disregarding the poison is fine because code using the mutex-ed value never modifies the value,
+// so there is no indeterminate state to contend with if a prior test has panicked.
 lazy_static! {
     static ref CONN: Mutex<PgConnection> =
         Mutex::new(PgConnection::establish(DROP_DATABASE_URL).expect("Database not available"));

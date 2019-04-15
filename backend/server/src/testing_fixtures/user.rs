@@ -11,7 +11,7 @@ pub struct UserFixture {
 impl Fixture for UserFixture {
     fn generate(conn: &PgConnection) -> Self {
         let new_user = NewUser {
-            twitter_user_id:  TEST_CLIENT_ID.to_owned(),
+            twitter_user_id: TEST_CLIENT_ID.to_owned(),
         };
 
         let user = User::create_user(new_user, conn).unwrap();

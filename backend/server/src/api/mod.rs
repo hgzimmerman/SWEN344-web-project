@@ -3,8 +3,8 @@ mod advertisement;
 pub(crate) mod auth;
 mod calendar;
 mod market;
-mod user;
 mod twitter_proxy;
+mod user;
 
 use warp::{filters::BoxedFilter, Reply};
 
@@ -16,11 +16,11 @@ use crate::{
         advertisement::{ad_api, health_api},
         auth::auth_api,
         market::market_api,
-        user::user_api
+        twitter_proxy::twitter_proxy_api,
+        user::user_api,
     },
-    static_files::{static_files_handler, FileConfig},
     state::State,
-    api::twitter_proxy::twitter_proxy_api
+    static_files::{static_files_handler, FileConfig},
 };
 
 /// The initial segment in the uri path.
@@ -79,10 +79,7 @@ mod integration_test {
     use pool::Pool;
     use testing_common::setup::setup_warp;
 
-    use crate::{
-        api::{calendar::NewEventRequest},
-        testing_fixtures::util::{deserialize},
-    };
+    use crate::{api::calendar::NewEventRequest, testing_fixtures::util::deserialize};
     use db::{
         event::{Event, EventChangeset},
         user::User,
@@ -90,28 +87,6 @@ mod integration_test {
 
     use crate::api::auth::get_jwt;
     use authorization::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
-
-//    #[test]
-//    fn test_login_works() {
-//        setup_warp(|_fixture: &UserFixture, pool: Pool| {
-//            let secret = Secret::new("test");
-//            let s = State::testing_init(pool, secret);
-//            let filter = routes(&s);
-//
-//            let login = LoginRequest {
-//                oauth_token: "Test Garbage because we don't want to have the tests depend on FB"
-//                    .to_string(),
-//            };
-//            let resp = warp::test::request()
-//                .method("POST")
-//                .path("/api/auth/login")
-//                .json(&login)
-//                .header("content-length", "300")
-//                .reply(&filter);
-//
-//            assert_eq!(resp.status(), 200)
-//        });
-//    }
 
     #[test]
     fn user_works() {
@@ -137,8 +112,7 @@ mod integration_test {
 
     mod events {
         use super::*;
-        use chrono::Datelike;
-        use chrono::NaiveDateTime;
+        use chrono::{Datelike, NaiveDateTime};
 
         #[test]
         fn create_event() {
@@ -180,7 +154,6 @@ mod integration_test {
 
                 let jwt = get_jwt(&s);
 
-
                 // create an event first.
                 let request = NewEventRequest {
                     title: "Do a thing".to_string(),
@@ -196,13 +169,10 @@ mod integration_test {
                 #[derive(Serialize)]
                 struct TimeBounds {
                     start: NaiveDateTime,
-                    stop: NaiveDateTime
+                    stop: NaiveDateTime,
                 }
 
-                let tb = TimeBounds {
-                    start,
-                    stop
-                };
+                let tb = TimeBounds { start, stop };
 
                 let resp = warp::test::request()
                     .method("POST")
@@ -216,7 +186,10 @@ mod integration_test {
 
                 let resp = warp::test::request()
                     .method("GET")
-                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
+                    .path(&format!(
+                        "/api/calendar/event/events?{}",
+                        serde_urlencoded::to_string(tb).unwrap()
+                    ))
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
@@ -431,18 +404,14 @@ mod integration_test {
                 let start = chrono::Utc::now().naive_utc();
                 let stop = start + chrono::Duration::hours(4);
 
-
                 use serde::Serialize;
                 #[derive(Serialize)]
                 struct TimeBounds {
                     start: NaiveDateTime,
-                    stop: NaiveDateTime
+                    stop: NaiveDateTime,
                 }
 
-                let tb = TimeBounds {
-                    start,
-                    stop
-                };
+                let tb = TimeBounds { start, stop };
 
                 let resp = warp::test::request()
                     .method("POST")
@@ -470,7 +439,10 @@ mod integration_test {
                 // verify it was deleted
                 let resp = warp::test::request()
                     .method("GET")
-                    .path(&format!("/api/calendar/event/events?{}", serde_urlencoded::to_string(tb).unwrap()) )
+                    .path(&format!(
+                        "/api/calendar/event/events?{}",
+                        serde_urlencoded::to_string(tb).unwrap()
+                    ))
                     .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
                     .reply(&filter);
 
@@ -485,11 +457,7 @@ mod integration_test {
     mod market {
         use super::*;
         use crate::api::market::StockTransactionRequest;
-        use db::stock::{
-//            Stock,
-//            StockTransaction,
-            UserStockResponse
-        };
+        use db::stock::UserStockResponse;
 
         #[test]
         fn buy_stock() {
