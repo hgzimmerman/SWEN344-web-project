@@ -1,9 +1,9 @@
 //! Responsible for serving static files and redirecting non-'/api/' requests to index.html.
-use crate::{api::API_STRING};
-use log::info;
-use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
+use crate::api::API_STRING;
 use apply::Apply;
+use log::info;
 use std::path::PathBuf;
+use warp::{self, filters::BoxedFilter, fs::File, path::Peek, reply::Reply, Filter};
 
 /// The directory that the webapp is stored in.
 const ASSETS_DIRECTORY: &str = "../../frontend/build/"; // THIS ASSUMES THAT THE BINARY IS BUILT FROM THE ROOT DIRECTORY OF `backend/server`
@@ -18,9 +18,6 @@ pub struct FileConfig {
     index_file_path: Option<PathBuf>,
 }
 
-
-
-
 impl FileConfig {
     pub fn new(root: PathBuf) -> Self {
         FileConfig {
@@ -34,7 +31,6 @@ impl FileConfig {
             index.clone()
         } else {
             self.static_dir_path.join("index.html")
-//            format!("{}index.html", self.static_dir_path)
         }
     }
 }
@@ -62,7 +58,7 @@ fn index_static_file_redirect(index_file_path: PathBuf) -> BoxedFilter<(impl Rep
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    return warp::reject::not_found().apply(Err)
+                    return warp::reject::not_found().apply(Err);
                 }
             }
             Ok(file)
@@ -125,7 +121,7 @@ mod unit_test {
             Err(e) => e,
         };
         assert!(err.is_not_found());
-//        let cause = err.find_cause::<Error>().ex();
-//        assert_eq!(*cause, Error::NotFound {type_name: "".to_string()})
+        //        let cause = err.find_cause::<Error>().ex();
+        //        assert_eq!(*cause, Error::NotFound {type_name: "".to_string()})
     }
 }

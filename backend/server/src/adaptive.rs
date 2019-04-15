@@ -8,11 +8,10 @@ use hyper::{
     Chunk, Uri,
 };
 
-use futures::future::join_all;
-use apply::Apply;
-use futures::future::Either;
-use serde::{Serialize,Deserialize};
 use crate::state::HttpsClient;
+use apply::Apply;
+use futures::future::{join_all, Either};
+use serde::{Deserialize, Serialize};
 
 /// The fictional load encountered by the servers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -23,23 +22,24 @@ pub struct NumServers(pub u32);
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct AvailabilityResponse {
-    availability: u32
+    availability: u32,
 }
-
-
 
 /// Checks to see if a given server is available.
 ///
 /// It resolves any error in making the connection or deserializing the value to a false.
-fn server_is_available(uri: Uri, client: &HttpsClient) -> Box<Future<Item=bool, Error=()> + 'static + Send> {
+fn server_is_available(
+    uri: Uri,
+    client: &HttpsClient,
+) -> Box<Future<Item = bool, Error = ()> + 'static + Send> {
     server_is_available_core(uri, client)
         .map(|resp| {
             match resp {
                 Ok(resp) => match resp.availability {
-                    1 => true,  // One indicates that the server is up
+                    1 => true, // One indicates that the server is up
                     _ => false,
-                }
-                Err(_) => false // Request deserialization failed
+                },
+                Err(_) => false, // Request deserialization failed
             }
         })
         .or_else(|_err| Ok(false)) // If the endpoint can't be reached, assume that the server isn't available.
@@ -47,7 +47,10 @@ fn server_is_available(uri: Uri, client: &HttpsClient) -> Box<Future<Item=bool, 
 }
 
 /// Checks if the server is available.
-fn server_is_available_core(uri: Uri, client: &HttpsClient) -> impl Future<Item=Result<AvailabilityResponse, serde_json::Error>, Error=hyper::Error> {
+fn server_is_available_core(
+    uri: Uri,
+    client: &HttpsClient,
+) -> impl Future<Item = Result<AvailabilityResponse, serde_json::Error>, Error = hyper::Error> {
     client
         .get(uri.clone())
         .and_then(|res| res.into_body().concat2()) // Get the whole body.
@@ -58,43 +61,41 @@ fn server_is_available_core(uri: Uri, client: &HttpsClient) -> impl Future<Item=
         .apply(Box::new)
 }
 
-
-
 /// Get the number of available servers.
 ///
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
 pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers, Error = Error> {
-
     let uris = vec![
         "https://adaptive-server.herokuapp.com/availability/1",
         "https://adaptive-server.herokuapp.com/availability/2",
         "https://adaptive-server.herokuapp.com/availability/3",
         "https://adaptive-server.herokuapp.com/availability/4",
     ]
-        .into_iter()
-        .map(|s| s.parse::<Uri>().map_err(|e| Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))))
-        .collect::<Result<Vec<_>, Error>>();
+    .into_iter()
+    .map(|s| {
+        s.parse::<Uri>().map_err(|e| {
+            Error::internal_server_error(format!("Malformed uri in get_num_servers_up:  {:?}", e))
+        })
+    })
+    .collect::<Result<Vec<_>, Error>>();
 
     let uris = match uris {
         Ok(uris) => uris,
-        Err(e) => return Either::A(futures::future::err(e)) // Return early with the parse error.
+        Err(e) => return Either::A(futures::future::err(e)), // Return early with the parse error.
     };
 
-    let servers: Vec<Box<Future<Item=bool, Error=()> + 'static + Send>> = uris
+    let servers: Vec<Box<Future<Item = bool, Error = ()> + 'static + Send>> = uris
         .into_iter()
-        .map(|uri|server_is_available(uri, &client))
+        .map(|uri| server_is_available(uri, &client))
         .collect();
 
     join_all(servers) // Wait for all requests to finish.
         .map(|x: Vec<bool>| {
             // Sum the number of servers that responded with a positive message.
-            x
-                .into_iter()
-                .fold(0, |acc, b| -> u32 {
-                    acc + b as u32
-                })
+            x.into_iter()
+                .fold(0, |acc, b| -> u32 { acc + b as u32 })
                 .apply(NumServers)
         })
         .map_err(|_| Error::InternalServerError(None)) // This can never error, but Type Coherency must be maintained
@@ -107,17 +108,19 @@ pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers
 /// A Future representing the Load of the "server cluster".
 /// If the request fails, it will return an error indicating that that resource is unavailable.
 pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error> {
-    let uri: Uri = "https://adaptive-server.herokuapp.com/serverload".parse().unwrap();
+    let uri: Uri = "https://adaptive-server.herokuapp.com/serverload"
+        .parse()
+        .unwrap();
     client
         .get(uri.clone())
         .and_then(|res| {
             res.into_body().concat2() // Await the whole body
         })
         .map_err(move |e| {
-                    use log::error;
+            use log::error;
             error!("{}", e);
             Error::DependentConnectionFailed {
-                url: uri.to_string()
+                url: uri.to_string(),
             }
         })
         .and_then(|chunk: Chunk| {
@@ -125,10 +128,11 @@ pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error>
             let body = String::from_utf8_lossy(&v).to_string();
             #[derive(Debug, Clone, Deserialize)]
             struct LoadResponse {
-                load: u32
+                load: u32,
             }
-            let load_response: LoadResponse = serde_json::from_str(&body)
-                .map_err(|_| Error::InternalServerError(Some(format!("Could not parse response {}", body))))?;
+            let load_response: LoadResponse = serde_json::from_str(&body).map_err(|_| {
+                Error::InternalServerError(Some(format!("Could not parse response {}", body)))
+            })?;
             Ok(Load(load_response.load))
         })
 }
@@ -190,28 +194,34 @@ pub fn should_serve_adds_bf(load_units: Load, available_servers: NumServers) -> 
     tape[2] != 0
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
-    use hyper_tls::HttpsConnector;
     use hyper::Client;
-//    use futures::future::lazy;
+    use hyper_tls::HttpsConnector;
+    //    use futures::future::lazy;
 
     #[test]
     fn check_if_server_is_available() {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, _>(https);
-        tokio::runtime::current_thread::Runtime::new().unwrap().block_on(
-            server_is_available_core("https://adaptive-server.herokuapp.com/availability/1".parse().unwrap(), &client)
+        tokio::runtime::current_thread::Runtime::new()
+            .unwrap()
+            .block_on(
+                server_is_available_core(
+                    "https://adaptive-server.herokuapp.com/availability/1"
+                        .parse()
+                        .unwrap(),
+                    &client,
+                )
                 .and_then(|resp| {
                     dbg!(&resp);
                     let availability = resp.expect("could not parse").availability;
                     assert!(availability == 1 || availability == 0);
                     Ok(())
                 })
-                .map_err(|_|())
-        )
+                .map_err(|_| ()),
+            )
             .expect("future should finish")
     }
 
@@ -240,10 +250,11 @@ mod test {
     fn should_serve_bf_equivalent() {
         let load = Load(27);
         let available_servers = NumServers(3);
-        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
+        assert_eq!(
+            should_serve_adds(load, available_servers),
+            should_serve_adds_bf(load, available_servers)
+        )
     }
-
-
 
     #[test]
     fn should_not_serve() {
@@ -256,13 +267,19 @@ mod test {
     fn should_not_serve_bf_equivalent() {
         let load = Load(30);
         let available_servers = NumServers(3);
-        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
+        assert_eq!(
+            should_serve_adds(load, available_servers),
+            should_serve_adds_bf(load, available_servers)
+        )
     }
 
-   #[test]
+    #[test]
     fn should_serve_bf_equivalent2() {
         let load = Load(39); // boundary value
         let available_servers = NumServers(4);
-        assert_eq!(should_serve_adds(load, available_servers), should_serve_adds_bf(load, available_servers))
+        assert_eq!(
+            should_serve_adds(load, available_servers),
+            should_serve_adds_bf(load, available_servers)
+        )
     }
 }

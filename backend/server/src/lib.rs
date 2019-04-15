@@ -31,7 +31,6 @@ use log::info;
 
 /// Starts the server.
 pub fn start(config: Config) {
-
     info!("{:#?}", config);
     let localhost = [0, 0, 0, 0];
     let addr = (localhost, config.port);
@@ -39,8 +38,7 @@ pub fn start(config: Config) {
     let state_config = StateConfig {
         secret: config.secret,
         max_pool_size: config.max_pool_size,
-
-        server_lib_root: config.server_lib_root
+        server_lib_root: config.server_lib_root,
     };
 
     let state = State::new(state_config);
@@ -48,10 +46,9 @@ pub fn start(config: Config) {
 
     if config.tls_enabled {
         warp::serve(routes)
-            .tls("tls/cert.pem", "tls/key.rsa") // TODO, actually get these keys.
+            .tls("tls/cert.pem", "tls/key.rsa")
             .run(addr);
     } else {
         warp::serve(routes).run(addr);
     }
 }
-
