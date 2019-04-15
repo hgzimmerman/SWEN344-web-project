@@ -25,11 +25,11 @@ pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 /// into the scope of the relevant api.
 pub struct State {
     /// A pool of database connections.
-    pub db: BoxedFilter<(PooledConn,)>,
+    db: BoxedFilter<(PooledConn,)>,
     /// The secret key.
-    pub secret: BoxedFilter<(Secret,)>,
+    secret: BoxedFilter<(Secret,)>,
     /// Https client
-    pub https: BoxedFilter<(HttpsClient,)>,
+    https: BoxedFilter<(HttpsClient,)>,
     /// Twitter connection token
     pub twitter_con_token: BoxedFilter<(KeyPair,)>,
     /// Twitter key pair for the auth token
@@ -84,6 +84,20 @@ impl State {
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: root,
         }
+    }
+
+    /// Gets a pooled connection to the database.
+    pub fn db(&self) -> BoxedFilter<(PooledConn,)> {
+        self.db.clone()
+    }
+
+    /// Gets the secret used for authoring JWTs
+    pub fn secret(&self) -> BoxedFilter<(Secret,)> {
+        self.secret.clone()
+    }
+
+    pub fn https_client(&self) -> BoxedFilter<(HttpsClient,)> {
+        self.https.clone()
     }
 
     /// Creates a new state object from an existing object pool.

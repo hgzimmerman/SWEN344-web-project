@@ -67,7 +67,8 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             DraftTweet::new(request.text)
                 .send(&twitter_token)
                 .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Tweet failed to send".to_owned()).reject()
+                    Error::DependentConnectionFailedReason("Tweet failed to send".to_owned())
+                        .reject()
                 })
         })
         .map(|tweet: Response<Tweet>| {
@@ -82,7 +83,8 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .with_page_size(50)
                 .start()
                 .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Could not get twitter feed".to_owned()).reject()
+                    Error::DependentConnectionFailedReason("Could not get twitter feed".to_owned())
+                        .reject()
                 })
         })
         .untuple_one()

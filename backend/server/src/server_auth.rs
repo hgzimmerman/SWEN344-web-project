@@ -70,7 +70,7 @@ where
 {
     warp::header::header::<String>(AUTHORIZATION_HEADER_KEY)
         .or_else(|_: Rejection| Error::not_authorized("Token Required").reject_result())
-        .and(s.secret.clone())
+        .and(s.secret())
         .and_then(|bearer_string, secret| {
             JwtPayload::extract_jwt(bearer_string, &secret)
                 .and_then(JwtPayload::validate_dates)

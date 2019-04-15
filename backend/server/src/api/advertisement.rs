@@ -25,7 +25,7 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     path("advertisement")
         .and(warp::get2())
-        .and(state.https.clone())
+        .and(state.https_client())
         .and_then(|client: HttpsClient| {
             // Get the stats asynchronously as a precondition to serving the request.
             let servers = get_num_servers_up(&client).map_err(Error::reject);
@@ -33,11 +33,11 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             servers.join(load)
         })
         .untuple_one() // converts `(NumServers, Load)` to `NumServers, Load`
-        .and(state.db.clone())
+        .and(state.db())
         .map(determine_and_record_ad_serving)
         .and_then(err_to_rejection)
         .untuple_one() // converts `()` to ``
-        .and(warp::fs::file(ad_path))
+        .and(warp::fs::file(ad_path)) // ad_path is immutable after startup, so restrictions related to `and_then` can be worked around by just using `and`
         .boxed()
 }
 
@@ -48,23 +48,22 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// and other stateful constructs.
 pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Health Api");
-    let all_health = warp::get2()
-        .and(state.db.clone())
-        .and_then(|conn: PooledConn| {
-            HealthRecord::get_all(&conn)
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
+    let all_health = warp::get2().and(state.db()).and_then(|conn: PooledConn| {
+        HealthRecord::get_all(&conn)
+            .map_err(Error::from_reject)
+            .map(util::json)
+    });
 
     // requirements only ask for one week, so this isn't getting parameterized.
-    let last_week_health = warp::get2()
-        .and(path("week"))
-        .and(state.db.clone())
-        .and_then(|conn: PooledConn| {
-            HealthRecord::get_last_7_days(&conn)
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
+    let last_week_health =
+        warp::get2()
+            .and(path("week"))
+            .and(state.db())
+            .and_then(|conn: PooledConn| {
+                HealthRecord::get_last_7_days(&conn)
+                    .map_err(Error::from_reject)
+                    .map(util::json)
+            });
 
     path("health").and(all_health.or(last_week_health)).boxed()
 }

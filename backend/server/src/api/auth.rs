@@ -31,8 +31,8 @@ pub static TEST_CLIENT_ID: &str = "yeet";
 #[cfg(test)]
 pub fn get_jwt(state: &State) -> String {
     use std::borrow::Cow;
-    let secret: Secret = warp::test::request().filter(&state.secret.clone()).unwrap();
-    let conn: PooledConn = warp::test::request().filter(&state.db.clone()).unwrap();
+    let secret: Secret = warp::test::request().filter(&state.secret()).unwrap();
+    let conn: PooledConn = warp::test::request().filter(&state.db()).unwrap();
     let token = egg_mode::Token::Access {
         consumer: KeyPair {
             key: Cow::from(""),
@@ -95,8 +95,8 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             },
         )
         .untuple_one()
-        .and(state.secret.clone())
-        .and(state.db.clone())
+        .and(state.secret())
+        .and(state.db())
         .and_then(
             |token: Token,
              id: u64,
@@ -115,7 +115,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     let refresh = path!("refresh")
         .and(warp::post2())
         .and(jwt_filter(&state))
-        .and(state.secret.clone())
+        .and(state.secret())
         .and_then(|payload: JwtPayload<Subject>, secret: Secret| {
             let subject = payload.subject();
             let payload = JwtPayload::new(subject, chrono::Duration::weeks(5));
