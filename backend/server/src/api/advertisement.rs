@@ -100,6 +100,6 @@ fn determine_and_record_ad_serving(
     if should_send_advertisement {
         Ok(())
     } else {
-        Err(Error::internal_server_error("The server load was determined to be too high, and therefore the \"advertisement\" was not sent."))
+        Err(Error::internal_server_error(format!(r##"The server load was determined to be too high, and therefore the "advertisement" was not sent. load: {}, servers: {}"##, load.0, available_servers.0)))
     }
 }

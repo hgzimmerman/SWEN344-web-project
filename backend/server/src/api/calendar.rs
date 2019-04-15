@@ -15,6 +15,8 @@ use pool::PooledConn;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{Filter, Rejection};
+use chrono::DateTime;
+use chrono::Utc;
 
 /// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -39,6 +41,13 @@ impl NewEventRequest {
             stop_at: self.stop_at,
         }
     }
+}
+
+/// Query parameters for /events
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct TimeBoundaries {
+    start: DateTime<Utc>,
+    stop: DateTime<Utc>,
 }
 
 /// Calendar api.
@@ -94,12 +103,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         )
         .and_then(util::json_or_reject);
 
-    /// Query parameters for /events
-    #[derive(Clone, Debug, Serialize, Deserialize)]
-    struct TimeBoundaries {
-        start: NaiveDateTime,
-        stop: NaiveDateTime,
-    }
+
 
     // Events with time bounds
     let events = warp::get2()
@@ -112,7 +116,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
              user_uuid: Uuid,
              conn: PooledConn|
              -> Result<Vec<Event>, diesel::result::Error> {
-                Event::events_from_n_to_n(user_uuid, tb.start, tb.stop, &conn)
+                Event::events_from_n_to_n(user_uuid, tb.start.naive_utc(), tb.stop.naive_utc(), &conn)
             },
         )
         .and_then(util::json_or_reject);
@@ -264,3 +268,41 @@ fn modify_event(
             .map(util::json)
     }
 }
+
+#[cfg(test)]
+mod unit_test {
+    use super::*;
+    use testing_common::setup::setup_warp;
+    use crate::testing_fixtures::user::UserFixture;
+    use pool::Pool;
+    use authorization::Secret;
+    use crate::api::auth::get_jwt;
+    use authorization::AUTHORIZATION_HEADER_KEY;
+    use authorization::BEARER;
+
+    #[test]
+    fn date_time_query_param_matches() {
+        setup_warp(|fixture: &UserFixture, pool: Pool| {
+            let secret = Secret::new("test");
+            let s = State::testing_init(pool, secret);
+            let filter = calendar_api(&s);
+
+            let jwt = get_jwt(&s);
+
+            let times = TimeBoundaries {
+                start: chrono::Utc::now(),
+                stop: chrono::Utc::now()
+            };
+            dbg!(serde_urlencoded::to_string(times));
+
+            let resp = warp::test::request()
+                .method("GET")
+                .path("/calendar/event/events?start=2019-04-15T15%3A13%3A56.792584378Z&stop=2019-04-15T15%3A13%3A56.792588175Z")
+                .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
+                .reply(&filter);
+
+            assert_eq!(resp.status(), 200);
+        });
+    }
+}
+
