@@ -13,16 +13,16 @@ use pool::{Pool, PoolConfig};
 use std::sync::{Mutex, MutexGuard};
 
 //pub const DATABASE_NAME: &'static str = "web_engineering_test";
-pub const DATABASE_NAME: &'static str = env!("TEST_DATABASE_NAME");
+pub const DATABASE_NAME: &str = env!("TEST_DATABASE_NAME");
 
 /// Points to the database that tests will be performed on.
 /// The database schema will be destroyed and recreated before every test.
 /// It absolutely should _never_ point to a production database,
 /// as tests ran using it will likely create an admin account that has known login credentials.
-pub const DATABASE_URL: &'static str = env!("TEST_DATABASE_URL");
+pub const DATABASE_URL: &str = env!("TEST_DATABASE_URL");
 
 /// Should point to the base postgres account.
-const DROP_DATABASE_URL: &'static str = env!("DROP_DATABASE_URL");
+const DROP_DATABASE_URL: &str = env!("DROP_DATABASE_URL");
 
 // This creates a singleton of the base database connection.
 //
@@ -123,7 +123,7 @@ fn create_database(conn: &PgConnection) -> DatabaseResult<()> {
 fn run_migrations(conn: &PgConnection) {
     use std::path::Path;
     // This directory traversal allows this library to be used by any crate in the `backend` crate.
-    const MIGRATIONS_DIRECTORY: &'static str = "../db/migrations";
+    const MIGRATIONS_DIRECTORY: &str = "../db/migrations";
 
     let migrations_dir: &Path = Path::new(MIGRATIONS_DIRECTORY);
     migrations::run_pending_migrations_in_directory(conn, migrations_dir, &mut ::std::io::sink())

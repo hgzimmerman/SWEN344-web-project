@@ -151,8 +151,7 @@ fn get_twitter_con_token() -> KeyPair {
     const KEY: &str = "Pq2sA4Lfbovd4SLQhSQ6UPEVg";
     const SECRET: &str = "uK6U7Xqj2QThlm6H3y8dKSH3itZgpo9AVhR5or80X9umZc62ln";
 
-    let con_token = egg_mode::KeyPair::new(KEY, SECRET);
-    con_token
+    egg_mode::KeyPair::new(KEY, SECRET)
 }
 
 /// Gets the request token.

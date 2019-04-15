@@ -221,7 +221,7 @@ fn get_current_price(
                         ))
                     })
                 })
-                .apply(|fut| Either::A(fut))
+                .apply(Either::A)
         }
         Err(e) => e.apply(futures::future::err).apply(Either::B),
     }
