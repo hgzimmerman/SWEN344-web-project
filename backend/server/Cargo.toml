@@ -10,11 +10,6 @@ name = "server_bin"
 path = "src/main.rs"
 
 
-[features]
-
-default = []
-production = []
-
 [dependencies]
 warp = {version="0.1.13", features=["tls"]}
 apply = "0.2.2"
