@@ -1,11 +1,10 @@
-extern crate selenium_rs;
 
 use selenium_rs::{
     element::Element,
     webdriver::{Browser, Selector, WebDriver},
 };
 
-fn main() {
+fn test() {
     let mut driver = WebDriver::new(Browser::Chrome);
 
     driver.start_session();
