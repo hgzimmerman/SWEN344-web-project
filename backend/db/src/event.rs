@@ -6,6 +6,7 @@ use crate::{
     },
     user::User,
 };
+use apply::Apply;
 use chrono::{Datelike, NaiveDateTime, Timelike};
 use diesel::{
     pg::Pg, query_dsl::QueryDsl, result::QueryResult, BoolExpressionMethods, ExpressionMethods,
@@ -59,6 +60,19 @@ pub struct NewEvent {
 pub struct EventChangeset {
     /// Unique identifier
     pub uuid: Uuid,
+    /// The title of the event.
+    pub title: String,
+    /// The body of the event.
+    pub text: String,
+    /// When the event starts.
+    pub start_at: NaiveDateTime,
+    /// When the event stops.
+    pub stop_at: NaiveDateTime,
+}
+
+/// A type used for importing and exporting events.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ImportExportEvent {
     /// The title of the event.
     pub title: String,
     /// The body of the event.
@@ -147,8 +161,30 @@ impl Event {
             .into_boxed()
     }
 
+    fn delete_events_for_user(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<usize> {
+        diesel::delete(events::table.filter(events::user_uuid.eq(user_uuid))).execute(conn)
+    }
+
     /// Allows the creation of many events at a time.
-    pub fn import_events(new_events: Vec<NewEvent>, conn: &PgConnection) -> QueryResult<()> {
+    pub fn import_events(
+        import_events: Vec<ImportExportEvent>,
+        user_uuid: Uuid,
+        conn: &PgConnection,
+    ) -> QueryResult<()> {
+        // Requirements call for deduplication to be performed by just deleting the every event for the user.
+        Event::delete_events_for_user(user_uuid, conn)?;
+
+        let new_events: Vec<NewEvent> = import_events
+            .into_iter()
+            .map(|event| NewEvent {
+                user_uuid,
+                title: event.title,
+                text: event.text,
+                start_at: event.start_at,
+                stop_at: event.stop_at,
+            })
+            .collect();
+
         new_events
             .chunks(20_000)
             .map(move |chunk| {
@@ -158,6 +194,24 @@ impl Event {
             })
             .collect::<Result<Vec<_>, _>>()
             .map(|_| ())
+    }
+
+    /// Returns every event that belongs to a given user, without user information.
+    pub fn export_events(
+        user_uuid: Uuid,
+        conn: &PgConnection,
+    ) -> QueryResult<Vec<ImportExportEvent>> {
+        Self::user_events(user_uuid)
+            .load::<Event>(conn)?
+            .into_iter()
+            .map(|e| ImportExportEvent {
+                title: e.title,
+                text: e.text,
+                start_at: e.start_at,
+                stop_at: e.stop_at,
+            })
+            .collect::<Vec<_>>()
+            .apply(Ok)
     }
 
     /// Returns every event that belongs to a given user.

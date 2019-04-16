@@ -8,15 +8,13 @@ use crate::{
     util::{self, json_body_filter},
 };
 use apply::Apply;
-use chrono::NaiveDateTime;
-use db::event::{Event, EventChangeset, MonthIndex, NewEvent, Year};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use db::event::{Event, EventChangeset, ImportExportEvent, MonthIndex, NewEvent, Year};
 use log::info;
 use pool::PooledConn;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::{Filter, Rejection};
-use chrono::DateTime;
-use chrono::Utc;
 
 /// A request for creating a new calendar Event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -66,18 +64,8 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .map(
             |user_uuid: Uuid,
              conn: PooledConn|
-             -> Result<Vec<NewEventRequest>, diesel::result::Error> {
-                Event::events(user_uuid, &conn).map(|events| {
-                    events
-                        .into_iter()
-                        .map(|event| NewEventRequest {
-                            title: event.title,
-                            text: event.text,
-                            start_at: event.start_at,
-                            stop_at: event.stop_at,
-                        })
-                        .collect::<Vec<_>>()
-                })
+             -> Result<Vec<ImportExportEvent>, diesel::result::Error> {
+                Event::export_events(user_uuid, &conn)
             },
         )
         .and_then(util::json_or_reject);
@@ -90,20 +78,14 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(user_filter(state))
         .and(state.db())
         .map(
-            |events: Vec<NewEventRequest>,
+            |events: Vec<ImportExportEvent>,
              user_uuid: Uuid,
              conn: PooledConn|
              -> Result<(), diesel::result::Error> {
-                let events = events
-                    .into_iter()
-                    .map(|e| e.into_new_event(user_uuid))
-                    .collect::<Vec<_>>();
-                Event::import_events(events, &conn)
+                Event::import_events(events, user_uuid, &conn)
             },
         )
         .and_then(util::json_or_reject);
-
-
 
     // Events with time bounds
     let events = warp::get2()
@@ -116,7 +98,12 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
              user_uuid: Uuid,
              conn: PooledConn|
              -> Result<Vec<Event>, diesel::result::Error> {
-                Event::events_from_n_to_n(user_uuid, tb.start.naive_utc(), tb.stop.naive_utc(), &conn)
+                Event::events_from_n_to_n(
+                    user_uuid,
+                    tb.start.naive_utc(),
+                    tb.stop.naive_utc(),
+                    &conn,
+                )
             },
         )
         .and_then(util::json_or_reject);
@@ -272,13 +259,10 @@ fn modify_event(
 #[cfg(test)]
 mod unit_test {
     use super::*;
-    use testing_common::setup::setup_warp;
-    use crate::testing_fixtures::user::UserFixture;
+    use crate::{api::auth::get_jwt, testing_fixtures::user::UserFixture};
+    use authorization::{Secret, AUTHORIZATION_HEADER_KEY, BEARER};
     use pool::Pool;
-    use authorization::Secret;
-    use crate::api::auth::get_jwt;
-    use authorization::AUTHORIZATION_HEADER_KEY;
-    use authorization::BEARER;
+    use testing_common::setup::setup_warp;
 
     #[test]
     fn date_time_query_param_matches() {
@@ -291,7 +275,7 @@ mod unit_test {
 
             let times = TimeBoundaries {
                 start: chrono::Utc::now(),
-                stop: chrono::Utc::now()
+                stop: chrono::Utc::now(),
             };
             dbg!(serde_urlencoded::to_string(times));
 
@@ -305,4 +289,3 @@ mod unit_test {
         });
     }
 }
-

@@ -39,7 +39,7 @@ pub fn start(config: Config) {
         secret: config.secret,
         max_pool_size: config.max_pool_size,
         server_lib_root: config.server_lib_root,
-        is_production: config.is_production
+        is_production: config.is_production,
     };
 
     let state = State::new(state_config);
