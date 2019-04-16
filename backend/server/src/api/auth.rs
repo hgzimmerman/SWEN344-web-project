@@ -71,8 +71,12 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(move |con_token| {
             egg_mode::request_token(&con_token, callback_link).map_err(|e| {
                 use log::error;
-                error!("Getting request token (using con_token + callback link) failed: {}", e);
-                Error::InternalServerError(Some("Getting request token failed".to_string())).reject()
+                error!(
+                    "Getting request token (using con_token + callback link) failed: {}",
+                    e
+                );
+                Error::InternalServerError(Some("Getting request token failed".to_string()))
+                    .reject()
             })
         })
         .map(|key_pair| {

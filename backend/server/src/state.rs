@@ -38,7 +38,7 @@ pub struct State {
     /// This allows file resources to have a common reference point when determining from where to serve assets.
     pub server_lib_root: PathBuf,
     /// Is the server running in a production environment
-    pub is_production: bool
+    pub is_production: bool,
 }
 
 /// Configuration object for creating the state.
@@ -49,7 +49,7 @@ pub struct StateConfig {
     pub secret: Option<Secret>,
     pub max_pool_size: Option<u32>,
     pub server_lib_root: Option<PathBuf>,
-    pub is_production: bool
+    pub is_production: bool,
 }
 
 impl State {
@@ -86,7 +86,7 @@ impl State {
             twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: root,
-            is_production: conf.is_production
+            is_production: conf.is_production,
         }
     }
 

@@ -24,7 +24,7 @@ pub struct Config {
     /// If the binary is launched from somewhere other than .../server, then this parameter needs to be supplied.
     pub server_lib_root: Option<PathBuf>,
     /// Is the server running in production.
-    pub is_production: bool
+    pub is_production: bool,
 }
 
 impl Config {
@@ -102,7 +102,7 @@ impl Config {
             secret,
             max_pool_size,
             server_lib_root,
-            is_production
+            is_production,
         }
     }
 }
