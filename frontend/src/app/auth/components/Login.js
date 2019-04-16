@@ -15,7 +15,7 @@ export default class Login extends React.Component {
    * When the component mounts, it will fetch the login link it needs to use from the api.
    */
   componentDidMount() {
-    fetch('http://localhost:8080/api/auth/link')
+    fetch('/api/auth/link')
         .then(response => {
           return response.json()
         })
