@@ -9,6 +9,7 @@ license = "MIT"
 name = "server_bin"
 path = "src/main.rs"
 
+
 [dependencies]
 warp = {version="0.1.13", features=["tls"]}
 apply = "0.2.2"
@@ -32,4 +33,7 @@ tokio = "0.1.15"
 rand = "0.6.5"
 serde_urlencoded = "0.5.4"
 bf = {path="../bf"}
+egg-mode = {git = "https://github.com/QuietMisdreavus/twitter-rs", rev = "8491554282f5e8a43f9144208198b756ce5ed07a"}
+tokio-core = "0.1.17"
+askama = "0.8.0"
 

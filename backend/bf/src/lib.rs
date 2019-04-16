@@ -6,9 +6,8 @@ extern crate nom;
 
 use nom::*;
 
-use std::str::Chars;
 use nom::types::CompleteByteSlice as Input;
-use std::ops::Deref;
+use std::{ops::Deref, str::Chars};
 
 pub struct BfProgram(Vec<Token>);
 
@@ -20,19 +19,18 @@ impl Deref for BfProgram {
     }
 }
 
-
 /// Runs a brainfuck program.
 /// This does not allow input and output via , and .
 /// Instead, it allows interop with Rust via setting the tape to a pre-defined state beforehand and allowing
 /// examination of it afterwords.
 pub fn run_brainfuck(program: &[Token], tape: &mut [u8]) {
-    consume_tokens(program, tape, &mut 0,  &mut "".chars());
+    consume_tokens(program, tape, &mut 0, &mut "".chars());
 }
 
 /// Parses a brainfuck program.
 pub fn parse_brainfuck(input: &str) -> Option<BfProgram> {
     let input = Input::from(input.as_bytes());
-    let (_,b) = brainfuck_parser(input).ok()?;
+    let (_, b) = brainfuck_parser(input).ok()?;
     Some(BfProgram(b))
 }
 
@@ -44,32 +42,36 @@ pub enum Token {
     ShiftLeft,
     Output,
     InputT,
-    Loop {expr: Vec<Token>},
-    Comment
+    Loop { expr: Vec<Token> },
+    Comment,
 }
 
-
-fn consume_tokens(tokens: &[Token], tape: &mut [u8], tape_pointer: &mut usize, input: &mut Chars) -> String {
+fn consume_tokens(
+    tokens: &[Token],
+    tape: &mut [u8],
+    tape_pointer: &mut usize,
+    input: &mut Chars,
+) -> String {
     let mut output_string: String = String::new();
 
     for token in tokens {
         match *token {
             Token::Plus => {
                 tape[*tape_pointer] = tape[*tape_pointer].wrapping_add(1);
-            },
+            }
             Token::Minus => {
                 tape[*tape_pointer] = tape[*tape_pointer].wrapping_sub(1);
-            },
+            }
             Token::ShiftRight => {
                 *tape_pointer += 1;
-            },
+            }
             Token::ShiftLeft => {
                 *tape_pointer -= 1;
-            },
+            }
             Token::Output => {
                 print!("{}", tape[*tape_pointer] as char);
                 output_string.push(tape[*tape_pointer] as char);
-            },
+            }
             Token::InputT => {
                 match input.next() {
                     Some(c) => {
@@ -79,12 +81,12 @@ fn consume_tokens(tokens: &[Token], tape: &mut [u8], tape_pointer: &mut usize, i
                         } else {
                             panic!("character {} is not ascii", c);
                         }
-                    },
+                    }
                     None => {
-                        panic!("Ran out of input");  // todo, look for some spec on BF to find out what to do here. Should I loop back around the input?
+                        panic!("Ran out of input"); // todo, look for some spec on BF to find out what to do here. Should I loop back around the input?
                     }
                 };
-            },
+            }
             Token::Loop { ref expr } => {
                 while tape[*tape_pointer] > 0 {
                     consume_tokens(&expr, tape, tape_pointer, input);
@@ -96,8 +98,6 @@ fn consume_tokens(tokens: &[Token], tape: &mut [u8], tape_pointer: &mut usize, i
 
     output_string
 }
-
-
 
 named!(plus_parser<Input, Token>,
     do_parse!(
@@ -171,10 +171,6 @@ named!(brainfuck_parser<Input, Vec<Token> >,
     )
 );
 
-
-
-
-
 #[test]
 fn plus_parser_test() {
     let plus = Input(&b"+"[..]);
@@ -197,7 +193,15 @@ fn loop_test() {
     let remainder = Input(&b""[..]);
     let res = loop_parser(looop);
     use Token::*;
-    assert_eq!(res, Ok((remainder, Token::Loop {expr: vec!(Plus, Plus, Minus)})));
+    assert_eq!(
+        res,
+        Ok((
+            remainder,
+            Token::Loop {
+                expr: vec!(Plus, Plus, Minus)
+            }
+        ))
+    );
 }
 
 #[test]
@@ -207,27 +211,50 @@ fn nested_loop_test() {
     let res = loop_parser(looop);
 
     use Token::*;
-    assert_eq!(res, Ok((remainder, Token::Loop {expr: vec!(Plus, Loop {expr: vec!(Plus, Plus)}, Minus)})));
+    assert_eq!(
+        res,
+        Ok((
+            remainder,
+            Token::Loop {
+                expr: vec!(
+                    Plus,
+                    Loop {
+                        expr: vec!(Plus, Plus)
+                    },
+                    Minus
+                )
+            }
+        ))
+    );
 }
 
 #[test]
 fn ignore_whitespace_test() {
-    let bf = Input(&b"+-+>  <  -
+    let bf = Input(
+        &b"+-+>  <  -
 
-    +"[..]);
+    +"[..],
+    );
     let remainder = Input(&b""[..]);
     let res = brainfuck_parser(bf);
 
     use Token::*;
-    assert_eq!(res, Ok((remainder, vec!(Plus, Minus, Plus, ShiftRight, ShiftLeft, Minus, Plus))));
+    assert_eq!(
+        res,
+        Ok((
+            remainder,
+            vec!(Plus, Minus, Plus, ShiftRight, ShiftLeft, Minus, Plus)
+        ))
+    );
 }
-
 
 // tests for end of line for the comment
 #[test]
 fn ignore_comment_eol_test() {
-    let bf = Input(&b"+ //+
-    +"[..]);
+    let bf = Input(
+        &b"+ //+
+    +"[..],
+    );
     let remainder = Input(&b""[..]);
     let res = brainfuck_parser(bf);
 
@@ -244,7 +271,6 @@ fn ignore_comment_eof_test() {
 
     assert_eq!(res, Ok((remainder, vec!(Token::Plus, Token::Comment))));
 }
-
 
 #[test]
 fn hello_world_integration_test() {
@@ -276,7 +302,8 @@ fn hello_world_integration_test() {
 +++.------.--------.    //Cell #3 for 'rl' and 'd'
 >>+.                    //Add 1 to Cell #5 gives us an exclamation point
 >++.                    //And finally a newline from Cell #6
-".to_string();
+"
+    .to_string();
 
     const TAPE_SIZE: usize = 32000;
     let mut tape = [0; TAPE_SIZE];
@@ -287,7 +314,6 @@ fn hello_world_integration_test() {
     let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "".chars());
     assert_eq!(output, "Hello World!\n");
 }
-
 
 #[test]
 fn multiplication_integration_test() {
@@ -331,7 +357,6 @@ fn compare() {
     assert_eq!(tape[0], 0);
     assert_eq!(tape[1], 1);
     assert_eq!(tape[2], 0);
-
 }
 
 #[test]

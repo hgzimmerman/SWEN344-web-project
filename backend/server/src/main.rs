@@ -1,7 +1,11 @@
 //! Binary for Server.
-use server::start;
+use env_logger::Builder as LoggerBuilder;
+use log::LevelFilter;
+use server::{start, Config};
 
 /// Simple shell around starting the server.
 fn main() {
-    start()
+    LoggerBuilder::new().filter_level(LevelFilter::Info).init();
+    let config = Config::parse_command_line_arguments();
+    start(config)
 }

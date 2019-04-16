@@ -1,8 +1,7 @@
 //! Common utilities
-use serde::{Deserialize, Serialize};
-use warp::{filters::BoxedFilter, Filter, Reply};
-use warp::Rejection;
 use crate::error::Error;
+use serde::{Deserialize, Serialize};
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 /// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.
 ///
@@ -19,7 +18,7 @@ where
 }
 
 #[allow(dead_code)]
-/// Util function that makes replying easier
+/// Util function that makes replying easier.
 pub fn json_convert<T, U>(source: T) -> impl Reply
 where
     T: Into<U>,
@@ -41,11 +40,9 @@ where
 pub fn json_or_reject<T, E>(source: Result<T, E>) -> Result<impl Reply, Rejection>
 where
     T: Serialize,
-    E: Into<Error>
+    E: Into<Error>,
 {
-    source
-        .map(json)
-        .map_err(|e| e.into().reject())
+    source.map(json).map_err(|e| e.into().reject())
 }
 
 /// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.

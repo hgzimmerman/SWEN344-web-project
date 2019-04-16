@@ -14,8 +14,8 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod adaptive_health;
 pub mod event;
-pub mod health;
 mod schema;
 pub mod stock;
 pub mod user;

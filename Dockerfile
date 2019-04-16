@@ -1,6 +1,6 @@
-FROM rustlang/rust:nightly
+FROM rust:latest
 
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install diesel_cli --no-default-features --features postgres --force
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt update -y
