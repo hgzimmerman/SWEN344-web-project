@@ -55,22 +55,24 @@ pub fn get_jwt(state: &State) -> String {
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Auth api");
 
+    // If its compiled for production, redirect to the release URL, otherwise, localhost.
+    let callback_link = if cfg!(feature = "production") {
+        // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
+        "https://vm344c.se.rit.edu/api/auth/callback"
+    } else {
+        "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
+    };
+
+    info!("Auth Callback link: {}", callback_link);
+
     let link = path!("link")
         .and(warp::get2())
         .and(state.twitter_con_token.clone())
         .and_then(move |con_token| {
-            // If its compiled for production, redirect to the release URL, otherwise, localhost.
-            let callback_link = if cfg!(feature = "production") {
-                // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
-                "https://vm344c.se.rit.edu/api/auth/callback"
-            } else {
-                "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
-            };
-
             egg_mode::request_token(&con_token, callback_link).map_err(|e| {
                 use log::error;
-                error!("{}", e);
-                Error::InternalServerError(Some("Getting key pair failed".to_string())).reject()
+                error!("Getting request token (using con_token + callback link) failed: {}", e);
+                Error::InternalServerError(Some("Getting request token failed".to_string())).reject()
             })
         })
         .map(|key_pair| {
@@ -89,7 +91,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
                 egg_mode::access_token((&con_token).clone(), &key_pair, q_params.oauth_verifier)
                     .map_err(|_| {
-                        Error::InternalServerError(Some("could not get access token.".to_owned()))
+                        Error::InternalServerError(Some("Could not get access token.".to_owned()))
                             .reject()
                     })
             },
