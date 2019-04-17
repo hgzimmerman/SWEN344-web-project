@@ -16,8 +16,9 @@ use warp::{path, Filter};
 //use crate::error::err_to_rejection;
 use crate::server_auth::{jwt_filter, Subject};
 use askama::Template;
-use egg_mode::{KeyPair, Token};
+use egg_mode::{Token};
 use warp::Rejection;
+use log::debug;
 
 /// Meaningless id for testing purposes
 #[cfg(test)]
@@ -55,47 +56,30 @@ pub fn get_jwt(state: &State) -> String {
 pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Auth api");
 
-    // If its compiled for production, redirect to the release URL, otherwise, localhost.
-    let callback_link = if state.is_production {
-        // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
-        "https://vm344c.se.rit.edu/api/auth/callback"
-    } else {
-        "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
-    };
+    let consumer_token = state.twitter_consumer_token.clone();
+    let consumer_token_copy = consumer_token.clone();
 
-    info!("Auth Callback link: {}", callback_link);
+    let request_token = state.twitter_request_token.clone();
+    let request_token_copy = state.twitter_request_token.clone();
+
 
     let link = path!("link")
         .and(warp::get2())
-        .and(state.twitter_consumer_token.clone())
-        .and_then(move |con_token| {
-            egg_mode::request_token(&con_token, callback_link).map_err(|e| {
-                use log::error;
-                error!(
-                    "Getting request token (using con_token + callback link) failed: {}",
-                    e
-                );
-                Error::InternalServerError(Some("Getting request token failed".to_string()))
-                    .reject()
-            })
-        })
-        .map(|key_pair| {
-            let authentication_url = egg_mode::authenticate_url(&key_pair);
+        .map(move || {
+            let authentication_url = egg_mode::authenticate_url(&(request_token.clone()));
             let link = Link { authentication_url };
             warp::reply::json(&link)
         });
 
     let callback = path!("callback")
         .and(warp::get2())
-        .and(state.twitter_consumer_token.clone())
-        .and(state.twitter_request_token.clone())
         .and(warp::query::query())
         .and_then(
-            |consumer_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
-                info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
-                egg_mode::access_token((&consumer_token).clone(), &key_pair, q_params.oauth_verifier)
-                    .map_err(|_| {
-                        Error::InternalServerError(Some("Could not get access token.".to_owned()))
+            move |q_params: TwitterCallbackQueryParams| {
+                debug!("{:?}", q_params);
+                egg_mode::access_token(consumer_token_copy.clone(), &(request_token_copy.clone()), q_params.oauth_verifier)
+                    .map_err(|e| {
+                        Error::InternalServerError(Some(format!("Could not get access token: {}", e)))
                             .reject()
                     })
             },
