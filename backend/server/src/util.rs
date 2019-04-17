@@ -1,20 +1,21 @@
 //! Common utilities
 use crate::error::Error;
 use serde::{Deserialize, Serialize};
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+use warp::{Filter, Rejection, Reply};
 
+
+const KILOBYTE: u64 = 1024;
 /// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.
 ///
 /// # Arguments
 /// * kb_limit - The maximum number of kilobytes, over which the request will be rejected.
 /// This is done to limit abusively sized requests.
-pub fn json_body_filter<T>(kb_limit: u64) -> BoxedFilter<(T,)>
+pub fn json_body_filter<T>(kb_limit: u64) -> impl Filter<Extract = (T,), Error = Rejection> + Copy
 where
     T: for<'de> Deserialize<'de> + Send + Sync + 'static,
 {
-    warp::body::content_length_limit(1024 * kb_limit)
+    warp::body::content_length_limit(KILOBYTE * kb_limit)
         .and(warp::body::json())
-        .boxed()
 }
 
 #[allow(dead_code)]
