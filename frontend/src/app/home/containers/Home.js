@@ -14,7 +14,7 @@ export default class Home extends React.Component {
 
   componentDidMount(){
     this.getWeather().then(() => this.getStocks());
-    
+
   }
 
   getWeather(){
@@ -51,12 +51,27 @@ export default class Home extends React.Component {
 
   }
 
+  sellStock(stock, quantity, price){
+    let owned = 3;
+    if (quantity === ''){
+      alert("Can't sell zero shares!")
+    }
+    else if (quantity > owned){
+      alert("Can't sell more shares than you own!")
+    }
+    else {
+      alert(`Sold ${quantity}x ${stock} shares!`)
+    }
+
+  }
+
   render(){
     return(
       <HomeView
         isLoading={this.state.isLoading}
         weather={this.state.weather}
         stocks={this.state.stocks}
+        sellStock={this.sellStock}
       />
     );
 

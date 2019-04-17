@@ -6,6 +6,23 @@ import PostForm from '../containers/PostForm.js';
 import '../../../App.css';
 
 export default class HomeView extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      visible: false
+    }
+  }
+
+  openModal(){
+    this.setState({ visible: true });
+
+  }
+
+  closeModal(){
+    this.setState({ visible: false });
+
+  }
+
   render() {
     return (
       <div className="App">
@@ -32,9 +49,12 @@ export default class HomeView extends React.Component {
                 <div>
                   <HomeStocksTable
                     stocks={this.props.stocks}
+                    sellStock={this.props.sellStock}
                   />
                 </div>
               </div>
+
+
             </div>
           : <div style={{marginTop: 50}}>
               <Loader

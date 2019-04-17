@@ -37,7 +37,10 @@ export const fakeAuth = {
 export const AuthButton = withRouter(
   ({ history }) => (
       <MenuItem
-        onClick={() => {fakeAuth.signout(() => history.push("/"))}}
+        onClick={() => {
+          fakeAuth.signout(() => history.push("/"))
+        }
+        }
       >
         Logout
       </MenuItem>
