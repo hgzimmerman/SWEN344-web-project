@@ -20,7 +20,7 @@ It takes about 10 minutes for the whole thing to build between the NPM build pro
 Once running, you can inspect a container by running `docker container list`, finding the container id, and substituting it in the following command: `docker exec -ti <ID> /bin/bash`
 
 To run on localhost:
-`docker-compose -f docker-compose-dev.yml up -d``
+`docker-compose -f docker-compose-dev.yml up -d`
 
 
 ### Bootstraping
