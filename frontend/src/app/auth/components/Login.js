@@ -12,13 +12,16 @@ export default class Login extends React.Component {
   constructor(props){
     super(props);
     this.state = {
+      isAuthenticated: false,
+      user: null,
+      token: '',
       username: null,
       password: null,
       redirectToReferrer: false
     }
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
-
+    this.isLocal = (window.location.host === "localhost" || window.location.host === "127.0.0.1");
   }
 
   componentDidMount() {
@@ -80,7 +83,60 @@ export default class Login extends React.Component {
     });
   }
 
-  render() {
+  onSuccess = (response) => {
+  const token = response.headers.get('x-auth-token');
+  response.json().then(user => {
+    if (token) {
+      this.setState({isAuthenticated: true, user: user, token: token});
+    }
+  });
+};
+
+onFailed = (error) => {
+  alert(error);
+};
+
+render() {
+  let content = !!this.state.isAuthenticated ?
+    (
+      <div>
+        <p>Authenticated</p>
+        <div>
+          {this.state.user.email}
+        </div>
+        <div>
+          <button onClick={this.logout} className="button" >
+            Log out
+          </button>
+        </div>
+      </div>
+    ) :
+    (
+      (window.location.host === "localhost" || window.location.host === "127.0.0.1") ? (
+        <TwitterLogin
+          loginUrl="http://localhost:8000"
+          onFailure={this.onFailed}
+          onSuccess={this.onSuccess}
+          requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
+        />
+        ) : (
+          <TwitterLogin
+          loginUrl="https://vm344c.se.rit.edu"
+          onFailure={this.onFailed}
+          onSuccess={this.onSuccess}
+          requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
+        />
+      )
+    );
+
+  return (
+    <div className="App">
+      {content}
+    </div>
+  );
+}
+
+  /*render() {
     const responseFacebook = (response) => {
       if (response.accessToken !== null && response.accessToken !== undefined){
         fbData = response;
@@ -134,22 +190,37 @@ export default class Login extends React.Component {
               callback={responseFacebook}
             />
             <div style={{marginTop: 20}}>
-              /*<TwitterLogin
-                loginUrl="http://localhost:8000/login"
+
+            { this.isLocal ? (
+              <TwitterLogin
+                loginUrl="http://localhost:8000"
                 onFailure={this.onFailed}
                 onSuccess={this.onSuccess}
                 requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-              />*/
+              />
+              ) : (
+                <TwitterLogin
+                loginUrl="https://vm344c.se.rit.edu"
+                onFailure={this.onFailed}
+                onSuccess={this.onSuccess}
+                requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
+              />
+            )}
+            </div>
+            <div>
+            <br/>
+              The terms of use for this site are that it is a proof of concept
+              for a class activity- use is only permitted for development and
+              grading purposes.
+              No information stored will be used beyond the purposes of this site,
+              grading and development. All information will be kept completely private.
             </div>
           </div>
         </div>
       </div>
     );
-
-  }
-
+  }*/
 }
-
 const styles = {
   container: {
     padding: 15,
