@@ -31,9 +31,9 @@ pub struct State {
     /// Https client
     https: BoxedFilter<(HttpsClient,)>,
     /// Twitter connection token
-    pub twitter_consumer_token: BoxedFilter<(KeyPair,)>,
+    pub twitter_consumer_token: KeyPair,
     /// Twitter key pair for the auth token
-    pub twitter_request_token: BoxedFilter<(KeyPair,)>,
+    pub twitter_request_token: KeyPair,
     /// The path to the server directory.
     /// This allows file resources to have a common reference point when determining from where to serve assets.
     pub server_lib_root: PathBuf,
@@ -74,8 +74,20 @@ impl State {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, _>(https);
 
+
+        // If for production, redirect to the release URL, otherwise, localhost.
+        let callback_link = if conf.is_production {
+            // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
+            "https://vm344c.se.rit.edu/api/auth/callback"
+        } else {
+            "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
+        };
+
+        use log::info;
+        info!("Twitter Authentication Callback link: {}", callback_link);
+
         let twitter_con_token = get_twitter_con_token();
-        let twitter_request_token = get_twitter_request_token(&twitter_con_token);
+        let twitter_request_token = get_twitter_request_token(&twitter_con_token, callback_link);
 
         let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
 
@@ -83,8 +95,8 @@ impl State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
-            twitter_consumer_token: twitter_key_pair_filter(twitter_con_token),
-            twitter_request_token: twitter_key_pair_filter(twitter_request_token),
+            twitter_consumer_token: twitter_con_token,
+            twitter_request_token,
             server_lib_root: root,
             is_production: conf.is_production,
         }
@@ -121,7 +133,7 @@ impl State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
-            twitter_consumer_token: twitter_key_pair_filter(twitter_con_token),
+            twitter_consumer_token: twitter_con_token,
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
             is_production: false
@@ -160,12 +172,7 @@ fn get_twitter_con_token() -> KeyPair {
 }
 
 /// Gets the request token.
-fn get_twitter_request_token(con_token: &KeyPair) -> KeyPair {
-    const CALLBACK_URL: &str = "https://vm344c.se.rit.edu/api/auth/callback";
-    tokio::runtime::current_thread::block_on_all(egg_mode::request_token(con_token, CALLBACK_URL))
+fn get_twitter_request_token(con_token: &KeyPair, callback_url: &str) -> KeyPair {
+    tokio::runtime::current_thread::block_on_all(egg_mode::request_token(con_token, callback_url))
         .expect("Couldn't authenticate to twitter")
-}
-
-pub fn twitter_key_pair_filter(twitter_key_pair: KeyPair) -> BoxedFilter<(KeyPair,)> {
-    warp::any().map(move || twitter_key_pair.clone()).boxed()
 }
