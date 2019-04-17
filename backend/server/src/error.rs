@@ -26,6 +26,10 @@ pub enum Error {
     /// If the server needs to talk to an external API to properly serve a request,
     /// and that server experiences an error, this is the error to represent that.
     DependentConnectionFailed { url: String },
+    /// If the server needs to talk to an external API to properly serve a request,
+    /// and that server experiences an error, this is the error to represent that.
+    /// This provides an explanation instead of just the name of the failed call.
+    DependentConnectionFailedReason(String),
     /// The server encountered an unspecified error.
     InternalServerError(Option<String>),
     /// The requested entity could not be located.
@@ -37,9 +41,7 @@ pub enum Error {
     /// The user does not have access to a particular resource.
     /// Authorization - user may be authenticated, but still should not access the resource.
     /// This is synonymous with HTTP - Forbidden code.
-    NotAuthorized {
-        reason: String,
-    },
+    NotAuthorized { reason: String },
 }
 
 impl Display for Error {
@@ -57,7 +59,8 @@ impl Display for Error {
                     "Internal server error encountered".to_string()
                 }
             },
-            Error::DependentConnectionFailed{url} => format!("An internal request needed to serve the request failed. URL: {}",url),
+            Error::DependentConnectionFailed{url} => format!("An external request needed to serve the request failed. URL: {}", url),
+            Error::DependentConnectionFailedReason(reason) => format!("An internal request needed to serve the request failed. With reason: '{}'", reason),
             Error::NotFound { type_name } => {
                 format!("The resource ({}) you requested could not be found", type_name)
             }
@@ -113,8 +116,8 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
                 &not_found
             } else {
                 match err.status() {
-                    StatusCode::INTERNAL_SERVER_ERROR =>  &internal_err,
-                    _ => return Err(err)
+                    StatusCode::INTERNAL_SERVER_ERROR => &internal_err,
+                    _ => return Err(err),
                 }
             }
         }
@@ -144,6 +147,7 @@ impl Error {
             Error::NotFound { .. } => StatusCode::NOT_FOUND,
             Error::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
+            Error::DependentConnectionFailedReason(_) => StatusCode::BAD_GATEWAY,
             Error::AuthError(ref auth_error) => {
                 match *auth_error {
                     AuthError::IllegalToken => StatusCode::UNAUTHORIZED,
@@ -239,10 +243,10 @@ impl From<diesel::result::Error> for Error {
                 DatabaseError(e)
             }
             DieselError::NotFound => NotFound {
-                type_name: "not implemented".to_string(),
+                type_name: "Not implemented".to_string(),
             },
             e => {
-                error!("{}", e);
+                error!("Unhandled database error: '{}'", e);
                 InternalServerError(None)
             }
         }
@@ -250,7 +254,7 @@ impl From<diesel::result::Error> for Error {
 }
 
 /// Convenience function that allows terse error handling in and_then combinators.
-pub fn err_to_rejection<T>(result: Result<T, Error>) -> Result<T,Rejection> {
+pub fn err_to_rejection<T>(result: Result<T, Error>) -> Result<T, Rejection> {
     result.map_err(Error::reject)
 }
 

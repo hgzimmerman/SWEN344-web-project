@@ -1,25 +1,25 @@
 //! Common utilities
-use serde::{Deserialize, Serialize};
-use warp::{filters::BoxedFilter, Filter, Reply};
-use warp::Rejection;
 use crate::error::Error;
+use serde::{Deserialize, Serialize};
+use warp::{Filter, Rejection, Reply};
 
+
+const KILOBYTE: u64 = 1024;
 /// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.
 ///
 /// # Arguments
 /// * kb_limit - The maximum number of kilobytes, over which the request will be rejected.
 /// This is done to limit abusively sized requests.
-pub fn json_body_filter<T>(kb_limit: u64) -> BoxedFilter<(T,)>
+pub fn json_body_filter<T>(kb_limit: u64) -> impl Filter<Extract = (T,), Error = Rejection> + Copy
 where
     T: for<'de> Deserialize<'de> + Send + Sync + 'static,
 {
-    warp::body::content_length_limit(1024 * kb_limit)
+    warp::body::content_length_limit(KILOBYTE * kb_limit)
         .and(warp::body::json())
-        .boxed()
 }
 
 #[allow(dead_code)]
-/// Util function that makes replying easier
+/// Util function that makes replying easier.
 pub fn json_convert<T, U>(source: T) -> impl Reply
 where
     T: Into<U>,
@@ -41,11 +41,9 @@ where
 pub fn json_or_reject<T, E>(source: Result<T, E>) -> Result<impl Reply, Rejection>
 where
     T: Serialize,
-    E: Into<Error>
+    E: Into<Error>,
 {
-    source
-        .map(json)
-        .map_err(|e| e.into().reject())
+    source.map(json).map_err(|e| e.into().reject())
 }
 
 /// Converts a vector of T to a vector of U then converts the U vector to a JSON reply.

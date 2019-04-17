@@ -21,27 +21,25 @@ mod static_files;
 mod testing_fixtures;
 mod util;
 
+pub use config::Config;
+
 use crate::{
     api::routes,
-    config::Config,
     state::{State, StateConfig},
 };
-use env_logger::Builder as LoggerBuilder;
-use log::{info, LevelFilter};
+use log::info;
 
-/// parses the command line arguments and starts the server.
-pub fn start() {
-    LoggerBuilder::new().filter_level(LevelFilter::Info).init();
-
-    let config = Config::parse_command_line_arguments();
+/// Starts the server.
+pub fn start(config: Config) {
     info!("{:#?}", config);
-
     let localhost = [0, 0, 0, 0];
     let addr = (localhost, config.port);
 
     let state_config = StateConfig {
         secret: config.secret,
         max_pool_size: config.max_pool_size,
+        server_lib_root: config.server_lib_root,
+        is_production: config.is_production,
     };
 
     let state = State::new(state_config);
@@ -49,7 +47,7 @@ pub fn start() {
 
     if config.tls_enabled {
         warp::serve(routes)
-            .tls("tls/cert.pem", "tls/key.rsa") // TODO, actually get these keys.
+            .tls("tls/cert.pem", "tls/key.rsa")
             .run(addr);
     } else {
         warp::serve(routes).run(addr);

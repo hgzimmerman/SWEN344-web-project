@@ -18,7 +18,7 @@ services:
     # diesel infer_schema macro gives warnings with this flag.
     # environment:
     #   - CARGO_INCREMENTAL=1
-    command: bash -c "bash ./build.sh"
+    command: bash -c "bash ./build_dev.sh"
 
   db:
     image: "postgres:11"

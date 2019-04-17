@@ -47,7 +47,7 @@ pub struct User {
     /// The user's unique identifier within facebook.
     pub twitter_user_id: String,
     /// Zip code that the user resides within
-    pub zip_code: Option<String>
+    pub zip_code: Option<String>,
 }
 
 /// Struct used to create new users.
@@ -78,10 +78,7 @@ impl User {
 
     /// Sets the zip code for the user.
     pub fn set_zip_code(user_uuid: Uuid, zip: String, conn: &PgConnection) -> QueryResult<User> {
-        diesel::update(
-            users::table
-                .find(user_uuid)
-        )
+        diesel::update(users::table.find(user_uuid))
             .set(users::zip_code.eq(zip))
             .get_result(conn)
     }

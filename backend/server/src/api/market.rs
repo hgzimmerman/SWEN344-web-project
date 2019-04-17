@@ -13,22 +13,19 @@ use pool::PooledConn;
 use uuid::Uuid;
 use warp::Rejection;
 
-use crate::state::HttpsClient;
+use crate::{state::HttpsClient, util::json_or_reject};
+use apply::Apply;
 use chrono::Utc;
-use db::stock::{NewStockTransaction, UserStockResponse};
+use db::stock::{NewStockTransaction, StockTransaction, UserStockResponse};
+use diesel::result::Error as DieselError;
 use futures::{
-    future::{self, Future},
+    future::{self, Either, Future},
     stream::Stream,
 };
 use hyper::{Chunk, Uri};
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use futures::future::Either;
-use apply::Apply;
-use db::stock::StockTransaction;
-use crate::util::json_or_reject;
-use diesel::result::Error as DieselError;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockTransactionRequest {
@@ -37,7 +34,6 @@ pub struct StockTransactionRequest {
     /// The sign bit indicates if it is a sale or a purchase;
     pub quantity: i32,
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StockAndPerfResponse {
@@ -56,7 +52,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
-        .and(s.https.clone())
+        .and(s.https_client())
         .and(json_body_filter(10))
         .and_then(|client: HttpsClient, request: StockTransactionRequest| {
             // Get the current price from a remote source
@@ -66,11 +62,11 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
         })
         .untuple_one()
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .map(transact) // Store the purchase/sale in the db
         .and_then(json_or_reject);
 
-    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db.clone()).and_then(
+    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db()).and_then(
         |user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
@@ -81,7 +77,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let user_transactions_for_stock = warp::get2()
         .and(path!("transactions" / String)) // The string is a symbol
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .and_then(|symbol: String, user_uuid: Uuid, conn: PooledConn| {
             let stock = Stock::get_stock_by_symbol(symbol, &conn).map_err(Error::from_reject)?;
             Stock::get_user_transactions_for_stock(user_uuid, stock.uuid, &conn)
@@ -95,13 +91,13 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
     let portfolio_performance = warp::get2()
         .and(path!("performance"))
         .and(user_filter(s))
-        .and(s.db.clone())
+        .and(s.db())
         .and_then(
             |user_uuid: Uuid, conn: PooledConn| -> Result<Vec<UserStockResponse>, Rejection> {
                 Stock::get_stocks_belonging_to_user(user_uuid, &conn).map_err(Error::from_reject)
             },
         )
-        .and(s.https.clone())
+        .and(s.https_client())
         .and_then(|stocks: Vec<UserStockResponse>, client: HttpsClient| {
             let symbols: Vec<&str> = stocks.iter().map(|s| s.stock.symbol.as_str()).collect();
             get_current_prices(&symbols, &client)
@@ -121,7 +117,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                         });
                         StockAndPerfResponse {
                             stock,
-                            performance: net
+                            performance: net,
                         }
                     })
                     .collect::<Vec<StockAndPerfResponse>>() // TODO make an actual type for this.
@@ -158,7 +154,6 @@ fn transact(
     conn: PooledConn,
 ) -> Result<StockTransaction, Error> {
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
-
 
     let stock = stock.or_else(|e| match e {
         DieselError::NotFound => {
@@ -204,8 +199,8 @@ fn get_current_price(
         "https://api.iextrading.com/1.0/stock/{}/price",
         stock_symbol
     )
-        .parse::<Uri>()
-        .map_err(|e| Error::bad_request(format!("{:?}", e)));
+    .parse::<Uri>()
+    .map_err(|e| Error::bad_request(format!("{:?}", e)));
 
     match uri {
         Ok(uri) => {
@@ -222,14 +217,13 @@ fn get_current_price(
                     body.parse::<f64>().map_err(move |_| -> Error {
                         crate::error::Error::internal_server_error(format!(
                             "Could not parse body of dependent connection: {}, body: {}",
-                            uri_string,
-                            body
+                            uri_string, body
                         ))
                     })
                 })
-                .apply(|fut| Either::A(fut))
+                .apply(Either::A)
         }
-        Err(e) => e.apply(futures::future::err).apply(Either::B)
+        Err(e) => e.apply(futures::future::err).apply(Either::B),
     }
 }
 

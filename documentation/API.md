@@ -48,18 +48,23 @@ The `/:` syntax indicates that the segment in the route is an arbitrary string t
 
 The 'Requires Auth' column indicates if the request needs the JWT attached to the request.
 
+Deprecated indicates that it should not be used, or if documentation falls behind, the route no longer exists.
+
 #### Implemented
 
 
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            | Deprecated |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |------------|
 | `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 | |
-| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | Deprecated |
+| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | removed |
 | `/api/auth/callback/`               | GET    | HTML               |                     |(Twitter token)| Logs the user in when the user is redirected from twitter auth | |
-| `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth |  |
+| `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth   |  |
+| `/api/auth/refresh/`                | GET    | String             |                     | yes           | Refreshes the JWT                     |  |
+| `/api/twitter_proxy/tweet/`         | POST   | TweetResponse      | TweetRequest        | yes           | Creates a new tweet                   |  |
+| `/api/twitter_proxy/feed/`          | GET    | \[TweetResponse\]  |                     | yes           | Gets the last 50 tweets in your feed  |  |
 | `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
-| `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code               | |
-| `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code                         | |
+| `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code              | |
+| `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code              | |
 | `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              | |
 | `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user | |
 | `/api/calendar/event/events?start=:datetime,stop=:datetime`  | GET| \[Event\]|          | yes           | Gets events for user within the time bounds| |
