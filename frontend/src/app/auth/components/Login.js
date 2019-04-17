@@ -1,10 +1,5 @@
 import React from 'react';
-import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import FacebookLogin from 'react-facebook-login';
-import TwitterLogin from 'react-twitter-auth';
-import { fakeAuth } from '../../../config/auth.js'
-import { Redirect } from 'react-router-dom';
 import '../../../App.css';
 export var fbData = '';
 
@@ -12,214 +7,46 @@ export default class Login extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      isAuthenticated: false,
-      user: null,
-      token: '',
-      username: null,
-      password: null,
-      redirectToReferrer: false
-    }
-    this.onChangeUsername = this.onChangeUsername.bind(this);
-    this.onChangePassword = this.onChangePassword.bind(this);
-    this.isLocal = (window.location.host === "localhost" || window.location.host === "127.0.0.1");
+      link: null
+    };
   }
 
+  /**
+   * When the component mounts, it will fetch the login link it needs to use from the api.
+   */
   componentDidMount() {
-    var oauth_nonce = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for(var i = 0; i < 32; i++) {
-      oauth_nonce += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-
-    var status = "Log In";
-    var include_entities = "true";
-    var oauth_signature_method = "HMAC-SHA1";
-    var oauth_timestamp = (new Date).getTime();
-    var oauth_token = "1103913649654001669-h84acKV147pk2QP2WK44uJ2eGsmVet";
-    var oauth_version = "1.0";
-    var oauth_consumer_key = "Pq2sA4Lfbovd4SLQhSQ6UPEVg";
-
-    var parameter_string = "include_entities=" + encodeURIComponent(include_entities)
-      + "&oauth_consumer_key=" + encodeURIComponent(oauth_consumer_key) + "&oauth_nonce="
-      + encodeURIComponent(oauth_nonce) + "&oauth_timestamp=" + encodeURIComponent(oauth_timestamp)
-      + "&oauth_token=" + encodeURIComponent(oauth_token) + "&oauth_version="
-      + encodeURIComponent(oauth_version) + "&status=" + encodeURIComponent(status);
-
+    fetch('/api/auth/link')
+        .then(response => {
+          return response.json()
+        })
+        .then( data => {
+          this.setState({link: data.authentication_url})
+        })
   }
 
-  onChangeUsername(e){
-    this.setState({
-      username: e.target.value,
-    });
-
+  /**
+   * Goes to the login link.
+   */
+  goToLink() {
+    window.location.href = this.state.link;
   }
 
-  onChangePassword(e){
-    this.setState({
-      password: e.target.value,
-    });
-
-  }
-
-  authenticate(){
-    if (this.state.username === 'test' && this.state.password === 'test'){
-      fakeAuth.authenticate(() => {
-        this.setState({ redirectToReferrer: true });
-      });
-    }
-    else {
-      alert('Could not authenticate')
-    }
-
-  }
-
-  onFailed(){
-    alert('Could not authenticate')
-  }
-
-  onSuccess(){
-    fakeAuth.authenticate(() => {
-      this.setState({ redirectToReferrer: true });
-    });
-  }
-
-  onSuccess = (response) => {
-  const token = response.headers.get('x-auth-token');
-  response.json().then(user => {
-    if (token) {
-      this.setState({isAuthenticated: true, user: user, token: token});
-    }
-  });
-};
-
-onFailed = (error) => {
-  alert(error);
-};
-
-render() {
-  let content = !!this.state.isAuthenticated ?
-    (
-      <div>
-        <p>Authenticated</p>
-        <div>
-          {this.state.user.email}
-        </div>
-        <div>
-          <button onClick={this.logout} className="button" >
-            Log out
-          </button>
-        </div>
-      </div>
-    ) :
-    (
-      (window.location.host === "localhost" || window.location.host === "127.0.0.1") ? (
-        <TwitterLogin
-          loginUrl="http://localhost:8000"
-          onFailure={this.onFailed}
-          onSuccess={this.onSuccess}
-          requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-        />
-        ) : (
-          <TwitterLogin
-          loginUrl="https://vm344c.se.rit.edu"
-          onFailure={this.onFailed}
-          onSuccess={this.onSuccess}
-          requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-        />
-      )
-    );
-
-  return (
-    <div className="App">
-      {content}
-    </div>
-  );
-}
-
-  /*render() {
-    const responseFacebook = (response) => {
-      if (response.accessToken !== null && response.accessToken !== undefined){
-        fbData = response;
-        fakeAuth.authenticate(() => {
-          this.setState({ redirectToReferrer: true });
-        });
-      }
-      else {
-        alert('Could not authenticate')
-      }
-
-    }
-    let { from } = this.props.location.state || { from: { pathname: "/" } };
-    let { redirectToReferrer } = this.state;
-
-    if (redirectToReferrer) return <Redirect to={from} />;
-
+  render() {
     return (
       <div className="App">
         <div style={styles.container}>
-          <TextField
-            id="outlined-with-placeholder"
-            label="Username"
-            placeholder="Username"
-            margin="normal"
-            variant="outlined"
-            onChange={this.onChangeUsername}
-            style={{width: '50%'}}
-          />
-          <TextField
-            id="outlined-with-placeholder"
-            label="Password"
-            placeholder="Password"
-            type="password"
-            margin="normal"
-            variant="outlined"
-            onChange={this.onChangePassword}
-            style={{width: '50%'}}
-          />
-          <div style={styles.container}>
-            <Button
-              onClick={() => this.authenticate()}
+          <Button
+              onClick={() => this.goToLink()}
+              value="Login"
               variant="contained"
               style={styles.button}
-            >
-              Login
-            </Button>
-            <FacebookLogin
-              appId="250744242473852"
-              fields="name,email,picture"
-              callback={responseFacebook}
-            />
-            <div style={{marginTop: 20}}>
-
-            { this.isLocal ? (
-              <TwitterLogin
-                loginUrl="http://localhost:8000"
-                onFailure={this.onFailed}
-                onSuccess={this.onSuccess}
-                requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-              />
-              ) : (
-                <TwitterLogin
-                loginUrl="https://vm344c.se.rit.edu"
-                onFailure={this.onFailed}
-                onSuccess={this.onSuccess}
-                requestTokenUrl="http://localhost:8000/api/v1/auth/twitter/reverse"
-              />
-            )}
-            </div>
-            <div>
-            <br/>
-              The terms of use for this site are that it is a proof of concept
-              for a class activity- use is only permitted for development and
-              grading purposes.
-              No information stored will be used beyond the purposes of this site,
-              grading and development. All information will be kept completely private.
-            </div>
-          </div>
+          >
+            Login using Twitter
+          </Button>
         </div>
       </div>
     );
-  }*/
+  }
 }
 const styles = {
   container: {
@@ -236,4 +63,4 @@ const styles = {
     height: 50,
     width: 200
   }
-}
+};

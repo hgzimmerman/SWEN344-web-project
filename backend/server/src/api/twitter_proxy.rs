@@ -57,7 +57,7 @@ pub struct TwitterUser {
 
 /// Proxy for twitter related things.
 pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    info!("Attaching twitter proxy");
+    info!("attaching twitter proxy");
 
     let post_tweet = path!("tweet")
         .and(post2())

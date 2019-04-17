@@ -67,7 +67,11 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let link = path!("link")
         .and(warp::get2())
+<<<<<<< HEAD
         .and(state.twitter_consumer_token.clone())
+=======
+        .and(state.twitter_con_token.clone())
+>>>>>>> bc5ca5e0b45ed42eebd038f7a1accc62f12fa4c4
         .and_then(move |con_token| {
             egg_mode::request_token(&con_token, callback_link).map_err(|e| {
                 use log::error;
@@ -87,13 +91,13 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let callback = path!("callback")
         .and(warp::get2())
-        .and(state.twitter_consumer_token.clone())
+        .and(state.twitter_con_token.clone())
         .and(state.twitter_request_token.clone())
         .and(warp::query::query())
         .and_then(
-            |consumer_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
+            |con_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
                 info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
-                egg_mode::access_token((&consumer_token).clone(), &key_pair, q_params.oauth_verifier)
+                egg_mode::access_token((&con_token).clone(), &key_pair, q_params.oauth_verifier)
                     .map_err(|_| {
                         Error::InternalServerError(Some("Could not get access token.".to_owned()))
                             .reject()

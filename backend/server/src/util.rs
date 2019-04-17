@@ -1,8 +1,7 @@
 //! Common utilities
 use crate::error::Error;
 use serde::{Deserialize, Serialize};
-use warp::{Filter, Rejection, Reply};
-
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 const KILOBYTE: u64 = 1024;
 /// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.

@@ -31,7 +31,7 @@ pub struct State {
     /// Https client
     https: BoxedFilter<(HttpsClient,)>,
     /// Twitter connection token
-    pub twitter_consumer_token: BoxedFilter<(KeyPair,)>,
+    pub twitter_con_token: BoxedFilter<(KeyPair,)>,
     /// Twitter key pair for the auth token
     pub twitter_request_token: BoxedFilter<(KeyPair,)>,
     /// The path to the server directory.
@@ -83,7 +83,7 @@ impl State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
-            twitter_consumer_token: twitter_key_pair_filter(twitter_con_token),
+            twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: root,
             is_production: conf.is_production,
@@ -121,10 +121,9 @@ impl State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
-            twitter_consumer_token: twitter_key_pair_filter(twitter_con_token),
+            twitter_con_token: twitter_key_pair_filter(twitter_con_token),
             twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
-            is_production: false
         }
     }
 }
