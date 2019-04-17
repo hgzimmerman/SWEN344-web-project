@@ -16,7 +16,7 @@ use warp::{filters::BoxedFilter, path, Filter, Reply};
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
 pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    info!("Attaching Auth api");
+    info!("Attaching User api");
 
     let get_zip_code = path!("zip")
         .and(warp::get2())
