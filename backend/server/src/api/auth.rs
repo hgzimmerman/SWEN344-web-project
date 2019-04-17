@@ -18,7 +18,7 @@ use crate::server_auth::{jwt_filter, Subject};
 use askama::Template;
 use egg_mode::{Token};
 use warp::Rejection;
-use log::debug;
+use egg_mode::KeyPair;
 
 /// Meaningless id for testing purposes
 #[cfg(test)]
@@ -57,15 +57,26 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
     info!("Attaching Auth api");
 
     let consumer_token = state.twitter_consumer_token.clone();
-    let consumer_token_copy = consumer_token.clone();
+    let consumer_token_2 = consumer_token.clone();
 
-    let request_token = state.twitter_request_token.clone();
-    let request_token_copy = state.twitter_request_token.clone();
+    let callback_link = if state.is_production {
+        // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
+        "https://vm344c.se.rit.edu/api/auth/callback"
+    } else {
+        "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
+    };
+    info!("Twitter Authentication Callback link: {}", callback_link);
 
 
     let link = path!("link")
         .and(warp::get2())
-        .map(move || {
+        .and_then(move || {
+            // You need a new request token for each link generated
+            egg_mode::request_token(&consumer_token, callback_link)
+                .map_err(|e| Error::DependentConnectionFailedReason(e.to_string()).reject())
+        })
+        .map(move |request_token: KeyPair| {
+            info!("request token for link: {:?}", request_token);
             let authentication_url = egg_mode::authenticate_url(&(request_token.clone()));
             let link = Link { authentication_url };
             warp::reply::json(&link)
@@ -75,9 +86,15 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(warp::get2())
         .and(warp::query::query())
         .and_then(
-            move |q_params: TwitterCallbackQueryParams| {
-                debug!("{:?}", q_params);
-                egg_mode::access_token(consumer_token_copy.clone(), &(request_token_copy.clone()), q_params.oauth_verifier)
+             move |q_params: TwitterCallbackQueryParams| {
+                 info!("{:?}", q_params);
+                 // A key pair has to be constructed from the query parameters,
+                 // but apparently the secret isn't needed.
+                 let what_request_token = KeyPair {
+                     key: q_params.oauth_token.into(),
+                     secret: "".into()
+                 };
+                 egg_mode::access_token(consumer_token_2.clone(), &what_request_token, q_params.oauth_verifier)
                     .map_err(|e| {
                         Error::InternalServerError(Some(format!("Could not get access token: {}", e)))
                             .reject()
