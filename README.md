@@ -19,6 +19,10 @@ It takes about 10 minutes for the whole thing to build between the NPM build pro
 
 Once running, you can inspect a container by running `docker container list`, finding the container id, and substituting it in the following command: `docker exec -ti <ID> /bin/bash`
 
+To run on localhost:
+`docker-compose -f docker-compose-dev.yml up -d``
+
+
 ### Bootstraping
 
 To get SSL to work in the first place, you need to be able to expose some files via `nginx` to verify the authenticity of the server, but because the `nginx` container won't start without the SSL creds, you get stuck in a chicken and egg problem.
