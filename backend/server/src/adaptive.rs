@@ -119,9 +119,7 @@ pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error>
         .map_err(move |e| {
             use log::error;
             error!("{}", e);
-            Error::DependentConnectionFailed {
-                url: uri.to_string(),
-            }
+            Error::dependent_connection_failed_url(uri.to_string())
         })
         .and_then(|chunk: Chunk| {
             let v = chunk.to_vec();

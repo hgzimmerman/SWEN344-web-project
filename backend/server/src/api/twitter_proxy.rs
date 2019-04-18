@@ -66,8 +66,8 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(|request: TweetRequest, twitter_token: Token| {
             DraftTweet::new(request.text)
                 .send(&twitter_token)
-                .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Tweet failed to send".to_owned())
+                .map_err(|e| {
+                    Error::dependent_connection_failed_reason(format!("Tweet failed to send: '{}'", e))
                         .reject()
                 })
         })
@@ -82,8 +82,8 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             egg_mode::tweet::home_timeline(&twitter_token)
                 .with_page_size(50)
                 .start()
-                .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Could not get twitter feed".to_owned())
+                .map_err(|e| {
+                    Error::dependent_connection_failed_reason(format!("Could not get twitter feed: '{}'", e))
                         .reject()
                 })
         })

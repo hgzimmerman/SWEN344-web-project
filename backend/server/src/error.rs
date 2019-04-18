@@ -25,11 +25,7 @@ pub enum Error {
     DatabaseError(String),
     /// If the server needs to talk to an external API to properly serve a request,
     /// and that server experiences an error, this is the error to represent that.
-    DependentConnectionFailed { url: String },
-    /// If the server needs to talk to an external API to properly serve a request,
-    /// and that server experiences an error, this is the error to represent that.
-    /// This provides an explanation instead of just the name of the failed call.
-    DependentConnectionFailedReason(String),
+    DependentConnectionFailed(DependentConnectionError),
     /// The server encountered an unspecified error.
     InternalServerError(Option<String>),
     /// The requested entity could not be located.
@@ -42,6 +38,13 @@ pub enum Error {
     /// Authorization - user may be authenticated, but still should not access the resource.
     /// This is synonymous with HTTP - Forbidden code.
     NotAuthorized { reason: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub enum DependentConnectionError {
+    Url(String),
+    Reason(String),
+    UrlAndReason(String, String)
 }
 
 impl Display for Error {
@@ -59,8 +62,19 @@ impl Display for Error {
                     "Internal server error encountered".to_string()
                 }
             },
-            Error::DependentConnectionFailed{url} => format!("An external request needed to serve the request failed. URL: {}", url),
-            Error::DependentConnectionFailedReason(reason) => format!("An internal request needed to serve the request failed. With reason: '{}'", reason),
+            Error::DependentConnectionFailed(error) => {
+                match error {
+                   DependentConnectionError::Reason(reason) => {
+                       format!("An internal request needed to serve the request failed. With reason: '{}'", reason)
+                   },
+                    DependentConnectionError::Url(uri) => {
+                        format!("An internal request needed to serve the request failed. Dependent url: '{}'", uri)
+                    },
+                    DependentConnectionError::UrlAndReason(uri, reason) => {
+                        format!("An internal request needed to serve the request failed. Dependent url: {}. With reason: '{}'", uri, reason)
+                    }
+                }
+            },
             Error::NotFound { type_name } => {
                 format!("The resource ({}) you requested could not be found", type_name)
             }
@@ -131,6 +145,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let error_response = ErrorResponse {
         message: s,
         canonical_reason: code.canonical_reason().unwrap_or_default(),
+        error_code: code.as_u16()
     };
     let json = warp::reply::json(&error_response);
 
@@ -146,8 +161,7 @@ impl Error {
             Error::BadRequest(_) => StatusCode::BAD_REQUEST,
             Error::NotFound { .. } => StatusCode::NOT_FOUND,
             Error::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::DependentConnectionFailed { .. } => StatusCode::BAD_GATEWAY,
-            Error::DependentConnectionFailedReason(_) => StatusCode::BAD_GATEWAY,
+            Error::DependentConnectionFailed(_) => StatusCode::BAD_GATEWAY,
             Error::AuthError(ref auth_error) => {
                 match *auth_error {
                     AuthError::IllegalToken => StatusCode::UNAUTHORIZED,
@@ -194,6 +208,24 @@ impl Error {
         Error::InternalServerError(None)
     }
 
+    pub fn dependent_connection_failed_reason<T: Into<String>>(reason: T) -> Self {
+        Error::DependentConnectionFailed(
+            DependentConnectionError::Reason(reason.into())
+        )
+    }
+    pub fn dependent_connection_failed_url<T: Into<String>>(url: T) -> Self {
+        Error::DependentConnectionFailed(
+            DependentConnectionError::Url(url.into())
+        )
+    }
+
+    #[allow(dead_code)]
+    pub fn dependent_connection_failed<T: Into<String>, U: Into<String>>(url: T, reason: U) -> Self {
+        Error::DependentConnectionFailed(
+            DependentConnectionError::UrlAndReason(url.into(), reason.into())
+        )
+    }
+
     /// Construct a not found error with the name of the type that could not be found.
     #[allow(dead_code)]
     pub fn not_found<T: Into<String>>(type_name: T) -> Self {
@@ -210,12 +242,6 @@ impl Error {
         }
     }
 
-    /// Construct a connection failed error.
-    pub fn connection_failed<T: ToString>(url: T) -> Self {
-        Error::DependentConnectionFailed {
-            url: url.to_string(),
-        }
-    }
 }
 
 impl From<diesel::result::Error> for Error {
@@ -263,4 +289,5 @@ pub fn err_to_rejection<T>(result: Result<T, Error>) -> Result<T, Rejection> {
 struct ErrorResponse {
     message: String,
     canonical_reason: &'static str,
+    error_code: u16,
 }

@@ -73,7 +73,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(move || {
             // You need a new request token for each link generated
             egg_mode::request_token(&consumer_token, callback_link)
-                .map_err(|e| Error::DependentConnectionFailedReason(e.to_string()).reject())
+                .map_err(|e| Error::dependent_connection_failed_reason(e.to_string()).reject())
         })
         .map(move |request_token: KeyPair| {
             info!("request token for link: {:?}", request_token);
