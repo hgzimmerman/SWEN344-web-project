@@ -56,7 +56,7 @@ Deprecated indicates that it should not be used, or if documentation falls behin
 | Route                               | Method | Body Return Type   | Body Accept Type    | Requires Auth |Description                            | Deprecated |
 | -------------------------------     | ------ | ----------------   | ------------------  | ------------- |-------------------------------------- |------------|
 | `/:filepath`                        | GET    | file resource      |                     | no            | Gets the requested file, and failing that - returns index.html instead of a 404 | |
-| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | removed |
+| `/api/auth/login/`                  | POST   | String             | Login               | no            | Logs in to the application, returning JWT string | Removed |
 | `/api/auth/callback/`               | GET    | HTML               |                     |(Twitter token)| Logs the user in when the user is redirected from twitter auth | |
 | `/api/auth/link/`                   | GET    | String             |                     | no            | Gets the link used for twitter auth   |  |
 | `/api/auth/refresh/`                | GET    | String             |                     | yes           | Refreshes the JWT                     |  |
@@ -68,9 +68,9 @@ Deprecated indicates that it should not be used, or if documentation falls behin
 | `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              | |
 | `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user | |
 | `/api/calendar/event/events?start=:datetime,stop=:datetime`  | GET| \[Event\]|          | yes           | Gets events for user within the time bounds| |
-| `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            | Deprecated |
-| `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this month for user       | Deprecated |
-| `/api/calendar/event/events/:year/:month`|GET| \[Event\]          |                     | yes           | Gets events at this specified year/month | Deprecated |
+| `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            | Removed |
+| `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this month for user       | Removed |
+| `/api/calendar/event/events/:year/:month`|GET| \[Event\]          |                     | yes           | Gets events at this specified year/month | Removed |
 | `/api/calendar/event/:uuid`         | DELETE | Event              |                     | yes           | Deletes event                         | |
 | `/api/calendar/event/`              | POST   | Event              | NewEventRequest     | yes           | Creates event                         | |
 | `/api/calendar/event/`              | PUT    | Event              | EventChangeset      | yes           | Modifies event                        | |

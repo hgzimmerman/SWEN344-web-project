@@ -30,11 +30,8 @@ pub struct State {
     secret: BoxedFilter<(Secret,)>,
     /// Https client
     https: BoxedFilter<(HttpsClient,)>,
-    /// Twitter connection token
+    /// Twitter consumer token
     pub twitter_consumer_token: KeyPair,
-    /// Twitter key pair for the auth token
-//    pub twitter_request_token: KeyPair,
-//    pub request_token: BoxedFilter<(KeyPair,)>,
     /// The path to the server directory.
     /// This allows file resources to have a common reference point when determining from where to serve assets.
     pub server_lib_root: PathBuf,
@@ -77,7 +74,6 @@ impl State {
 
 
         let twitter_con_token = get_twitter_con_token();
-//        let twitter_request_token = get_twitter_request_token(&twitter_con_token, callback_link);
 
         let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
 
@@ -101,6 +97,7 @@ impl State {
         self.secret.clone()
     }
 
+    /// Gets the https client used for making dependent api calls.
     pub fn https_client(&self) -> BoxedFilter<(HttpsClient,)> {
         self.https.clone()
     }
@@ -116,14 +113,12 @@ impl State {
             .build::<_, Body>(https);
 
         let twitter_con_token = get_twitter_con_token();
-        let twitter_request_token = get_twitter_request_token(&twitter_con_token,"http://localhost:8080/api/auth/callback" );// This makes the assumption that the port is 8080
 
         State {
             db: db_filter(pool),
             secret: secret_filter(secret),
             https: http_filter(client),
             twitter_consumer_token: twitter_con_token,
-            twitter_request_token: twitter_key_pair_filter(twitter_request_token),
             server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
             is_production: false
         }

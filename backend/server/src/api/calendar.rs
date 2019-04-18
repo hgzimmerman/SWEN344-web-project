@@ -9,7 +9,7 @@ use crate::{
 };
 use apply::Apply;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use db::event::{Event, EventChangeset, ImportExportEvent, MonthIndex, NewEvent, Year};
+use db::event::{Event, EventChangeset, ImportExportEvent, NewEvent};
 use log::info;
 use pool::PooledConn;
 use serde::{Deserialize, Serialize};
@@ -43,9 +43,9 @@ impl NewEventRequest {
 
 /// Query parameters for /events
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct TimeBoundaries {
-    start: DateTime<Utc>,
-    stop: DateTime<Utc>,
+pub struct TimeBoundaries {
+    pub start: DateTime<Utc>,
+    pub stop: DateTime<Utc>,
 }
 
 /// Calendar api.
@@ -108,54 +108,6 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         )
         .and_then(util::json_or_reject);
 
-    // TODO deprecate
-    let get_events_custom_month_and_year = warp::get2()
-        .and(path!("events" / i32 / u32)) // "events", year, month
-        .and(path::end())
-        .and(user_filter(state))
-        .and(state.db())
-        .map(
-            |year: i32,
-             month_index: u32,
-             user_uuid: Uuid,
-             conn: PooledConn|
-             -> Result<Vec<Event>, Error> {
-                let month_index = MonthIndex::from_1_indexed_u32(month_index).ok_or_else(|| {
-                    Error::bad_request("Month index is out of bounds (needs 1-12)")
-                })?;
-                let year = Year::from_i32(year)
-                    .ok_or_else(|| Error::bad_request("Year is not within reasonable bounds"))?;
-                Event::events_for_any_month(month_index, year, user_uuid, &conn)
-                    .map_err(Error::from)
-            },
-        )
-        .and_then(util::json_or_reject);
-
-    // TODO deprecate
-    // Events Today
-    let events_today = warp::get2()
-        .and(path!("events" / "today"))
-        .and(user_filter(state))
-        .and(state.db())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| {
-            Event::events_today(user_uuid, &conn)
-                .map_err(Error::from_reject)
-                .map(util::json)
-        });
-
-    // TODO deprecate
-    // This month
-    let events_month = warp::get2()
-        .and(path!("events" / "month"))
-        .and(user_filter(state))
-        .and(state.db())
-        .map(
-            |user_uuid: Uuid, conn: PooledConn| -> Result<Vec<Event>, diesel::result::Error> {
-                Event::events_month(user_uuid, &conn)
-            },
-        )
-        .and_then(util::json_or_reject);
-
     let create_event = warp::post2()
         .and(json_body_filter(50))
         .and(user_filter(state))
@@ -188,9 +140,6 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             .or(import_events)
             .or(events)
             .or(create_event)
-            .or(events_today)
-            .or(events_month)
-            .or(get_events_custom_month_and_year)
             .or(delete_event)
             .or(modify_event),
     );
@@ -266,7 +215,7 @@ mod unit_test {
 
     #[test]
     fn date_time_query_param_matches() {
-        setup_warp(|fixture: &UserFixture, pool: Pool| {
+        setup_warp(|_fixture: &UserFixture, pool: Pool| {
             let secret = Secret::new("test");
             let s = State::testing_init(pool, secret);
             let filter = calendar_api(&s);
@@ -277,7 +226,7 @@ mod unit_test {
                 start: chrono::Utc::now(),
                 stop: chrono::Utc::now(),
             };
-            dbg!(serde_urlencoded::to_string(times));
+            dbg!(serde_urlencoded::to_string(times).unwrap());
 
             let resp = warp::test::request()
                 .method("GET")
