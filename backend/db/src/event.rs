@@ -171,7 +171,7 @@ impl Event {
         user_uuid: Uuid,
         conn: &PgConnection,
     ) -> QueryResult<()> {
-        // Requirements call for deduplication to be performed by just deleting the every event for the user.
+        // Requirements call for "deduplication" to be performed by just deleting the every event for the user.
         Event::delete_events_for_user(user_uuid, conn)?;
 
         let new_events: Vec<NewEvent> = import_events
@@ -185,8 +185,11 @@ impl Event {
             })
             .collect();
 
+        // An approximate limit for the number of items diesel can insert at once.
+        const DIESEL_ELEMENT_LIMIT: usize = 20_000;
+
         new_events
-            .chunks(20_000)
+            .chunks(DIESEL_ELEMENT_LIMIT)
             .map(move |chunk| {
                 diesel::insert_into(events::table)
                     .values(chunk)
