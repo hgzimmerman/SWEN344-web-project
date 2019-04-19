@@ -1,6 +1,5 @@
 use crate::state::State;
-use warp::{filters::BoxedFilter, Reply};
-//use warp::path::path;
+use warp::{Reply};
 use crate::{error::Error, server_auth::twitter_token_filter, util::json_body_filter};
 use apply::Apply;
 use egg_mode::{
@@ -11,6 +10,7 @@ use futures::future::Future;
 use log::info;
 use serde::{Deserialize, Serialize};
 use warp::{get2, path, post2, Filter};
+use warp::Rejection;
 
 /// Request used to create a tweet
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -56,7 +56,7 @@ pub struct TwitterUser {
 }
 
 /// Proxy for twitter related things.
-pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn twitter_proxy_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching twitter proxy");
 
     let post_tweet = path!("tweet")
@@ -67,7 +67,7 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             DraftTweet::new(request.text)
                 .send(&twitter_token)
                 .map_err(|e| {
-                    Error::dependent_connection_failed_reason(format!("Tweet failed to send: '{}'", e))
+                    Error::dependent_connection_failed_context(format!("Tweet failed to send: '{}'", e))
                         .reject()
                 })
         })
@@ -83,7 +83,7 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .with_page_size(50)
                 .start()
                 .map_err(|e| {
-                    Error::dependent_connection_failed_reason(format!("Could not get twitter feed: '{}'", e))
+                    Error::dependent_connection_failed_context(format!("Could not get twitter feed: '{}'", e))
                         .reject()
                 })
         })
@@ -99,5 +99,5 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             },
         );
 
-    path!("twitter_proxy").and(post_tweet.or(get_feed)).boxed()
+    path!("twitter_proxy").and(post_tweet.or(get_feed))
 }

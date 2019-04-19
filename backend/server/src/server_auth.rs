@@ -85,8 +85,11 @@ where
 ///
 /// # Arguments
 /// * secret - The secret to be made available by the returned Filter.
-pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
-    warp::any().map(move || secret.clone()).boxed()
+pub fn secret_filter(secret: Secret) -> impl Filter<Extract = (Secret,), Error = Rejection> + Clone {
+    warp::any()
+        .and_then(move || -> Result<Secret, Rejection> {
+            Ok(secret.clone())
+        })
 }
 
 /// If the user has a JWT, then the user has basic user privileges.

@@ -1,6 +1,6 @@
 //! Responsible for hosting routes that deal with stock market data.
 use crate::state::State;
-use warp::{filters::BoxedFilter, path, Filter, Reply};
+use warp::{path, Filter, Reply};
 
 use crate::{
     error::Error,
@@ -48,7 +48,7 @@ pub struct StockAndPerfResponse {
 /// # Arguments
 /// s - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
@@ -132,7 +132,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
             .or(portfolio_performance),
     );
 
-    path!("market").and(stock_api).boxed()
+    path!("market").and(stock_api)
 }
 
 /// Get the stock or create it if needed.

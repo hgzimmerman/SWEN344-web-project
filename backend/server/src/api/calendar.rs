@@ -1,6 +1,6 @@
 //! Responsible for hosting everything related to calendar data.
 use crate::state::State;
-use warp::{filters::BoxedFilter, path, Reply};
+use warp::{path, Reply};
 
 use crate::{
     error::Error,
@@ -53,7 +53,7 @@ pub struct TimeBoundaries {
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn calendar_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Calendar Api");
     // Get all events in the NewEventRequest format.
     let export_events = warp::get2()
@@ -144,7 +144,7 @@ pub fn calendar_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             .or(modify_event),
     );
 
-    path!("calendar").and(events).boxed()
+    path!("calendar").and(events)
 }
 
 /// Deletes the event after checking that it belongs to the user.

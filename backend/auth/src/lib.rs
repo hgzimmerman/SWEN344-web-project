@@ -17,6 +17,8 @@ use frank_jwt::{decode, encode, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use warp::{filters::BoxedFilter, Filter};
+use std::fmt;
+use std::fmt::Display;
 
 /// Enumeration of all errors that can occur while authenticating.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
@@ -37,6 +39,27 @@ pub enum AuthError {
     JwtDecodeError,
     /// Could not encode the JWT.
     JwtEncodeError,
+}
+
+impl Display for AuthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let description = match self {
+            AuthError::DeserializeError => "Something could not be deserialized".to_string(),
+            AuthError::SerializeError => "Something could not be serialized".to_string(),
+            AuthError::JwtDecodeError => "JWT could not be decoded".to_string(),
+            AuthError::JwtEncodeError => "JWT could not be encoded".to_string(),
+            AuthError::IllegalToken => "The provided token is invalid".to_string(),
+            AuthError::ExpiredToken => {
+                "The provided token has expired, please reauthenticate to acquire a new one".to_string()
+            }
+            AuthError::MalformedToken => "The token was not formatted correctly".to_string(),
+            AuthError::MissingToken => {
+                "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
+            }
+        };
+
+        write!(f, "{}", description)
+    }
 }
 
 /// The payload section of the JWT

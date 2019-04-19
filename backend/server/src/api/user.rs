@@ -8,14 +8,15 @@ use diesel::result::QueryResult;
 use log::info;
 use pool::PooledConn;
 use uuid::Uuid;
-use warp::{filters::BoxedFilter, path, Filter, Reply};
+use warp::{path, Filter, Reply};
+use warp::Rejection;
 
 /// The user api.
 ///
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn user_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching User api");
 
     let get_zip_code = path!("zip")
@@ -48,6 +49,9 @@ pub fn user_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(util::json_or_reject);
 
     path!("user")
-        .and(get_user.or(set_zip_code).or(get_zip_code))
-        .boxed()
+        .and(
+            get_user
+                .or(set_zip_code)
+                .or(get_zip_code)
+        )
 }

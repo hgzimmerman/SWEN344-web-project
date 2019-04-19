@@ -1,7 +1,7 @@
 //! Responsible for granting JWT tokens on login.
 use crate::state::State;
 use serde::{Deserialize, Serialize};
-use warp::{filters::BoxedFilter, Reply};
+use warp::{Reply};
 
 use crate::error::Error;
 use apply::Apply;
@@ -53,7 +53,7 @@ pub fn get_jwt(state: &State) -> String {
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Auth api");
 
     let consumer_token = state.twitter_consumer_token.clone();
@@ -73,7 +73,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(move || {
             // You need a new request token for each link generated
             egg_mode::request_token(&consumer_token, callback_link)
-                .map_err(|e| Error::dependent_connection_failed_reason(e.to_string()).reject())
+                .map_err(|e| Error::dependent_connection_failed_context(e.to_string()).reject())
         })
         .map(move |request_token: KeyPair| {
             info!("request token for link: {:?}", request_token);
@@ -154,7 +154,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let api_root = path!("auth");
 
-    api_root.and(subroutes).boxed()
+    api_root.and(subroutes)
 }
 
 /// The JSON returned by the /api/auth/link route.

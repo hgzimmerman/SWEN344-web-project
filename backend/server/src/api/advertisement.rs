@@ -10,14 +10,15 @@ use db::adaptive_health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
 use log::info;
 use pool::PooledConn;
-use warp::{filters::BoxedFilter, path, Filter, Reply};
+use warp::{path, Filter, Reply};
+use warp::Rejection;
 
 /// Api for serving the advertisement.
 ///
 /// # Arguments
 /// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn ad_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Ad Api");
 
     let root = state.server_lib_root.clone();
@@ -38,7 +39,6 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and_then(err_to_rejection)
         .untuple_one() // converts `()` to ``
         .and(warp::fs::file(ad_path)) // ad_path is immutable after startup, so restrictions related to `and_then` can be worked around by just using `and`
-        .boxed()
 }
 
 /// Api for accessing health information related to serving the advertisement.
@@ -46,7 +46,7 @@ pub fn ad_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// # Arguments
 /// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn health_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Health Api");
     let all_health = warp::get2().and(state.db()).and_then(|conn: PooledConn| {
         HealthRecord::get_all(&conn)
@@ -65,7 +65,7 @@ pub fn health_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                     .map(util::json)
             });
 
-    path("health").and(all_health.or(last_week_health)).boxed()
+    path("health").and(all_health.or(last_week_health))
 }
 
 /// Determines if the add should be served and records the result.

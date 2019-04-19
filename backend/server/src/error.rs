@@ -43,8 +43,8 @@ pub enum Error {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum DependentConnectionError {
     Url(String),
-    Reason(String),
-    UrlAndReason(String, String)
+    Context(String),
+    UrlAndContext(String, String)
 }
 
 impl Display for Error {
@@ -64,13 +64,13 @@ impl Display for Error {
             },
             Error::DependentConnectionFailed(error) => {
                 match error {
-                   DependentConnectionError::Reason(reason) => {
-                       format!("An internal request needed to serve the request failed. With reason: '{}'", reason)
-                   },
+                    DependentConnectionError::Context(reason) => {
+                        format!("An internal request needed to serve the request failed. With reason: '{}'", reason)
+                    },
                     DependentConnectionError::Url(uri) => {
                         format!("An internal request needed to serve the request failed. Dependent url: '{}'", uri)
                     },
-                    DependentConnectionError::UrlAndReason(uri, reason) => {
+                    DependentConnectionError::UrlAndContext(uri, reason) => {
                         format!("An internal request needed to serve the request failed. Dependent url: {}. With reason: '{}'", uri, reason)
                     }
                 }
@@ -78,20 +78,7 @@ impl Display for Error {
             Error::NotFound { type_name } => {
                 format!("The resource ({}) you requested could not be found", type_name)
             }
-            Error::AuthError(auth_error) => match auth_error {
-                AuthError::DeserializeError => "Something could not be deserialized".to_string(),
-                AuthError::SerializeError => "Something could not be serialized".to_string(),
-                AuthError::JwtDecodeError => "JWT could not be decoded".to_string(),
-                AuthError::JwtEncodeError => "JWT could not be encoded".to_string(),
-                AuthError::IllegalToken => "The provided token is invalid".to_string(),
-                AuthError::ExpiredToken => {
-                    "The provided token has expired, please reauthenticate to acquire a new one".to_string()
-                }
-                AuthError::MalformedToken => "The token was not formatted correctly".to_string(),
-                AuthError::MissingToken => {
-                    "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
-                }
-            }
+            Error::AuthError(auth_error) =>  format!("{}", auth_error),
             Error::NotAuthorized { reason } => {
                 format!("You are forbidden from accessing this resource. ({})", reason)
             }
@@ -185,19 +172,24 @@ impl Error {
     }
 
     /// Reject an error.
+    #[inline]
     pub fn reject(self) -> Rejection {
         warp::reject::custom(self)
     }
 
     /// Transform a compatible error and reject it.
+    #[inline]
     pub fn from_reject<T: Into<Error>>(error: T) -> Rejection {
         error.into().apply(Self::reject)
     }
 
+    /// Construct a bad request error.
+    #[inline]
     pub fn bad_request<T: Into<String>>(message: T) -> Self {
         Error::BadRequest(message.into())
     }
     /// Construct an internal error with a custom message.
+    #[inline]
     pub fn internal_server_error<T: Into<String>>(reason: T) -> Self {
         Error::InternalServerError(Some(reason.into()))
     }
@@ -208,34 +200,42 @@ impl Error {
         Error::InternalServerError(None)
     }
 
-    pub fn dependent_connection_failed_reason<T: Into<String>>(reason: T) -> Self {
+    /// Construct a gateway error that includes the context about why the connection failed.
+    #[inline]
+    pub fn dependent_connection_failed_context<T: Into<String>>(context: T) -> Self {
         Error::DependentConnectionFailed(
-            DependentConnectionError::Reason(reason.into())
+            DependentConnectionError::Context(context.into())
         )
     }
+
+    /// Construct a gateway error that includes the url.
+    #[inline]
     pub fn dependent_connection_failed_url<T: Into<String>>(url: T) -> Self {
         Error::DependentConnectionFailed(
             DependentConnectionError::Url(url.into())
         )
     }
 
-    #[allow(dead_code)]
+    /// Construct a gateway error that includes the url and a contextual note about the request.
+    #[inline]
     pub fn dependent_connection_failed<T: Into<String>, U: Into<String>>(url: T, reason: U) -> Self {
         Error::DependentConnectionFailed(
-            DependentConnectionError::UrlAndReason(url.into(), reason.into())
+            DependentConnectionError::UrlAndContext(url.into(), reason.into())
         )
     }
 
     /// Construct a not found error with the name of the type that could not be found.
     #[allow(dead_code)]
+    #[inline]
     pub fn not_found<T: Into<String>>(type_name: T) -> Self {
         Error::NotFound {
             type_name: type_name.into(),
         }
     }
 
-    /// Construct a not found error with the name of the type that could not be found.
+    /// Construct a not authorized error with a reason.
     #[allow(dead_code)]
+    #[inline]
     pub fn not_authorized<T: ToString>(reason: T) -> Self {
         Error::NotAuthorized {
             reason: reason.to_string(),
