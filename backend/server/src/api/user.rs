@@ -8,8 +8,7 @@ use diesel::result::QueryResult;
 use log::info;
 use pool::PooledConn;
 use uuid::Uuid;
-use warp::{path, Filter, Reply};
-use warp::Rejection;
+use warp::{path, Filter, Rejection, Reply};
 
 /// The user api.
 ///
@@ -48,10 +47,5 @@ pub fn user_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
         })
         .and_then(util::json_or_reject);
 
-    path!("user")
-        .and(
-            get_user
-                .or(set_zip_code)
-                .or(get_zip_code)
-        )
+    path!("user").and(get_user.or(set_zip_code).or(get_zip_code))
 }

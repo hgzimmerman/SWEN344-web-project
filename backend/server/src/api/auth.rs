@@ -1,7 +1,7 @@
 //! Responsible for granting JWT tokens on login.
 use crate::state::State;
 use serde::{Deserialize, Serialize};
-use warp::{Reply};
+use warp::Reply;
 
 use crate::error::Error;
 use apply::Apply;
@@ -16,9 +16,8 @@ use warp::{path, Filter};
 //use crate::error::err_to_rejection;
 use crate::server_auth::{jwt_filter, Subject};
 use askama::Template;
-use egg_mode::{Token};
+use egg_mode::{KeyPair, Token};
 use warp::Rejection;
-use egg_mode::KeyPair;
 
 /// Meaningless id for testing purposes
 #[cfg(test)]
@@ -67,7 +66,6 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
     };
     info!("Twitter Authentication Callback link: {}", callback_link);
 
-
     let link = path!("link")
         .and(warp::get2())
         .and_then(move || {
@@ -85,22 +83,24 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
     let callback = path!("callback")
         .and(warp::get2())
         .and(warp::query::query())
-        .and_then(
-             move |q_params: TwitterCallbackQueryParams| {
-                 info!("{:?}", q_params);
-                 // A key pair has to be constructed from the query parameters,
-                 // but apparently the secret isn't needed.
-                 let what_request_token = KeyPair {
-                     key: q_params.oauth_token.into(),
-                     secret: "".into()
-                 };
-                 egg_mode::access_token(consumer_token_2.clone(), &what_request_token, q_params.oauth_verifier)
-                    .map_err(|e| {
-                        Error::InternalServerError(Some(format!("Could not get access token: {}", e)))
-                            .reject()
-                    })
-            },
-        )
+        .and_then(move |q_params: TwitterCallbackQueryParams| {
+            info!("{:?}", q_params);
+            // A key pair has to be constructed from the query parameters,
+            // but apparently the secret isn't needed.
+            let what_request_token = KeyPair {
+                key: q_params.oauth_token.into(),
+                secret: "".into(),
+            };
+            egg_mode::access_token(
+                consumer_token_2.clone(),
+                &what_request_token,
+                q_params.oauth_verifier,
+            )
+            .map_err(|e| {
+                Error::InternalServerError(Some(format!("Could not get access token: {}", e)))
+                    .reject()
+            })
+        })
         .untuple_one()
         .and(state.secret())
         .and(state.db())

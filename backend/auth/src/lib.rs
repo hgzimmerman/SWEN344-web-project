@@ -16,9 +16,8 @@ use chrono::{Duration, NaiveDateTime};
 use frank_jwt::{decode, encode, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::fmt::{self, Display};
 use warp::{filters::BoxedFilter, Filter};
-use std::fmt;
-use std::fmt::Display;
 
 /// Enumeration of all errors that can occur while authenticating.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
@@ -50,11 +49,13 @@ impl Display for AuthError {
             AuthError::JwtEncodeError => "JWT could not be encoded".to_string(),
             AuthError::IllegalToken => "The provided token is invalid".to_string(),
             AuthError::ExpiredToken => {
-                "The provided token has expired, please reauthenticate to acquire a new one".to_string()
+                "The provided token has expired, please reauthenticate to acquire a new one"
+                    .to_string()
             }
             AuthError::MalformedToken => "The token was not formatted correctly".to_string(),
             AuthError::MissingToken => {
-                "The Api route was expecting a JWT token and none was provided. Try logging in.".to_string()
+                "The Api route was expecting a JWT token and none was provided. Try logging in."
+                    .to_string()
             }
         };
 

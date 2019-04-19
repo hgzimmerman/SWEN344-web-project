@@ -6,7 +6,7 @@ mod market;
 mod twitter_proxy;
 mod user;
 
-use warp::{Reply};
+use warp::Reply;
 
 use warp::{path, Filter};
 
@@ -29,7 +29,7 @@ pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
-pub fn api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone  {
+pub fn api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     path(API_STRING)
         .and(
             market_api(state)
@@ -165,7 +165,6 @@ mod integration_test {
                 let start = chrono::Utc::now();
                 let stop = start + chrono::Duration::hours(4);
 
-
                 let tb = TimeBoundaries { start, stop };
 
                 let resp = warp::test::request()
@@ -195,7 +194,6 @@ mod integration_test {
                 assert_eq!(&events[0].text, "");
             });
         }
-
 
         #[test]
         fn modify_event() {

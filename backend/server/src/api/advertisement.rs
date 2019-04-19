@@ -10,8 +10,7 @@ use db::adaptive_health::{HealthRecord, NewHealthRecord};
 use futures::future::Future;
 use log::info;
 use pool::PooledConn;
-use warp::{path, Filter, Reply};
-use warp::Rejection;
+use warp::{path, Filter, Rejection, Reply};
 
 /// Api for serving the advertisement.
 ///
@@ -46,7 +45,9 @@ pub fn ad_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
 /// # Arguments
 /// * state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn health_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+pub fn health_api(
+    state: &State,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Health Api");
     let all_health = warp::get2().and(state.db()).and_then(|conn: PooledConn| {
         HealthRecord::get_all(&conn)

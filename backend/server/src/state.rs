@@ -72,7 +72,6 @@ impl State {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, _>(https);
 
-
         let twitter_con_token = get_twitter_con_token();
 
         let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
@@ -120,20 +119,19 @@ impl State {
             https: client,
             twitter_consumer_token: twitter_con_token,
             server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
-            is_production: false
+            is_production: false,
         }
     }
 }
 
 /// Function that creates the HttpClient filter.
-fn http_filter(client: HttpsClient) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
+fn http_filter(
+    client: HttpsClient,
+) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
     // This needs to be able to return a Result w/a Rejection, because there is no way to specify the type of
     // warp::never::Never because it is private, precluding the possibility of using map instead of and_then().
     // This adds space overhead, but not nearly as much as using a boxed filter.
-    warp::any()
-        .and_then(move || -> Result<HttpsClient, Rejection> {
-            Ok(client.clone())
-        })
+    warp::any().and_then(move || -> Result<HttpsClient, Rejection> { Ok(client.clone()) })
 }
 
 /// Filter that exposes connections to the database to individual filter requests
@@ -144,8 +142,7 @@ pub fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rej
             .map_err(|_| Error::DatabaseUnavailable.reject())
     }
 
-    warp::any()
-        .and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
+    warp::any().and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
 }
 
 /// Gets the connection key pair for the serer.

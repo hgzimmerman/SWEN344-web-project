@@ -44,7 +44,7 @@ pub enum Error {
 pub enum DependentConnectionError {
     Url(String),
     Context(String),
-    UrlAndContext(String, String)
+    UrlAndContext(String, String),
 }
 
 impl Display for Error {
@@ -132,7 +132,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     let error_response = ErrorResponse {
         message: s,
         canonical_reason: code.canonical_reason().unwrap_or_default(),
-        error_code: code.as_u16()
+        error_code: code.as_u16(),
     };
     let json = warp::reply::json(&error_response);
 
@@ -203,25 +203,25 @@ impl Error {
     /// Construct a gateway error that includes the context about why the connection failed.
     #[inline]
     pub fn dependent_connection_failed_context<T: Into<String>>(context: T) -> Self {
-        Error::DependentConnectionFailed(
-            DependentConnectionError::Context(context.into())
-        )
+        Error::DependentConnectionFailed(DependentConnectionError::Context(context.into()))
     }
 
     /// Construct a gateway error that includes the url.
     #[inline]
     pub fn dependent_connection_failed_url<T: Into<String>>(url: T) -> Self {
-        Error::DependentConnectionFailed(
-            DependentConnectionError::Url(url.into())
-        )
+        Error::DependentConnectionFailed(DependentConnectionError::Url(url.into()))
     }
 
     /// Construct a gateway error that includes the url and a contextual note about the request.
     #[inline]
-    pub fn dependent_connection_failed<T: Into<String>, U: Into<String>>(url: T, reason: U) -> Self {
-        Error::DependentConnectionFailed(
-            DependentConnectionError::UrlAndContext(url.into(), reason.into())
-        )
+    pub fn dependent_connection_failed<T: Into<String>, U: Into<String>>(
+        url: T,
+        reason: U,
+    ) -> Self {
+        Error::DependentConnectionFailed(DependentConnectionError::UrlAndContext(
+            url.into(),
+            reason.into(),
+        ))
     }
 
     /// Construct a not found error with the name of the type that could not be found.
@@ -241,7 +241,6 @@ impl Error {
             reason: reason.to_string(),
         }
     }
-
 }
 
 impl From<diesel::result::Error> for Error {

@@ -7,7 +7,7 @@ use crate::{
     user::User,
 };
 use apply::Apply;
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use diesel::{
     pg::Pg, query_dsl::QueryDsl, result::QueryResult, BoolExpressionMethods, ExpressionMethods,
     Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
