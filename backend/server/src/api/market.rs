@@ -120,7 +120,7 @@ pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
                             performance: net,
                         }
                     })
-                    .collect::<Vec<StockAndPerfResponse>>() // TODO make an actual type for this.
+                    .collect::<Vec<StockAndPerfResponse>>()
             },
         )
         .map(util::json);

@@ -133,24 +133,7 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
                 .map(|a| warp::reply::json(&a))
         });
 
-    // TODO remove me, this is for testing only
-    let test_redirect = path!("test_redirect.html")
-        .map(|| {
-            #[derive(Template)]
-            #[template(path = "login.html")]
-            struct LoginTemplate<'a> {
-                jwt: &'a str,
-                target_url: &'a str,
-            }
-            let login = LoginTemplate {
-                jwt: "yeet",
-                target_url: "/",
-            };
-            login.render().unwrap_or_else(|e| e.to_string())
-        })
-        .with(warp::reply::with::header("content-type", "text/html"));
-
-    let subroutes = link.or(callback).or(test_redirect).or(refresh);
+    let subroutes = link.or(callback).or(refresh);
 
     let api_root = path!("auth");
 

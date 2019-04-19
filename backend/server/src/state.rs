@@ -137,7 +137,7 @@ fn http_filter(client: HttpsClient) -> impl Filter<Extract = (HttpsClient,), Err
 }
 
 /// Filter that exposes connections to the database to individual filter requests
-pub fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone { //BoxedFilter<(PooledConn,)> {
+pub fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
     fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
         pool.clone()
             .get() // Will get the connection from the pool, or wait a specified time until one becomes available.
