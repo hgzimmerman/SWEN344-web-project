@@ -85,8 +85,10 @@ where
 ///
 /// # Arguments
 /// * secret - The secret to be made available by the returned Filter.
-pub fn secret_filter(secret: Secret) -> BoxedFilter<(Secret,)> {
-    warp::any().map(move || secret.clone()).boxed()
+pub fn secret_filter(
+    secret: Secret,
+) -> impl Filter<Extract = (Secret,), Error = Rejection> + Clone {
+    warp::any().and_then(move || -> Result<Secret, Rejection> { Ok(secret.clone()) })
 }
 
 /// If the user has a JWT, then the user has basic user privileges.
@@ -137,7 +139,7 @@ mod unit_test {
             secret: Some(secret.clone()),
             max_pool_size: None,
             server_lib_root: None,
-            is_production: false
+            is_production: false,
         };
         let state = State::new(conf);
         let uuid = Uuid::new_v4();
@@ -158,7 +160,7 @@ mod unit_test {
             secret: Some(secret.clone()),
             max_pool_size: None,
             server_lib_root: None,
-            is_production: false
+            is_production: false,
         };
 
         let state = State::new(conf);

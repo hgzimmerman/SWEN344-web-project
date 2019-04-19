@@ -12,7 +12,7 @@ use hyper_tls::HttpsConnector;
 use pool::{init_pool, Pool, PoolConfig, PooledConn, DATABASE_URL};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::path::PathBuf;
-use warp::{filters::BoxedFilter, Filter, Rejection};
+use warp::{Filter, Rejection};
 
 /// Simplified type for representing a HttpClient.
 pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
@@ -25,11 +25,11 @@ pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 /// into the scope of the relevant api.
 pub struct State {
     /// A pool of database connections.
-    db: BoxedFilter<(PooledConn,)>,
+    db: Pool,
     /// The secret key.
-    secret: BoxedFilter<(Secret,)>,
+    secret: Secret,
     /// Https client
-    https: BoxedFilter<(HttpsClient,)>,
+    https: HttpsClient,
     /// Twitter consumer token
     pub twitter_consumer_token: KeyPair,
     /// The path to the server directory.
@@ -72,15 +72,14 @@ impl State {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, _>(https);
 
-
         let twitter_con_token = get_twitter_con_token();
 
         let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
 
         State {
-            db: db_filter(pool),
-            secret: secret_filter(secret),
-            https: http_filter(client),
+            db: pool, //db_filter(pool),
+            secret,
+            https: client,
             twitter_consumer_token: twitter_con_token.clone(),
             server_lib_root: root,
             is_production: conf.is_production,
@@ -88,18 +87,18 @@ impl State {
     }
 
     /// Gets a pooled connection to the database.
-    pub fn db(&self) -> BoxedFilter<(PooledConn,)> {
-        self.db.clone()
+    pub fn db(&self) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
+        db_filter(self.db.clone())
     }
 
     /// Gets the secret used for authoring JWTs
-    pub fn secret(&self) -> BoxedFilter<(Secret,)> {
-        self.secret.clone()
+    pub fn secret(&self) -> impl Filter<Extract = (Secret,), Error = Rejection> + Clone {
+        secret_filter(self.secret.clone())
     }
 
     /// Gets the https client used for making dependent api calls.
-    pub fn https_client(&self) -> BoxedFilter<(HttpsClient,)> {
-        self.https.clone()
+    pub fn https_client(&self) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
+        http_filter(self.https.clone())
     }
 
     /// Creates a new state object from an existing object pool.
@@ -115,32 +114,35 @@ impl State {
         let twitter_con_token = get_twitter_con_token();
 
         State {
-            db: db_filter(pool),
-            secret: secret_filter(secret),
-            https: http_filter(client),
+            db: pool,
+            secret,
+            https: client,
             twitter_consumer_token: twitter_con_token,
             server_lib_root: PathBuf::from("./"), // THIS makes the assumption that the tests are run from the backend/server dir.
-            is_production: false
+            is_production: false,
         }
     }
 }
 
 /// Function that creates the HttpClient filter.
-pub fn http_filter(client: HttpsClient) -> BoxedFilter<(HttpsClient,)> {
-    warp::any().map(move || client.clone()).boxed()
+fn http_filter(
+    client: HttpsClient,
+) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
+    // This needs to be able to return a Result w/a Rejection, because there is no way to specify the type of
+    // warp::never::Never because it is private, precluding the possibility of using map instead of and_then().
+    // This adds space overhead, but not nearly as much as using a boxed filter.
+    warp::any().and_then(move || -> Result<HttpsClient, Rejection> { Ok(client.clone()) })
 }
 
 /// Filter that exposes connections to the database to individual filter requests
-pub fn db_filter(pool: Pool) -> BoxedFilter<(PooledConn,)> {
+pub fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
     fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
         pool.clone()
             .get() // Will get the connection from the pool, or wait a specified time until one becomes available.
             .map_err(|_| Error::DatabaseUnavailable.reject())
     }
 
-    warp::any()
-        .and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
-        .boxed()
+    warp::any().and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
 }
 
 /// Gets the connection key pair for the serer.

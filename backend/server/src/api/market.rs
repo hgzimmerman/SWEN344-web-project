@@ -1,6 +1,6 @@
 //! Responsible for hosting routes that deal with stock market data.
 use crate::state::State;
-use warp::{filters::BoxedFilter, path, Filter, Reply};
+use warp::{path, Filter, Reply};
 
 use crate::{
     error::Error,
@@ -48,7 +48,7 @@ pub struct StockAndPerfResponse {
 /// # Arguments
 /// s - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
@@ -120,7 +120,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                             performance: net,
                         }
                     })
-                    .collect::<Vec<StockAndPerfResponse>>() // TODO make an actual type for this.
+                    .collect::<Vec<StockAndPerfResponse>>()
             },
         )
         .map(util::json);
@@ -132,7 +132,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
             .or(portfolio_performance),
     );
 
-    path!("market").and(stock_api).boxed()
+    path!("market").and(stock_api)
 }
 
 /// Get the stock or create it if needed.
@@ -212,7 +212,12 @@ fn get_current_price(
                 .and_then(|res| {
                     res.into_body().concat2() // Await the whole body
                 })
-                .map_err(move |_| Error::dependent_connection_failed(uri.to_string(), format!("Could not get current price for {}.", stock_symbol_copy)))
+                .map_err(move |_| {
+                    Error::dependent_connection_failed(
+                        uri.to_string(),
+                        format!("Could not get current price for {}.", stock_symbol_copy),
+                    )
+                })
                 .and_then(move |chunk: Chunk| -> Result<f64, Error> {
                     let v = chunk.to_vec();
                     let body = String::from_utf8_lossy(&v).to_string();
@@ -253,7 +258,9 @@ fn get_current_prices(
         .and_then(|res| {
             res.into_body().concat2() // Await the whole body
         })
-        .map_err(move |_| Error::dependent_connection_failed(uri.to_string(), "Could not get current stocks."))
+        .map_err(move |_| {
+            Error::dependent_connection_failed(uri.to_string(), "Could not get current stocks.")
+        })
         .and_then(|chunk: Chunk| {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();

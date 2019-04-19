@@ -6,7 +6,7 @@ mod market;
 mod twitter_proxy;
 mod user;
 
-use warp::{filters::BoxedFilter, Reply};
+use warp::Reply;
 
 use warp::{path, Filter};
 
@@ -22,13 +22,14 @@ use crate::{
     state::State,
     static_files::{static_files_handler, FileConfig},
 };
+use warp::Rejection;
 
 /// The initial segment in the uri path.
 pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
-pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     path(API_STRING)
         .and(
             market_api(state)
@@ -51,7 +52,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// * Initializes warp logging
 /// * converts errors
 /// * Handles CORS
-pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn routes(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> {
     let cors = warp::cors()
         //        .allow_origin("http://localhost:8081")
         .allow_headers(vec![
@@ -69,7 +70,6 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .with(warp::log("routes"))
         .with(cors)
         .recover(crate::error::customize_error)
-        .boxed()
 }
 
 #[cfg(test)]
@@ -165,7 +165,6 @@ mod integration_test {
                 let start = chrono::Utc::now();
                 let stop = start + chrono::Duration::hours(4);
 
-
                 let tb = TimeBoundaries { start, stop };
 
                 let resp = warp::test::request()
@@ -195,7 +194,6 @@ mod integration_test {
                 assert_eq!(&events[0].text, "");
             });
         }
-
 
         #[test]
         fn modify_event() {

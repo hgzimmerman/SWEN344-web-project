@@ -3,7 +3,6 @@ use crate::error::Error;
 use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
-
 const KILOBYTE: u64 = 1024;
 /// Extracts the body of a request after stipulating that it has a reasonable size in kilobytes.
 ///
@@ -14,8 +13,7 @@ pub fn json_body_filter<T>(kb_limit: u64) -> impl Filter<Extract = (T,), Error =
 where
     T: for<'de> Deserialize<'de> + Send + Sync + 'static,
 {
-    warp::body::content_length_limit(KILOBYTE * kb_limit)
-        .and(warp::body::json())
+    warp::body::content_length_limit(KILOBYTE * kb_limit).and(warp::body::json())
 }
 
 #[allow(dead_code)]
