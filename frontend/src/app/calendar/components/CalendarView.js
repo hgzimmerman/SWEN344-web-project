@@ -1,6 +1,7 @@
 import React from 'react';
-// import Calendar from 'react-calendar';
-import BigCalendar from 'react-big-calendar'
+import FullCalendar from 'fullcalendar-reactwrapper';
+import BigCalendar from 'react-big-calendar';
+import '../../../../node_modules/fullcalendar-reactwrapper/dist/css/fullcalendar.min.css';
 import moment from 'moment'
 import '../../../App.css';
 
@@ -9,6 +10,7 @@ export default class CalendarView extends React.Component {
     super(props);
     this.state = {
       date: new Date(),
+      events: null
     }
 
   }
@@ -20,14 +22,20 @@ export default class CalendarView extends React.Component {
   render() {
     const localizer = BigCalendar.momentLocalizer(moment)
     return (
-        <div>
-          <BigCalendar
-            localizer={localizer}
-            events={['test']}
-            startAccessor="start"
-            endAccessor="end"
+
+          <FullCalendar
+            id="main-calendar"
+            header={{
+              left: 'prev, next today myCustomButton',
+              center: 'title',
+              right: 'month,basicWeek,basicDay'
+            }}
+            navLinks={true}
+            editable={true}
+            eventLimit={true}
+            events={this.state.events}
           />
-        </div>
+
     );
 
   }

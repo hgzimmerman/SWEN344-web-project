@@ -7,6 +7,7 @@
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.2",
     "canvasjs": "^1.8.1",
+    "fullcalendar-reactwrapper": "^1.0.7",
     "install": "^0.12.2",
     "moment": "^2.24.0",
     "npm": "^6.7.0",
