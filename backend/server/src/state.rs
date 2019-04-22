@@ -25,18 +25,18 @@ pub type HttpsClient = Client<HttpsConnector<HttpConnector<GaiResolver>>, Body>;
 /// into the scope of the relevant api.
 pub struct State {
     /// A pool of database connections.
-    db: Pool,
+    database_connection_pool: Pool,
     /// The secret key.
     secret: Secret,
     /// Https client
     https: HttpsClient,
     /// Twitter consumer token
-    pub twitter_consumer_token: KeyPair,
+    twitter_consumer_token: KeyPair,
     /// The path to the server directory.
     /// This allows file resources to have a common reference point when determining from where to serve assets.
-    pub server_lib_root: PathBuf,
+    server_lib_root: PathBuf,
     /// Is the server running in a production environment
-    pub is_production: bool,
+    is_production: bool,
 }
 
 /// Configuration object for creating the state.
@@ -77,7 +77,7 @@ impl State {
         let root = conf.server_lib_root.unwrap_or_else(|| PathBuf::from("./"));
 
         State {
-            db: pool, //db_filter(pool),
+            database_connection_pool: pool, //db_filter(pool),
             secret,
             https: client,
             twitter_consumer_token: twitter_con_token.clone(),
@@ -88,7 +88,21 @@ impl State {
 
     /// Gets a pooled connection to the database.
     pub fn db(&self) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
-        db_filter(self.db.clone())
+        /// Filter that exposes connections to the database to individual filter requests
+        fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
+            fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
+                pool.clone()
+                    .get() // Will get the connection from the pool, or wait a specified time until one becomes available.
+                    .map_err(|_| {
+                        log::error!("Pool exhausted: could not get database connection.");
+                        Error::DatabaseUnavailable.reject()
+                    })
+            }
+
+            warp::any().and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
+        }
+
+        db_filter(self.database_connection_pool.clone())
     }
 
     /// Gets the secret used for authoring JWTs
@@ -98,7 +112,33 @@ impl State {
 
     /// Gets the https client used for making dependent api calls.
     pub fn https_client(&self) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
+        /// Function that creates the HttpClient filter.
+        fn http_filter(
+            client: HttpsClient,
+        ) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
+            // This needs to be able to return a Result w/a Rejection, because there is no way to specify the type of
+            // warp::never::Never because it is private, precluding the possibility of using map instead of and_then().
+            // This adds space overhead, but not nearly as much as using a boxed filter.
+            warp::any().and_then(move || -> Result<HttpsClient, Rejection> { Ok(client.clone()) })
+        }
         http_filter(self.https.clone())
+    }
+
+    /// Access the twitter consumer token.
+    pub fn twitter_consumer_token(&self) -> impl Filter<Extract = (KeyPair,), Error = Rejection> + Clone {
+        fn twitter_consumer_token_filter(twitter_consumer_token: KeyPair) -> impl Filter<Extract = (KeyPair,), Error = Rejection> + Clone {
+            warp::any().and_then(move || -> Result<KeyPair, Rejection> { Ok(twitter_consumer_token.clone()) })
+        }
+        twitter_consumer_token_filter(self.twitter_consumer_token.clone())
+    }
+
+
+    pub fn server_lib_root(&self) -> PathBuf {
+        self.server_lib_root.clone()
+    }
+
+    pub fn is_production(&self) -> bool {
+        self.is_production
     }
 
     /// Creates a new state object from an existing object pool.
@@ -114,7 +154,7 @@ impl State {
         let twitter_con_token = get_twitter_con_token();
 
         State {
-            db: pool,
+            database_connection_pool: pool,
             secret,
             https: client,
             twitter_consumer_token: twitter_con_token,
@@ -124,26 +164,8 @@ impl State {
     }
 }
 
-/// Function that creates the HttpClient filter.
-fn http_filter(
-    client: HttpsClient,
-) -> impl Filter<Extract = (HttpsClient,), Error = Rejection> + Clone {
-    // This needs to be able to return a Result w/a Rejection, because there is no way to specify the type of
-    // warp::never::Never because it is private, precluding the possibility of using map instead of and_then().
-    // This adds space overhead, but not nearly as much as using a boxed filter.
-    warp::any().and_then(move || -> Result<HttpsClient, Rejection> { Ok(client.clone()) })
-}
 
-/// Filter that exposes connections to the database to individual filter requests
-pub fn db_filter(pool: Pool) -> impl Filter<Extract = (PooledConn,), Error = Rejection> + Clone {
-    fn get_conn_from_pool(pool: &Pool) -> Result<PooledConn, Rejection> {
-        pool.clone()
-            .get() // Will get the connection from the pool, or wait a specified time until one becomes available.
-            .map_err(|_| Error::DatabaseUnavailable.reject())
-    }
 
-    warp::any().and_then(move || -> Result<PooledConn, Rejection> { get_conn_from_pool(&pool) })
-}
 
 /// Gets the connection key pair for the serer.
 /// This represents the authenticity of the application
@@ -155,11 +177,4 @@ fn get_twitter_con_token() -> KeyPair {
     const SECRET: &str = "uK6U7Xqj2QThlm6H3y8dKSH3itZgpo9AVhR5or80X9umZc62ln";
 
     egg_mode::KeyPair::new(KEY, SECRET)
-}
-
-/// Gets the request token.
-#[allow(dead_code)]
-fn get_twitter_request_token(con_token: &KeyPair, callback_url: &str) -> KeyPair {
-    tokio::runtime::current_thread::block_on_all(egg_mode::request_token(con_token, callback_url))
-        .expect("Couldn't authenticate to twitter")
 }

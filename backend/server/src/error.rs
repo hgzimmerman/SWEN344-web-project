@@ -123,6 +123,7 @@ pub fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
             }
         }
     };
+    error!("{}", cause);
 
     use std::fmt::Write;
     let mut s: String = String::new();

@@ -20,7 +20,7 @@ use warp::{path, Filter, Rejection, Reply};
 pub fn ad_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Ad Api");
 
-    let root = state.server_lib_root.clone();
+    let root = state.server_lib_root();
     let ad_path = root.join("static/ad/rit_ad.png");
 
     path("advertisement")
@@ -38,6 +38,7 @@ pub fn ad_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
         .and_then(err_to_rejection)
         .untuple_one() // converts `()` to ``
         .and(warp::fs::file(ad_path)) // ad_path is immutable after startup, so restrictions related to `and_then` can be worked around by just using `and`
+
 }
 
 /// Api for accessing health information related to serving the advertisement.

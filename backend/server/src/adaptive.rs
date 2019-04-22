@@ -197,7 +197,6 @@ mod test {
     use super::*;
     use hyper::Client;
     use hyper_tls::HttpsConnector;
-    //    use futures::future::lazy;
 
     #[test]
     fn check_if_server_is_available() {
