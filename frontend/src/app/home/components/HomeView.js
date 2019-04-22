@@ -34,6 +34,11 @@ export default class HomeView extends React.Component {
                     stocks={this.props.stocks}
                   />
                 </div>
+
+                 <Paper style={styles.ad}>
+                  <img src={this.props.ad}></img>
+                </Paper>
+
               </div>
             </div>
           : <div style={{marginTop: 50}}>
@@ -84,6 +89,9 @@ const styles = {
   },
   events: {
     height: 230
+  },
+  ad: {
+    height: 200
   },
   text: {
     color: '#7c7c7c'
