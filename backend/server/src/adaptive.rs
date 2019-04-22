@@ -66,6 +66,10 @@ fn server_is_available_core(
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
+///
+/// # Note
+/// The resources that are accessed by this function take quite a while to initialize after not being used.
+/// This future may take up to 10 seconds to resolve on the first call, but it should be around 50 - 300 ms afterwords.
 pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers, Error = Error> {
     let uris = vec![
         "https://adaptive-server.herokuapp.com/availability/1",
@@ -107,6 +111,10 @@ pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers
 /// # Return
 /// A Future representing the Load of the "server cluster".
 /// If the request fails, it will return an error indicating that that resource is unavailable.
+///
+/// # Note
+/// The resource that is accessed by this function take quite a while to initialize after not being used.
+/// This future may take up to 10 seconds to resolve on the first call, but it should be around 50 - 300 ms afterwords.
 pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error> {
     let uri: Uri = "https://adaptive-server.herokuapp.com/serverload"
         .parse()
