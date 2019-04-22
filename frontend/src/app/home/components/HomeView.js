@@ -3,6 +3,8 @@ import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import PostForm from '../containers/PostForm.js';
+import FeedChild from './FeedChild.js';
+import PostView from './PostView.js';
 import '../../../App.css';
 
 export default class HomeView extends React.Component {
@@ -11,6 +13,21 @@ export default class HomeView extends React.Component {
     this.state = {
       visible: false
     }
+  }
+
+  displayFeed() {
+    var tweets = [];
+    for (var i = 0; i < this.state.feed.length; i++) {
+      tweets.push(<FeedChild
+        text={this.state.feed[i].text}
+        id={this.state.feed[i].id}
+        created_at={this.state.feed[i].created_at}
+        favorited={this.state.feed[i].favorited}
+        favorite_count={this.state.feed[i].favorite_count}
+        user={this.state.feed[i].user}
+        />)
+    }
+    return <div>{tweets}</div>;
   }
 
   openModal(){
@@ -30,8 +47,13 @@ export default class HomeView extends React.Component {
           (!this.props.isLoading)
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
-                <h2>Feed</h2>
-                <PostForm/>
+                <h2>Twitter Feed</h2>
+                <PostView
+                  post={this.props.post}
+                  postFeed={this.props.postFeed}
+                />
+                <br/>
+                {this.displayFeed()}
               </Paper>
 
               <div style={{padding: 30}}>
