@@ -24,6 +24,7 @@ pub fn user_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
         .and(state.db())
         .map(
             |user_uuid: Uuid, conn: PooledConn| -> QueryResult<Option<String>> {
+                info!("getting zip code for user: {}", user_uuid);
                 User::get_zip_code(user_uuid, &conn)
             },
         )
@@ -35,6 +36,7 @@ pub fn user_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
         .and(user_filter(state))
         .and(state.db())
         .map(|zip_code: String, user_uuid: Uuid, conn: PooledConn| {
+            info!("Setting zip code to {} for user: {}", zip_code, user_uuid);
             User::set_zip_code(user_uuid, zip_code, &conn)
         })
         .and_then(util::json_or_reject);

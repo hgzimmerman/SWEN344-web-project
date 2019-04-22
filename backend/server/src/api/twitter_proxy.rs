@@ -65,6 +65,7 @@ pub fn twitter_proxy_api(
         .and(json_body_filter(3))
         .and(twitter_token_filter(state))
         .and_then(|request: TweetRequest, twitter_token: Token| {
+            info!("Posting tweet");
             DraftTweet::new(request.text)
                 .send(&twitter_token)
                 .map_err(|e| {
@@ -83,6 +84,7 @@ pub fn twitter_proxy_api(
         .and(get2())
         .and(twitter_token_filter(state))
         .and_then(|twitter_token: Token| {
+            info!("Getting twitter feed");
             egg_mode::tweet::home_timeline(&twitter_token)
                 .with_page_size(50)
                 .start()

@@ -63,7 +63,7 @@ pub fn routes(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]);
 
-    let file_config = FileConfig::new(state.server_lib_root.clone());
+    let file_config = FileConfig::new(state.server_lib_root());
 
     api(state)
         .or(static_files_handler(file_config))

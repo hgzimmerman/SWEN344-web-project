@@ -153,6 +153,7 @@ fn transact(
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<StockTransaction, Error> {
+    info!("Transacting stock {:?}, at current price: {}, for user: {}", request, current_price, user_uuid);
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
     let stock = stock.or_else(|e| match e {
@@ -195,6 +196,7 @@ fn get_current_price(
     stock_symbol: &str,
     client: &HttpsClient,
 ) -> impl Future<Item = f64, Error = Error> {
+    info!("Getting current price for stock: {}", stock_symbol);
     let stock_symbol_copy = stock_symbol.to_string();
 
     let uri = format!(
@@ -239,6 +241,7 @@ fn get_current_prices(
     stock_symbols: &[&str],
     client: &HttpsClient,
 ) -> impl Future<Item = Vec<f64>, Error = Error> {
+    info!("Getting current prices for multiple stocks: {:?}", stock_symbols);
     let uri: Uri = format!(
         "https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price",
         stock_symbols.join(",")
@@ -266,7 +269,7 @@ fn get_current_prices(
             let body = String::from_utf8_lossy(&v).to_string();
             serde_json::from_str::<HashMap<String, Price>>(&body)
                 .map(|r| {
-                    info!("Get current prices: {:#?}", r);
+                    info!("Got current prices: {:#?}", r);
                     r.values().map(|v| v.price).collect()
                 })
                 .map_err(|_| {

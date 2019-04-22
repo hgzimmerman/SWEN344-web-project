@@ -67,6 +67,7 @@ pub fn calendar_api(
             |user_uuid: Uuid,
              conn: PooledConn|
              -> Result<Vec<ImportExportEvent>, diesel::result::Error> {
+                info!("Exporting events for user: {}", user_uuid);
                 Event::export_events(user_uuid, &conn)
             },
         )
@@ -84,6 +85,7 @@ pub fn calendar_api(
              user_uuid: Uuid,
              conn: PooledConn|
              -> Result<(), diesel::result::Error> {
+                info!("Importing events for user: {}", user_uuid);
                 Event::import_events(events, user_uuid, &conn)
             },
         )
@@ -100,6 +102,7 @@ pub fn calendar_api(
              user_uuid: Uuid,
              conn: PooledConn|
              -> Result<Vec<Event>, diesel::result::Error> {
+                info!("getting time-bounded events for user: {}, from {} until {}", user_uuid, tb.start, tb.stop);
                 Event::events_from_n_to_n(
                     user_uuid,
                     tb.start.naive_utc(),

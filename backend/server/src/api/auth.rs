@@ -55,10 +55,7 @@ pub fn get_jwt(state: &State) -> String {
 pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Auth api");
 
-    let consumer_token = state.twitter_consumer_token.clone();
-    let consumer_token_2 = consumer_token.clone();
-
-    let callback_link = if state.is_production {
+    let callback_link = if state.is_production() {
         // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
         "https://vm344c.se.rit.edu/api/auth/callback"
     } else {
@@ -68,7 +65,8 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
 
     let link = path!("link")
         .and(warp::get2())
-        .and_then(move || {
+        .and(state.twitter_consumer_token())
+        .and_then(move |consumer_token: KeyPair| {
             // You need a new request token for each link generated
             egg_mode::request_token(&consumer_token, callback_link)
                 .map_err(|e| Error::dependent_connection_failed_context(e.to_string()).reject())
@@ -83,7 +81,8 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
     let callback = path!("callback")
         .and(warp::get2())
         .and(warp::query::query())
-        .and_then(move |q_params: TwitterCallbackQueryParams| {
+        .and(state.twitter_consumer_token())
+        .and_then(|q_params: TwitterCallbackQueryParams, consumer_token: KeyPair| {
             info!("{:?}", q_params);
             // A key pair has to be constructed from the query parameters,
             // but apparently the secret isn't needed.
@@ -92,7 +91,7 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
                 secret: "".into(),
             };
             egg_mode::access_token(
-                consumer_token_2.clone(),
+                consumer_token,
                 &what_request_token,
                 q_params.oauth_verifier,
             )
@@ -133,11 +132,11 @@ pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
                 .map(|a| warp::reply::json(&a))
         });
 
-    let subroutes = link.or(callback).or(refresh);
-
     let api_root = path!("auth");
-
-    api_root.and(subroutes)
+    api_root
+        .and(
+            link.or(callback).or(refresh)
+        )
 }
 
 /// The JSON returned by the /api/auth/link route.
