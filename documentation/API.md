@@ -31,7 +31,9 @@ It should look something like this (where 'garbage' is a stand-in for the random
 Authorization: bearer garbage.garbage.garbage 
 ```
 
-When you get the response from the login api endpoint, take the plain string and store it in `localstorage`.
+When twitter redirects to `/api/auth/callback`, it includes query parameters that are used to generate the JWT and associate it with a given user.
+This JWT is then templated into a simple HTML document that runs a script that installs the JWT in the `localstorage` under the key: `jwt`.
+Then it redirects to `/`, which will load the website from the **_address the server is running on_**, **NOT** the Node.js server started by `npm start`
 This allows it to be accessible from a global context within the app, as well as on other tabs in the same web browser.
 
 ### File Serving Details
