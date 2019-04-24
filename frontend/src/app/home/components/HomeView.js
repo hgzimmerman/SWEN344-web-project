@@ -36,8 +36,8 @@ export default class HomeView extends React.Component {
                 </div>
 
                  <Paper style={styles.ad}>
-                  <img src={this.props.ad}></img>
-                </Paper>
+                    <img src="/api/advertisement" alt="advertisement"></img>
+                  </Paper> 
 
               </div>
             </div>

@@ -13,7 +13,7 @@ export default class Home extends React.Component {
   }
 
   componentDidMount(){
-    this.getWeather().then(() => this.getStocks()).then(() => this.getSelfAdaptiveAd());
+    this.getWeather().then(() => this.getStocks());
   }
 
   getWeather(){
@@ -50,19 +50,6 @@ export default class Home extends React.Component {
 
   }
 
-  getSelfAdaptiveAd(){
-    const url = 'https://vm344c.se.rit.edu/api/advertisement';
-
-    return fetch(url, { method: 'GET'})
-      .then((res) => res.blob())
-        .then((res) => {
-          this.setState({
-            ad: res,
-            isLoading: true
-          })
-        })
-  }
-
   sellStock(stock, quantity, price){
     let owned = 3;
     if (quantity === ''){
@@ -84,7 +71,6 @@ export default class Home extends React.Component {
         weather={this.state.weather}
         stocks={this.state.stocks}
         sellStock={this.sellStock}
-        ad={this.state.ad}
       />
     );
 
