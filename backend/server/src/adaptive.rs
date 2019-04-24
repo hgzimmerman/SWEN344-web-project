@@ -33,7 +33,7 @@ fn server_is_available(
     client: &HttpsClient,
 ) -> Box<Future<Item = bool, Error = ()> + 'static + Send> {
     server_is_available_core(uri, client)
-        .map(|resp| {
+        .map(|resp| -> bool {
             match resp {
                 Ok(resp) => match resp.availability {
                     1 => true, // One indicates that the server is up
