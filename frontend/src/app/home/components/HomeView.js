@@ -29,7 +29,7 @@ export default class HomeView extends React.Component {
     }
     return <div>{tweets}</div>;
   }
-
+                  
   openModal(){
     this.setState({ visible: true });
 
@@ -75,7 +75,10 @@ export default class HomeView extends React.Component {
                   />
                 </div>
               </div>
-
+    
+              <Paper style={styles.ad}>
+                    <img src="/api/advertisement" alt="advertisement"></img>
+              </Paper> 
 
             </div>
           : <div style={{marginTop: 50}}>
@@ -123,6 +126,9 @@ const styles = {
     color: '#00A6DD',
     fontWeight: '400',
     fontSize: 40
+  },
+    ad: {
+    height: 200
   },
   events: {
     height: 230

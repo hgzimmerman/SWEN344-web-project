@@ -337,7 +337,7 @@ fn seek_right() {
 
     let bf = "++++>+<[>]+".to_string();
     let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
-    let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
+    let _output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
     assert_eq!(tape_pointer, 2);
     assert_eq!(tape[0], 4);
     assert_eq!(tape[1], 1);
@@ -351,7 +351,7 @@ fn compare() {
 
     let bf = ">++++>+++<[- > -[>]<<]".to_string();
     let tokens: BfProgram = parse_brainfuck(&bf).unwrap();
-    let output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
+    let _output = consume_tokens(&tokens, &mut tape, &mut tape_pointer, &mut "HI".chars());
     std::dbg!(&tape);
     assert_eq!(tape_pointer, 0);
     assert_eq!(tape[0], 0);

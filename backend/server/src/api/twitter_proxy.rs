@@ -1,7 +1,6 @@
-use crate::state::State;
-use warp::{filters::BoxedFilter, Reply};
-//use warp::path::path;
-use crate::{error::Error, server_auth::twitter_token_filter, util::json_body_filter};
+use crate::{
+    error::Error, server_auth::twitter_token_filter, state::State, util::json_body_filter,
+};
 use apply::Apply;
 use egg_mode::{
     tweet::{DraftTweet, Timeline, Tweet},
@@ -10,7 +9,7 @@ use egg_mode::{
 use futures::future::Future;
 use log::info;
 use serde::{Deserialize, Serialize};
-use warp::{get2, path, post2, Filter};
+use warp::{get2, path, post2, Filter, Rejection, Reply};
 
 /// Request used to create a tweet
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -56,19 +55,26 @@ pub struct TwitterUser {
 }
 
 /// Proxy for twitter related things.
-pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
-    info!("attaching twitter proxy");
 
+pub fn twitter_proxy_api(
+    state: &State,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    info!("Attaching twitter proxy");
+  
     let post_tweet = path!("tweet")
         .and(post2())
         .and(json_body_filter(3))
         .and(twitter_token_filter(state))
         .and_then(|request: TweetRequest, twitter_token: Token| {
+            info!("Posting tweet");
             DraftTweet::new(request.text)
                 .send(&twitter_token)
-                .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Tweet failed to send".to_owned())
-                        .reject()
+                .map_err(|e| {
+                    Error::dependent_connection_failed_context(format!(
+                        "Tweet failed to send: '{}'",
+                        e
+                    ))
+                    .reject()
                 })
         })
         .map(|tweet: Response<Tweet>| {
@@ -79,12 +85,16 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
         .and(get2())
         .and(twitter_token_filter(state))
         .and_then(|twitter_token: Token| {
+            info!("Getting twitter feed");
             egg_mode::tweet::home_timeline(&twitter_token)
                 .with_page_size(50)
                 .start()
-                .map_err(|_| {
-                    Error::DependentConnectionFailedReason("Could not get twitter feed".to_owned())
-                        .reject()
+                .map_err(|e| {
+                    Error::dependent_connection_failed_context(format!(
+                        "Could not get twitter feed: '{}'",
+                        e
+                    ))
+                    .reject()
                 })
         })
         .untuple_one()
@@ -99,5 +109,5 @@ pub fn twitter_proxy_api(state: &State) -> BoxedFilter<(impl Reply,)> {
             },
         );
 
-    path!("twitter_proxy").and(post_tweet.or(get_feed)).boxed()
+    path!("twitter_proxy").and(post_tweet.or(get_feed))
 }
