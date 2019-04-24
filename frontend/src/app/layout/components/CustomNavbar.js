@@ -51,7 +51,11 @@ export default class CustomNavbar extends React.Component {
                   Weather
                 </Typography>
               </Link>
-
+              <Link to="/adaptive" style={styles.tab}>
+                <Typography variant="h6" color="inherit">
+                  Adaptive
+                </Typography>
+              </Link>
               {isAuthenticated() && (
                 <div style={{float: 'right'}}>
                   <IconButton

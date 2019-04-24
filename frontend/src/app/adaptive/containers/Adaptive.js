@@ -1,12 +1,13 @@
 import React from 'react';
 import {getJwtBearer} from "../../../config/auth";
+import AdaptiveView from "../components/AdaptiveView";
 
 export default class Adaptive extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       // Timeserries data regarding serving rates
-      data: '',
+      data: null,
       isLoading: true,
       error: null
     }
@@ -17,19 +18,41 @@ export default class Adaptive extends React.Component {
       "Authorization" : getJwtBearer()
     };
     const url = "/api/health/week";
-    fetch(url, {headers})
+    return fetch(url, {headers})
       .then((res) => {
-        let json = res.json();
-        if (res.ok) {
-          this.setState({
-            data: json
-          });
-        } else {
-          this.setState({
-            error: json
-          });
-        }
+        res.json().then(json => {
+          if (res.ok) {
+            console.log("loaded the health data");
+            this.setState({
+              data: json,
+              isLoading: false
+            });
+          } else {
+            this.setState({
+              error: json,
+              isLoading: false
+            });
+          }
+        })
+
       });
+  }
+
+  componentDidMount() {
+    console.log("mounted adaptive component");
+    this.getAdServeRateData();
+  }
+
+
+
+  render(){
+    return(
+      <AdaptiveView
+        data={this.state.data}
+        isLoading={this.state.isLoading}
+        error={this.state.error}
+      />
+    );
 
   }
 }
