@@ -6,8 +6,9 @@ import IconButton from '@material-ui/core/IconButton';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import Menu from '@material-ui/core/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
-import { AuthButton, fakeAuth } from '../../../config/auth.js';
+import { AuthButton } from '../../../config/auth.js';
 import { loggedIn } from '../../auth/components/Login.js';
+import {isAuthenticated} from "../../../config/auth";
 
 export default class CustomNavbar extends React.Component {
   state = {
@@ -25,7 +26,7 @@ export default class CustomNavbar extends React.Component {
   render(){
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-    if (fakeAuth.isAuthenticated) {
+    if (isAuthenticated()) {
       return(
         <div>
           <AppBar position="static" style={styles.navbar}>
@@ -51,7 +52,7 @@ export default class CustomNavbar extends React.Component {
                 </Typography>
               </Link>
 
-              {fakeAuth.isAuthenticated && (
+              {isAuthenticated() && (
                 <div style={{float: 'right'}}>
                   <IconButton
                     aria-owns={open ? 'menu-appbar' : undefined}
