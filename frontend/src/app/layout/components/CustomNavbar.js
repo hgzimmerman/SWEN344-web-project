@@ -28,7 +28,7 @@ export default class CustomNavbar extends React.Component {
     const open = Boolean(anchorEl);
     if (isAuthenticated()) {
       return(
-        <div>
+        <nav>
           <AppBar position="static" style={styles.navbar}>
             <Toolbar>
               <Link to="/" style={styles.tab}>
@@ -84,11 +84,13 @@ export default class CustomNavbar extends React.Component {
 
             </Toolbar>
           </AppBar>
-        </div>
+        </nav>
       );
     } else {
       return (
-        <div></div>
+        <nav>
+          <AppBar position="static" style={styles.navbar}/>
+        </nav>
       );
     }
 

@@ -55,15 +55,13 @@ export const AuthButton = withRouter(
       <MenuItem
         onClick={
           () => {
-            fakeAuth.signout(() => {
               signout(); // Remove the JWT from storage
               // Kick off a state change + re-render by changing the history's location,
               // forcing the rendering logic to acknowledge the removal of the JWT from storage,
               // indicating that the user is now signed out.
               // This will cause a redirect to /login.
               history.push("/") // TODO, it may be better to make this explicitly point to /login.
-            })
-          }
+            }
         }
       >
         Logout
