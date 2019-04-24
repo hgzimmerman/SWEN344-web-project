@@ -67,11 +67,7 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
 
     let link = path!("link")
         .and(warp::get2())
-<<<<<<< HEAD
         .and(state.twitter_consumer_token.clone())
-=======
-        .and(state.twitter_con_token.clone())
->>>>>>> bc5ca5e0b45ed42eebd038f7a1accc62f12fa4c4
         .and_then(move |con_token| {
             egg_mode::request_token(&con_token, callback_link).map_err(|e| {
                 use log::error;

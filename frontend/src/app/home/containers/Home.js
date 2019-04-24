@@ -21,12 +21,22 @@ export default class Home extends React.Component {
 
   getFeed() {
     const jwt = localStorage.getItem("jwt");
-    const url = `https://vm344c.se.rit.edu/api/twitter_proxy/feed?jwt=${jwt}`;
-    return fetch(url, { method: 'GET'})
-      .then((res) => res.json())
+    const url = `api/twitter_proxy/feed`;
+
+    return fetch(url,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'jwt': jwt
+        }
+      }
+    )
+    .then((res) => res.json())
         .then((res) => {
           this.setState({
-            feed: json.parse(res.feed_response)
+            feed: JSON.parse(res.feed_response)
           });
         }
       );
@@ -83,7 +93,7 @@ export default class Home extends React.Component {
   postFeed() {
     if (this.state.post !== "") {
       const jwt = localStorage.getItem("jwt");
-      const url = `https://vm344c.se.rit.edu/api/twitter_proxy/tweet/`;
+      const url = `api/twitter_proxy/tweet/`;
       return fetch(url,
         {
           method: 'POST',
