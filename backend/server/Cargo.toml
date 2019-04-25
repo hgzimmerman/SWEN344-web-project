@@ -11,7 +11,7 @@ path = "src/main.rs"
 
 
 [dependencies]
-warp = {version="0.1.13", features=["tls"]}
+warp = {version="0.1.15", features=["tls"]}
 apply = "0.2.2"
 clap = "2.32.0"
 log = "0.4.6"

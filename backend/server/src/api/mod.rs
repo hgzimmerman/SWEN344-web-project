@@ -6,7 +6,7 @@ mod market;
 mod twitter_proxy;
 mod user;
 
-use warp::{filters::BoxedFilter, Reply};
+use warp::Reply;
 
 use warp::{path, Filter};
 
@@ -22,13 +22,14 @@ use crate::{
     state::State,
     static_files::{static_files_handler, FileConfig},
 };
+use warp::Rejection;
 
 /// The initial segment in the uri path.
 pub const API_STRING: &str = "api";
 
 /// The core of the exposed routes.
 /// Anything that sits behind this filter accesses the DB in some way.
-pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     path(API_STRING)
         .and(
             market_api(state)
@@ -51,7 +52,7 @@ pub fn api(state: &State) -> BoxedFilter<(impl Reply,)> {
 /// * Initializes warp logging
 /// * converts errors
 /// * Handles CORS
-pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn routes(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> {
     let cors = warp::cors()
         //        .allow_origin("http://localhost:8081")
         .allow_headers(vec![
@@ -62,14 +63,13 @@ pub fn routes(state: &State) -> BoxedFilter<(impl Reply,)> {
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]);
 
-    let file_config = FileConfig::new(state.server_lib_root.clone());
+    let file_config = FileConfig::new(state.server_lib_root());
 
     api(state)
         .or(static_files_handler(file_config))
         .with(warp::log("routes"))
         .with(cors)
         .recover(crate::error::customize_error)
-        .boxed()
 }
 
 #[cfg(test)]
@@ -112,7 +112,7 @@ mod integration_test {
 
     mod events {
         use super::*;
-        use chrono::{Datelike, NaiveDateTime};
+        use crate::api::calendar::TimeBoundaries;
 
         #[test]
         fn create_event() {
@@ -162,17 +162,10 @@ mod integration_test {
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
                 };
 
-                let start = chrono::Utc::now().naive_utc();
+                let start = chrono::Utc::now();
                 let stop = start + chrono::Duration::hours(4);
 
-                use serde::Serialize;
-                #[derive(Serialize)]
-                struct TimeBounds {
-                    start: NaiveDateTime,
-                    stop: NaiveDateTime,
-                }
-
-                let tb = TimeBounds { start, stop };
+                let tb = TimeBoundaries { start, stop };
 
                 let resp = warp::test::request()
                     .method("POST")
@@ -199,135 +192,6 @@ mod integration_test {
                 assert_eq!(events.len(), 1);
                 assert_eq!(&events[0].title, "Do a thing");
                 assert_eq!(&events[0].text, "");
-            });
-        }
-
-        // TODO This test is dumb because it will fail or pass depending on when the test is run.
-        // TODO delete it and its associated backing api
-        #[test]
-        fn get_events_today() {
-            setup_warp(|_fixture: &UserFixture, pool: Pool| {
-                let secret = Secret::new("test");
-                let s = State::testing_init(pool, secret);
-                let filter = routes(&s);
-
-                let jwt = get_jwt(&s);
-
-                // create an event first.
-                let request = NewEventRequest {
-                    title: "Do a thing".to_string(),
-                    text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(1),
-                    stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
-                };
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/calendar/event")
-                    .json(&request)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                // create another event in a week.
-                let request = NewEventRequest {
-                    title: "Do a thing a week from now".to_string(),
-                    text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc() + chrono::Duration::weeks(1),
-                    stop_at: chrono::Utc::now().naive_utc()
-                        + chrono::Duration::weeks(1)
-                        + chrono::Duration::hours(1),
-                };
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/calendar/event")
-                    .json(&request)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/calendar/event/events/today")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let events: Vec<Event> = deserialize(resp);
-                assert_eq!(events.len(), 1);
-                assert_eq!(&events[0].title, "Do a thing");
-                assert_eq!(&events[0].text, "");
-            });
-        }
-
-        #[test]
-        fn get_events_this_month() {
-            setup_warp(|_fixture: &UserFixture, pool: Pool| {
-                let secret = Secret::new("test");
-                let s = State::testing_init(pool, secret);
-                let filter = routes(&s);
-
-                let jwt = get_jwt(&s);
-
-                // create an event first.
-                let request = NewEventRequest {
-                    title: "Do a thing".to_string(),
-                    text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
-                        + chrono::Duration::hours(1),
-                    stop_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
-                        + chrono::Duration::hours(2),
-                };
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/calendar/event")
-                    .json(&request)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                // create another event in a week.
-                let request = NewEventRequest {
-                    title: "Do a thing a week from now".to_string(),
-                    text: "".to_string(),
-                    start_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
-                        + chrono::Duration::weeks(1),
-                    stop_at: chrono::Utc::now().naive_utc().with_day0(1).unwrap()
-                        + chrono::Duration::weeks(1)
-                        + chrono::Duration::hours(1),
-                };
-
-                let resp = warp::test::request()
-                    .method("POST")
-                    .path("/api/calendar/event")
-                    .json(&request)
-                    .header("content-length", "500")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let resp = warp::test::request()
-                    .method("GET")
-                    .path("/api/calendar/event/events/month")
-                    .header(AUTHORIZATION_HEADER_KEY, format!("{} {}", BEARER, jwt))
-                    .reply(&filter);
-
-                assert_eq!(resp.status(), 200);
-
-                let events: Vec<Event> = deserialize(resp);
-                assert_eq!(events.len(), 2);
-                assert_eq!(&events[0].title, "Do a thing");
-                assert_eq!(&events[1].title, "Do a thing a week from now");
             });
         }
 
@@ -401,17 +265,10 @@ mod integration_test {
                     stop_at: chrono::Utc::now().naive_utc() + chrono::Duration::hours(2),
                 };
 
-                let start = chrono::Utc::now().naive_utc();
+                let start = chrono::Utc::now();
                 let stop = start + chrono::Duration::hours(4);
 
-                use serde::Serialize;
-                #[derive(Serialize)]
-                struct TimeBounds {
-                    start: NaiveDateTime,
-                    stop: NaiveDateTime,
-                }
-
-                let tb = TimeBounds { start, stop };
+                let tb = TimeBoundaries { start, stop };
 
                 let resp = warp::test::request()
                     .method("POST")

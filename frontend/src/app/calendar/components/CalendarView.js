@@ -22,7 +22,6 @@ export default class CalendarView extends React.Component {
   render() {
     const localizer = BigCalendar.momentLocalizer(moment)
     return (
-
           <FullCalendar
             id="main-calendar"
             header={{
@@ -35,7 +34,6 @@ export default class CalendarView extends React.Component {
             eventLimit={true}
             events={this.state.events}
           />
-
     );
 
   }

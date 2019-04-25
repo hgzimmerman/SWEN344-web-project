@@ -11,6 +11,7 @@ import Login from './app/auth/components/Login.js';
 import Weather from './app/weather/containers/Weather.js';
 import { PrivateRoute } from '../src/config/auth.js';
 import './App.css';
+import Adaptive from "./app/adaptive/containers/Adaptive";
 
 const Main = () => (
   <main>
@@ -21,6 +22,7 @@ const Main = () => (
       <PrivateRoute exact path='/calendar' component={CalendarView}/>
       <PrivateRoute exact path='/stocks' component={Stocks}/>
       <PrivateRoute exact path='/weather' component={Weather}/>
+      <PrivateRoute exact path='/adaptive' component={Adaptive}/>
     </Switch>
   </main>
 );

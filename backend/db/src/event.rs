@@ -7,7 +7,7 @@ use crate::{
     user::User,
 };
 use apply::Apply;
-use chrono::{Datelike, NaiveDateTime, Timelike};
+use chrono::NaiveDateTime;
 use diesel::{
     pg::Pg, query_dsl::QueryDsl, result::QueryResult, BoolExpressionMethods, ExpressionMethods,
     Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
@@ -171,7 +171,7 @@ impl Event {
         user_uuid: Uuid,
         conn: &PgConnection,
     ) -> QueryResult<()> {
-        // Requirements call for deduplication to be performed by just deleting the every event for the user.
+        // Requirements call for "deduplication" to be performed by just deleting the every event for the user.
         Event::delete_events_for_user(user_uuid, conn)?;
 
         let new_events: Vec<NewEvent> = import_events
@@ -185,8 +185,11 @@ impl Event {
             })
             .collect();
 
+        // An approximate limit for the number of items diesel can insert at once.
+        const DIESEL_ELEMENT_LIMIT: usize = 20_000;
+
         new_events
-            .chunks(20_000)
+            .chunks(DIESEL_ELEMENT_LIMIT)
             .map(move |chunk| {
                 diesel::insert_into(events::table)
                     .values(chunk)
@@ -217,86 +220,6 @@ impl Event {
     /// Returns every event that belongs to a given user.
     pub fn events(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
         Self::user_events(user_uuid).load::<Event>(conn)
-    }
-
-    /// The month index is 0-indexed.
-    /// So 0-11 are valid input values.
-    pub fn events_for_any_month(
-        month_index: MonthIndex,
-        year: Year,
-        user_uuid: Uuid,
-        conn: &PgConnection,
-    ) -> QueryResult<Vec<Event>> {
-        let start = chrono::Utc::now()
-            .naive_utc()
-            .with_year(year.0)
-            .unwrap()
-            .with_month0(month_index.0)
-            .unwrap()
-            .with_hour(0)
-            .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap()
-            .with_nanosecond(0)
-            .unwrap();
-        let end = start.with_month((month_index.0 + 1) % 13).unwrap();
-        Event::events_from_n_to_n(user_uuid, start, end, conn)
-    }
-
-    /// All events that belong to a user that occur on the current date.
-    pub fn events_today(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
-        // TODO may want to make local at some point
-        // yes, this doesn't take into account the timezone of the user :/
-        let today_00_00 = chrono::Utc::now()
-            .naive_utc()
-            .with_hour(0)
-            .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap()
-            .with_nanosecond(0)
-            .unwrap();
-        let tomorrow_00_00 = today_00_00 + chrono::Duration::days(1);
-
-        Self::user_events(user_uuid)
-            .filter(
-                events::dsl::start_at
-                    .gt(today_00_00)
-                    .and(events::dsl::start_at.lt(tomorrow_00_00)),
-            ) // TODO impl OR events that end before tomorrow?
-            .load::<Event>(conn)
-    }
-
-    /// Actually not a even month.
-    /// This gives every event made from the beginning of this month, to five weeks after that.
-    pub fn events_month(user_uuid: Uuid, conn: &PgConnection) -> QueryResult<Vec<Event>> {
-        // TODO may want to make local at some point
-        // TODO This may want to explicitly make this exactly a month.
-        // yes, this doesn't take into account the timezone of the user :/
-        let start_of_this_month = chrono::Utc::now()
-            .naive_utc()
-            .with_day0(0) // first day of the month
-            .unwrap()
-            .with_hour(0)
-            .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap()
-            .with_nanosecond(0)
-            .unwrap();
-        let five_weeks = start_of_this_month + chrono::Duration::weeks(5);
-
-        Self::user_events(user_uuid)
-            .filter(
-                events::start_at
-                    .gt(start_of_this_month)
-                    .and(events::start_at.lt(five_weeks)),
-            )
-            .load::<Event>(conn)
     }
 
     /// All events occurring from a starting time to an end time, that belong to a user.

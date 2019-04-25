@@ -17,7 +17,15 @@ export default class Login extends React.Component {
   componentDidMount() {
     fetch('/api/auth/link')
         .then(response => {
-          return response.json()
+          let json = response.json();
+          if (response.ok) {
+              return json;
+          } else {
+              return json.then(err => {throw err;});
+          }
+        })
+        .catch(err => {
+          alert(err)
         })
         .then( data => {
           this.setState({link: data.authentication_url})
@@ -48,7 +56,6 @@ export default class Login extends React.Component {
     );
   }
 }
-
 const styles = {
   container: {
     padding: 15,

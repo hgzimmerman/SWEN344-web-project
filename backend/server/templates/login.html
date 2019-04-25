@@ -11,7 +11,7 @@
         }
         function WindowLoad(event) {
             window.localStorage.setItem('jwt', '{{jwt|safe}}');
-            window.location.href = "{{target_url|safe}}";
+            window.location.replace("{{target_url|safe}}");
         }
     </script>
 </head>
