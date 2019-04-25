@@ -18,8 +18,9 @@ export default class PostForm extends React.Component {
   handleSubmit() {
     if (fbData !== '') {
       console.log(fbData)
-      const url = `https://graph.facebook.com/${fbData.id}/feed?message=${this.state.value}&access_token=${fbData.accessToken}`;
-      return fetch(url, { method: 'POST' })
+      // const url = `https://graph.facebook.com/${fbData.id}/feed?message=${this.state.value}&access_token=${fbData.accessToken}`;
+      const url = `https://graph.facebook.com/${fbData.id}/posts?access_token=${fbData.accessToken}`;
+      return fetch(url, { method: 'GET' })
         .then((res) => res.json())
           .then((res) => {
             console.log(res);

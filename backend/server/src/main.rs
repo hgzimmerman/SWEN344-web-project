@@ -6,6 +6,6 @@ use server::{start, Config};
 /// Simple shell around starting the server.
 fn main() {
     LoggerBuilder::new().filter_level(LevelFilter::Info).init();
-    let config = Config::parse_command_line_arguments();
+    let config: Config = Config::parse_command_line_arguments();
     start(config)
 }

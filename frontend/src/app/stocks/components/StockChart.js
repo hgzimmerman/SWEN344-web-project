@@ -39,7 +39,7 @@ export default class StockChart extends React.Component {
 				legendText: "Date",
 				dataPoints: dataPoints
 			}]
-		}
+		};
 
 		return (
 		<div>

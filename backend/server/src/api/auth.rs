@@ -1,7 +1,7 @@
 //! Responsible for granting JWT tokens on login.
 use crate::state::State;
 use serde::{Deserialize, Serialize};
-use warp::{filters::BoxedFilter, Reply};
+use warp::Reply;
 
 use crate::error::Error;
 use apply::Apply;
@@ -52,54 +52,54 @@ pub fn get_jwt(state: &State) -> String {
 /// # Arguments
 /// state - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn auth_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Auth api");
 
-    // If its compiled for production, redirect to the release URL, otherwise, localhost.
-    let callback_link = if state.is_production {
+    let callback_link = if state.is_production() {
         // This makes the assumption that nginx sits in front of the application, making port numbers irrelevant.
         "https://vm344c.se.rit.edu/api/auth/callback"
     } else {
         "http://localhost:8080/api/auth/callback" // This makes the assumption that the port is 8080
     };
-
-    info!("Auth Callback link: {}", callback_link);
+    info!("Twitter Authentication Callback link: {}", callback_link);
 
     let link = path!("link")
         .and(warp::get2())
-        .and(state.twitter_consumer_token.clone())
-        .and_then(move |con_token| {
-            egg_mode::request_token(&con_token, callback_link).map_err(|e| {
-                use log::error;
-                error!(
-                    "Getting request token (using con_token + callback link) failed: {}",
-                    e
-                );
-                Error::InternalServerError(Some("Getting request token failed".to_string()))
-                    .reject()
-            })
+        .and(state.twitter_consumer_token())
+        .and_then(move |consumer_token: KeyPair| {
+            // You need a new request token for each link generated
+            egg_mode::request_token(&consumer_token, callback_link)
+                .map_err(|e| Error::dependent_connection_failed_context(e.to_string()).reject())
         })
-        .map(|key_pair| {
-            let authentication_url = egg_mode::authenticate_url(&key_pair);
+        .map(move |request_token: KeyPair| {
+            info!("request token for link: {:?}", request_token);
+            let authentication_url = egg_mode::authenticate_url(&(request_token.clone()));
             let link = Link { authentication_url };
             warp::reply::json(&link)
         });
 
     let callback = path!("callback")
         .and(warp::get2())
-        .and(state.twitter_consumer_token.clone())
-        .and(state.twitter_request_token.clone())
         .and(warp::query::query())
-        .and_then(
-            |consumer_token: KeyPair, key_pair: KeyPair, q_params: TwitterCallbackQueryParams| {
-                info!("{:?}", q_params); // TODO remove this info!() after tests indicate this works
-                egg_mode::access_token((&consumer_token).clone(), &key_pair, q_params.oauth_verifier)
-                    .map_err(|_| {
-                        Error::InternalServerError(Some("Could not get access token.".to_owned()))
-                            .reject()
-                    })
-            },
-        )
+        .and(state.twitter_consumer_token())
+        .and_then(|q_params: TwitterCallbackQueryParams, consumer_token: KeyPair| {
+            info!("{:?}", q_params);
+            // A key pair has to be constructed from the query parameters,
+            // but apparently the secret isn't needed.
+            let what_request_token = KeyPair {
+                key: q_params.oauth_token.into(),
+                secret: "".into(),
+            };
+            egg_mode::access_token(
+                consumer_token,
+                &what_request_token,
+                q_params.oauth_verifier,
+            )
+            .map_err(|e| {
+                Error::InternalServerError(Some(format!("Could not get access token: {}", e)))
+                    .reject()
+            })
+        })
         .untuple_one()
         .and(state.secret())
         .and(state.db())
@@ -132,28 +132,11 @@ pub fn auth_api(state: &State) -> BoxedFilter<(impl Reply,)> {
                 .map(|a| warp::reply::json(&a))
         });
 
-    // TODO remove me, this is for testing only
-    let test_redirect = path!("test_redirect.html")
-        .map(|| {
-            #[derive(Template)]
-            #[template(path = "login.html")]
-            struct LoginTemplate<'a> {
-                jwt: &'a str,
-                target_url: &'a str,
-            }
-            let login = LoginTemplate {
-                jwt: "yeet",
-                target_url: "/",
-            };
-            login.render().unwrap_or_else(|e| e.to_string())
-        })
-        .with(warp::reply::with::header("content-type", "text/html"));
-
-    let subroutes = link.or(callback).or(test_redirect).or(refresh);
-
     let api_root = path!("auth");
-
-    api_root.and(subroutes).boxed()
+    api_root
+        .and(
+            link.or(callback).or(refresh)
+        )
 }
 
 /// The JSON returned by the /api/auth/link route.

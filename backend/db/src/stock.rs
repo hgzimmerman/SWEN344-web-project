@@ -119,22 +119,6 @@ impl Stock {
         )
     }
 
-    // TODO this needs some work... or it could be removed, as I think a higher level of abstraction deals with this... double check.
-    /// Creates a transaction
-    pub fn create_transaction_safe(
-        user_uuid: Uuid,
-        new_transaction: NewStockTransaction,
-        conn: &PgConnection,
-    ) -> QueryResult<StockTransaction> {
-        let t = Self::get_user_transactions_for_stock(user_uuid, new_transaction.stock_uuid, conn)?;
-        let quantity = t.iter().fold(0, |acc, st| acc + st.quantity);
-        if new_transaction.quantity > quantity {
-            panic!("can't have negative -> need a real error")
-        } else {
-            Stock::create_transaction(new_transaction, conn)
-        }
-    }
-
     /// Gets a given stock.
     pub fn get_stock(stock_uuid: Uuid, conn: &PgConnection) -> QueryResult<Stock> {
         util::get_row(schema::stocks::table, stock_uuid, conn)
