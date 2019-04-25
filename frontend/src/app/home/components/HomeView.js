@@ -47,6 +47,7 @@ export default class HomeView extends React.Component {
                 />
                 <br/>
                 {
+                  // TODO the state for this object should be moved to its own inner component
                   (this.state.feed != null)
                     ? displayFeed(this.state.feed)
                     : <></>
