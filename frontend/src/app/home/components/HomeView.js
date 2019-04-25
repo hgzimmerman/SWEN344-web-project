@@ -6,13 +6,13 @@ import PostForm from '../containers/PostForm.js';
 import FeedChild from './FeedChild.js';
 import PostView from './PostView.js';
 import '../../../App.css';
+import Feed from "./Feed";
 
 export default class HomeView extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       visible: false,
-      feed: null,
       isLoading: true
     }
   }
@@ -28,7 +28,6 @@ export default class HomeView extends React.Component {
   }
 
   componentDidMount() {
-    // todo actually get the feed :/
     this.setState({isLoading: false})
   }
 
@@ -44,13 +43,7 @@ export default class HomeView extends React.Component {
                   post={this.props.post}
                   postFeed={this.props.postFeed}
                 />
-                <br/>
-                {
-                  // TODO the state for this object should be moved to its own inner component
-                  (this.state.feed != null)
-                    ? displayFeed(this.state.feed)
-                    : <></>
-                }
+                <Feed/>
               </Paper>
 
               <div style={{padding: 30}}>
@@ -94,20 +87,7 @@ export default class HomeView extends React.Component {
   }
 
 }
-function displayFeed(feed) {
-  var tweets = [];
-  for (var i = 0; i < feed.length; i++) {
-    tweets.push(<FeedChild
-      text={feed[i].text}
-      id={feed[i].id}
-      created_at={feed[i].created_at}
-      favorited={feed[i].favorited}
-      favorite_count={feed[i].favorite_count}
-      user={feed[i].user}
-      />)
-  }
-  return <div>{tweets}</div>;
-}
+
 
 const styles = {
   container: {
