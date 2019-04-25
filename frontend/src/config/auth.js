@@ -63,7 +63,8 @@ export function getJwtBearer() {
  */
 function authenticatedFetch(url, extras) {
     let headers = {
-      "Authorization": getJwtBearer()
+      "Authorization": getJwtBearer(),
+      'content-type': 'application/json',
     };
     if (extras !== undefined && extras.method !== undefined && extras.body !== undefined) {
       console.log("making a request with a body");
@@ -80,7 +81,6 @@ function authenticatedFetch(url, extras) {
     }
 }
 
-// TODO some solution for post/put/patch
 /**
  * Authenticates a request, then deserializes the response and handles the error.
  * @param url

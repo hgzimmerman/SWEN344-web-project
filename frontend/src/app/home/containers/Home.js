@@ -111,7 +111,6 @@ export default class Home extends React.Component {
   render(){
     return(
       <HomeView
-        feed={this.state.feed}
         post={this.state.post}
         postFeed={this.postFeed}
         isLoading={this.state.isLoading}

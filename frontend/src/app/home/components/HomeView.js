@@ -2,9 +2,6 @@ import React from 'react';
 import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
-import PostForm from '../containers/PostForm.js';
-import FeedChild from './FeedChild.js';
-import PostView from './PostView.js';
 import '../../../App.css';
 import Feed from "./Feed";
 
@@ -39,10 +36,6 @@ export default class HomeView extends React.Component {
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
                 <h2>Twitter Feed</h2>
-                <PostView
-                  post={this.props.post}
-                  postFeed={this.props.postFeed}
-                />
                 <Feed/>
               </Paper>
 
@@ -104,6 +97,8 @@ const styles = {
     color: 'black'
   },
   feed: {
+    display: "flex",
+    flexDirection: "column",
     width: '40%',
     height: 700,
     marginTop: 20,
