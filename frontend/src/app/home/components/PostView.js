@@ -8,7 +8,7 @@ export default class PostView extends React.Component {
     super(props);
     this.state = {
       post: this.props.post
-    }
+    };
     this.onFeedPost = this.onFeedPost.bind(this);
     this.postFeed = this.props.postFeed.bind(this);
   }
@@ -23,24 +23,24 @@ export default class PostView extends React.Component {
   render() {
     return (
       <div>
-      <div>
-        <TextField
-          id="outlined-with-placeholder"
-          label="Search"
-          placeholder="Write your tweet"
-          margin="normal"
-          variant="outlined"
-          onChange={this.onFeedPost}
-          style={{width: '50%'}}
-        />
-      </div>
+        <div>
+          <TextField
+            id="outlined-with-placeholder"
+            label="Search"
+            placeholder="Write your tweet"
+            margin="normal"
+            variant="outlined"
+            onChange={this.onFeedPost}
+            style={{width: '50%'}}
+          />
+        </div>
 
-      <Button
-        onClick={() => this.postFeed(this.state.stockName)}
-        variant="contained"
-      >
-        Search
-      </Button>
+        <Button
+          onClick={() => this.postFeed(this.state.stockName)}
+          variant="contained"
+        >
+          Search
+        </Button>
       </div>
     );
   }

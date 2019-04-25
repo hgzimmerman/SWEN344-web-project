@@ -11,24 +11,13 @@ export default class HomeView extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      visible: false
+      visible: false,
+      feed: null,
+      isLoading: true
     }
   }
 
-  displayFeed() {
-    var tweets = [];
-    for (var i = 0; i < this.state.feed.length; i++) {
-      tweets.push(<FeedChild
-        text={this.state.feed[i].text}
-        id={this.state.feed[i].id}
-        created_at={this.state.feed[i].created_at}
-        favorited={this.state.feed[i].favorited}
-        favorite_count={this.state.feed[i].favorite_count}
-        user={this.state.feed[i].user}
-        />)
-    }
-    return <div>{tweets}</div>;
-  }
+
 
   openModal(){
     this.setState({ visible: true });
@@ -37,7 +26,11 @@ export default class HomeView extends React.Component {
 
   closeModal(){
     this.setState({ visible: false });
+  }
 
+  componentDidMount() {
+    // todo actually get the feed :/
+    this.setState({isLoading: false})
   }
 
   render() {
@@ -53,7 +46,11 @@ export default class HomeView extends React.Component {
                   postFeed={this.props.postFeed}
                 />
                 <br/>
-                {this.displayFeed()}
+                {
+                  (this.state.feed != null)
+                    ? displayFeed(this.state.feed)
+                    : <></>
+                }
               </Paper>
 
               <div style={{padding: 30}}>
@@ -75,7 +72,9 @@ export default class HomeView extends React.Component {
                   />
                 </div>
               </div>
-
+              <Paper style={styles.ad}>
+                    <img src="/api/advertisement" alt="advertisement"></img>
+              </Paper>
 
             </div>
           : <div style={{marginTop: 50}}>
@@ -92,6 +91,20 @@ export default class HomeView extends React.Component {
 
   }
 
+}
+function displayFeed(feed) {
+  var tweets = [];
+  for (var i = 0; i < feed.length; i++) {
+    tweets.push(<FeedChild
+      text={feed[i].text}
+      id={feed[i].id}
+      created_at={feed[i].created_at}
+      favorited={feed[i].favorited}
+      favorite_count={feed[i].favorite_count}
+      user={feed[i].user}
+      />)
+  }
+  return <div>{tweets}</div>;
 }
 
 const styles = {
@@ -123,6 +136,9 @@ const styles = {
     color: '#00A6DD',
     fontWeight: '400',
     fontSize: 40
+  },
+    ad: {
+    height: 200
   },
   events: {
     height: 230

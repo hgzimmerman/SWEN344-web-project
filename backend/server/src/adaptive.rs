@@ -33,7 +33,7 @@ fn server_is_available(
     client: &HttpsClient,
 ) -> Box<Future<Item = bool, Error = ()> + 'static + Send> {
     server_is_available_core(uri, client)
-        .map(|resp| {
+        .map(|resp| -> bool {
             match resp {
                 Ok(resp) => match resp.availability {
                     1 => true, // One indicates that the server is up
@@ -66,6 +66,10 @@ fn server_is_available_core(
 /// # Return
 /// A Future of the number of servers that report themselves as available.
 /// This should never error, but would indicate the url that caused the error.
+///
+/// # Note
+/// The resources that are accessed by this function take quite a while to initialize after not being used.
+/// This future may take up to 10 seconds to resolve on the first call, but it should be around 50 - 300 ms afterwords.
 pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers, Error = Error> {
     let uris = vec![
         "https://adaptive-server.herokuapp.com/availability/1",
@@ -107,6 +111,10 @@ pub fn get_num_servers_up(client: &HttpsClient) -> impl Future<Item = NumServers
 /// # Return
 /// A Future representing the Load of the "server cluster".
 /// If the request fails, it will return an error indicating that that resource is unavailable.
+///
+/// # Note
+/// The resource that is accessed by this function take quite a while to initialize after not being used.
+/// This future may take up to 10 seconds to resolve on the first call, but it should be around 50 - 300 ms afterwords.
 pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error> {
     let uri: Uri = "https://adaptive-server.herokuapp.com/serverload"
         .parse()
@@ -119,9 +127,7 @@ pub fn get_load(client: &HttpsClient) -> impl Future<Item = Load, Error = Error>
         .map_err(move |e| {
             use log::error;
             error!("{}", e);
-            Error::DependentConnectionFailed {
-                url: uri.to_string(),
-            }
+            Error::dependent_connection_failed_url(uri.to_string())
         })
         .and_then(|chunk: Chunk| {
             let v = chunk.to_vec();
@@ -199,7 +205,6 @@ mod test {
     use super::*;
     use hyper::Client;
     use hyper_tls::HttpsConnector;
-    //    use futures::future::lazy;
 
     #[test]
     fn check_if_server_is_available() {
