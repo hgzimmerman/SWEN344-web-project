@@ -18,6 +18,7 @@ export default class Adaptive extends React.Component {
     this.displayFeed = this.displayFeed.bind(this);
   }
 
+  // TODO this technically isn't needed, but this was initially created to work around a bug in FeedChild, where a JS object was attempted to be rendered
   static transformTweet(tweet) {
     return {
       text: tweet.text,
@@ -83,7 +84,8 @@ export default class Adaptive extends React.Component {
         created_at={tweet.created_at}
         favorited={tweet.favorited}
         favorite_count={tweet.favorite_count}
-        user={tweet.user}
+        user_name={tweet.user_name}
+        user_id={tweet.user_id}
       />
     });
 
@@ -104,7 +106,7 @@ export default class Adaptive extends React.Component {
               margin="normal"
               variant="outlined"
               onChange={this.updateNewTweet}
-              style={{width: '50%'}}
+              style={{width: '70%'}}
             />
           </div>
 
@@ -136,10 +138,6 @@ export default class Adaptive extends React.Component {
 
 const styles = {
   tweet_container: {
-    // display: 'flex',
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    // flexDirection: "column",
     height: "100%",
     overflowY: "scroll"
   },

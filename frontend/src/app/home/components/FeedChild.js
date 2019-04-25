@@ -10,7 +10,8 @@ export default class FeedChild extends React.Component {
       created_at: this.props.created_at,
       favorited: this.props.favorited,//
       favorite_count: this.props.favorite_count,
-      user: this.props.user//
+      user_name: this.props.user_name,
+      user_id: this.props.user_id
     }
   }
 
@@ -18,7 +19,7 @@ export default class FeedChild extends React.Component {
     if (this.state.user !== "") {
       return (
         <Paper>
-          <small>{this.state.user} - {this.state.created_at}</small>
+          <small>{this.state.user_name} - {this.state.created_at}</small>
           <p>{this.state.text}</p>
         </Paper>
       );
