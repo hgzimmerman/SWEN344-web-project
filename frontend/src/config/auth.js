@@ -3,6 +3,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import { Route, Redirect, withRouter } from 'react-router-dom';
 
 export const PrivateRoute = function PrivateRoute({ component: Component, ...rest }) {
+  if (!fakeAuth.isAuthenticated){
+    alert('You must log in to view this page!')
+  }
   return (
     <Route
       {...rest}

@@ -18,7 +18,6 @@ export default class HomeView extends React.Component {
   }
 
 
-
   openModal(){
     this.setState({ visible: true });
 
@@ -73,9 +72,11 @@ export default class HomeView extends React.Component {
                   />
                 </div>
               </div>
+
               <Paper style={styles.ad}>
                     <img src="/api/advertisement" alt="advertisement"></img>
               </Paper>
+
 
             </div>
           : <div style={{marginTop: 50}}>

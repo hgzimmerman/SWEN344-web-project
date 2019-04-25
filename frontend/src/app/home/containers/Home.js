@@ -90,6 +90,7 @@ export default class Home extends React.Component {
 
   }
 
+
   postFeed() {
     if (this.state.post !== "") {
       const jwt = localStorage.getItem("jwt");
@@ -128,6 +129,7 @@ export default class Home extends React.Component {
       alert('You most enter text to post');
     }
   }
+
 
   render(){
     return(

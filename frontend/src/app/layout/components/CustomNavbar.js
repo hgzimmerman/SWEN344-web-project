@@ -26,9 +26,11 @@ export default class CustomNavbar extends React.Component {
   render(){
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
+
     if (isAuthenticated()) {
       return(
         <nav>
+
           <AppBar position="static" style={styles.navbar}>
             <Toolbar>
               <Link to="/" style={styles.tab}>
@@ -51,12 +53,14 @@ export default class CustomNavbar extends React.Component {
                   Weather
                 </Typography>
               </Link>
+
               <Link to="/adaptive" style={styles.tab}>
                 <Typography variant="h6" color="inherit">
                   Adaptive
                 </Typography>
               </Link>
               {isAuthenticated() && (
+
                 <div style={{float: 'right'}}>
                   <IconButton
                     aria-owns={open ? 'menu-appbar' : undefined}
