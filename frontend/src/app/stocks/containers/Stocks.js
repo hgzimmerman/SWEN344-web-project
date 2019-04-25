@@ -29,7 +29,6 @@ export default class Stocks extends React.Component {
   }
 
   getStock(stock){
-
     if (stock){
       console.log(typeof stock)
       const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
@@ -60,7 +59,7 @@ export default class Stocks extends React.Component {
   buyStock(stock, quantity, price){
     const url = '/api/market/stock/transact';
     const headers = {
-      'Authorization: ': 'bearer token'
+      'Authorization: ': window.localstorage.getItem('jwt')
     }
     const body = JSON.stringify({
       "uuid": "temp",
