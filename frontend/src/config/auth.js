@@ -43,14 +43,62 @@ export function getJwt() {
     return window.localStorage.getItem(JWT_KEY);
 }
 
+/**
+ * Gets the jwt and
+ * @returns {*}
+ */
 export function getJwtBearer() {
     let jwt = getJwt();
     if (jwt !== null) {
         return 'bearer ' + getJwt();
     } else {
         console.error("Trying to construct bearer string for authentication while not logged in.");
-        return null
+        throw new Error("Attempt to get JWT bearer, but JWT does not exist");
     }
+}
+
+/**
+ * Creates a promise for a fetch request that has been initialized with the jwt token.
+ * @param url
+ * @param extras A object containing the body and method. It is nullable and not required for GET requests.
+ *        method Must be of type "put" | "post" | "get" | "delete" | "patch". It is not nullable.
+ *        body Must be of type string | null.
+ */
+function authenticatedFetch(url, extras) {
+    let headers = {
+      "Authorization": getJwtBearer()
+    };
+    if (extras !== undefined && extras.method !== undefined && extras.body !== undefined) {
+      console.log("making a request with a body");
+      let init = {
+        headers,
+        body: extras.body,
+        method: extras.method
+      };
+      return fetch(url, init)
+    } else {
+
+      console.log("making request without body");
+      return fetch(url, {headers})
+    }
+}
+
+// TODO some solution for post/put/patch
+/**
+ * Authenticates a request, then deserializes the response and handles the error.
+ * @param url
+ * @returns {*}
+ */
+export function authenticatedFetchDe(url, extras) {
+  return authenticatedFetch(url, extras)
+    .then(response => {
+      let json = response.json();
+      if (response.ok) {
+        return json;
+      } else {
+        return json.then(err => {throw err;});
+      }
+    })
 }
 
 export const AuthButton = withRouter(
