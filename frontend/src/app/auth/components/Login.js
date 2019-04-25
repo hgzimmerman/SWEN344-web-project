@@ -56,7 +56,6 @@ export default class Login extends React.Component {
     );
   }
 }
-
 const styles = {
   container: {
     padding: 15,

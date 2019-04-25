@@ -3,15 +3,21 @@ import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
 import PostForm from '../containers/PostForm.js';
+import FeedChild from './FeedChild.js';
+import PostView from './PostView.js';
 import '../../../App.css';
 
 export default class HomeView extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      visible: false
+      visible: false,
+      feed: null,
+      isLoading: true
     }
   }
+
+
 
   openModal(){
     this.setState({ visible: true });
@@ -20,7 +26,11 @@ export default class HomeView extends React.Component {
 
   closeModal(){
     this.setState({ visible: false });
+  }
 
+  componentDidMount() {
+    // todo actually get the feed :/
+    this.setState({isLoading: false})
   }
 
   render() {
@@ -30,8 +40,18 @@ export default class HomeView extends React.Component {
           (!this.props.isLoading)
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
-                <h2>Feed</h2>
-                <PostForm/>
+                <h2>Twitter Feed</h2>
+                <PostView
+                  post={this.props.post}
+                  postFeed={this.props.postFeed}
+                />
+                <br/>
+                {
+                  // TODO the state for this object should be moved to its own inner component
+                  (this.state.feed != null)
+                    ? displayFeed(this.state.feed)
+                    : <></>
+                }
               </Paper>
 
               <div style={{padding: 30}}>
@@ -55,7 +75,7 @@ export default class HomeView extends React.Component {
               </div>
               <Paper style={styles.ad}>
                     <img src="/api/advertisement" alt="advertisement"></img>
-              </Paper> 
+              </Paper>
 
             </div>
           : <div style={{marginTop: 50}}>
@@ -72,6 +92,20 @@ export default class HomeView extends React.Component {
 
   }
 
+}
+function displayFeed(feed) {
+  var tweets = [];
+  for (var i = 0; i < feed.length; i++) {
+    tweets.push(<FeedChild
+      text={feed[i].text}
+      id={feed[i].id}
+      created_at={feed[i].created_at}
+      favorited={feed[i].favorited}
+      favorite_count={feed[i].favorite_count}
+      user={feed[i].user}
+      />)
+  }
+  return <div>{tweets}</div>;
 }
 
 const styles = {

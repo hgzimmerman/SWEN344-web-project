@@ -5,16 +5,41 @@ export default class Home extends React.Component {
   constructor(props){
     super(props);
     this.state = {
+      feed:[],
+      post: '',
       weather: null,
       isLoading: true
-    }
+    };
     this.getWeather = this.getWeather.bind(this);
 
   }
 
   componentDidMount(){
-    this.getWeather().then(() => this.getStocks());
+    this.getWeather().then(() => this.getStocks()).then(() => this.getFeed());
 
+  }
+
+  getFeed() {
+    const jwt = localStorage.getItem("jwt");
+    const url = `api/twitter_proxy/feed`;
+
+    return fetch(url,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'jwt': jwt
+        }
+      }
+    )
+    .then((res) => res.json())
+        .then((res) => {
+          this.setState({
+            feed: JSON.parse(res.feed_response)
+          });
+        }
+      );
   }
 
   getWeather(){
@@ -65,9 +90,51 @@ export default class Home extends React.Component {
 
   }
 
+  postFeed() {
+    if (this.state.post !== "") {
+      const jwt = localStorage.getItem("jwt");
+      const url = `api/twitter_proxy/tweet/`;
+      return fetch(url,
+        {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jwt: jwt,
+            text: this.state.post
+          })
+        })
+        .then((res) => res.json())
+          .then((res) =>
+            {
+              if (res === 200) {
+                alert("Tweet successfully posted");
+                this.setState({
+                  isLoading: false,
+                  error: false
+                });
+              } else {
+                alert("There was an error posting your tweet");
+                this.setState({
+                    isLoading: false,
+                    error: true
+                })
+              }
+            }
+        );
+    } else {
+      alert('You most enter text to post');
+    }
+  }
+
   render(){
     return(
       <HomeView
+        feed={this.state.feed}
+        post={this.state.post}
+        postFeed={this.postFeed}
         isLoading={this.state.isLoading}
         weather={this.state.weather}
         stocks={this.state.stocks}
