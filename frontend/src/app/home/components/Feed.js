@@ -1,8 +1,8 @@
 import React from 'react';
-import FeedChild from "./FeedChild";
 import {authenticatedFetchDe} from "../../../config/auth";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import Paper from "@material-ui/core/Paper";
 
 export default class Adaptive extends React.Component {
   constructor(props) {
@@ -18,24 +18,10 @@ export default class Adaptive extends React.Component {
     this.displayFeed = this.displayFeed.bind(this);
   }
 
-  // TODO this technically isn't needed, but this was initially created to work around a bug in FeedChild, where a JS object was attempted to be rendered
-  static transformTweet(tweet) {
-    return {
-      text: tweet.text,
-      id: tweet.id,
-      created_at: tweet.created_at,
-      favorited: tweet.favorited,
-      favorite_count: tweet.favorite_count,
-      user_name: tweet.user.name,
-      user_id: tweet.user.id
-    }
-  }
-
   componentDidMount() {
     const url = "/api/twitter_proxy/feed";
     return authenticatedFetchDe(url)
-      .then(responseFeed => {
-        let feed = responseFeed.map(tweet => Adaptive.transformTweet(tweet));
+      .then(feed => {
         this.setState({
           feed,
           isLoading: false,
@@ -55,12 +41,13 @@ export default class Adaptive extends React.Component {
     };
     let body = JSON.stringify(body_obj);
     return authenticatedFetchDe(url, {method: "POST", body})
-      .then(tweet => Adaptive.transformTweet(tweet))
       .then(tweet => {
         if (this.state.feed != null) {
           console.log("successfully tweeted a thing");
           this.setState(prevState => ({
-            feed: [...prevState.feed.slice(), tweet] // stick the new tweet at the beginning
+            newTweet: "",
+            feed: [tweet, ...prevState.feed.slice()], // stick the new tweet at the beginning
+            error: null
           }))
         }
       })
@@ -78,15 +65,12 @@ export default class Adaptive extends React.Component {
 
   displayFeed() {
     let tweets = this.state.feed.map(tweet => {
-      return <FeedChild
-        text={tweet.text}
-        id={tweet.id}
-        created_at={tweet.created_at}
-        favorited={tweet.favorited}
-        favorite_count={tweet.favorite_count}
-        user_name={tweet.user_name}
-        user_id={tweet.user_id}
-      />
+      return (
+        <Paper>
+          <small>{tweet.user.name} - {tweet.created_at}</small>
+          <p>{tweet.text}</p>
+        </Paper>
+      );
     });
 
     return <div style={styles.tweet_container}>
