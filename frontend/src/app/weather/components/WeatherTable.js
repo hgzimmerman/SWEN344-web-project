@@ -7,12 +7,16 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Loader from 'react-loader-spinner';
 
+/**
+ * A pure component that just displays weather info.
+ */
 export default class WeatherTable extends React.Component {
+  // Parses precipitation for the day's weather.
   getPrecip() {
-    console.log("Table: " + this.props.weather);
-		var prec = '';
-		var i;
-		for (i = 0; i < this.props.weather.weather.length; i++) {
+    console.log("Weather Table data: " + this.props.weather);
+    let prec = '';
+    let i;
+    for (i = 0; i < this.props.weather.weather.length; i++) {
 			if (i === this.props.weather.weather.length-1) {
 				prec += this.props.weather.weather[i].main;
 			}
@@ -26,7 +30,7 @@ export default class WeatherTable extends React.Component {
   render(){
     return (
       (this.props.weather !== null && this.props.weather !== undefined)
-        ? <div className="App">
+        ? <div>
             <div style={{float:'center', margin: 10}} className="tables">
                 <Paper style={styles.root}>
                   <h2>{this.props.zipCode}</h2>
@@ -90,4 +94,4 @@ const styles = {
   panel: {
     padding: 30
   }
-}
+};

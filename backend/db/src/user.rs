@@ -77,10 +77,11 @@ impl User {
     }
 
     /// Sets the zip code for the user.
-    pub fn set_zip_code(user_uuid: Uuid, zip: String, conn: &PgConnection) -> QueryResult<User> {
+    pub fn set_zip_code(user_uuid: Uuid, zip: String, conn: &PgConnection) -> QueryResult<String> {
         diesel::update(users::table.find(user_uuid))
-            .set(users::zip_code.eq(zip))
-            .get_result(conn)
+            .set(users::zip_code.eq(zip.clone()))
+            .execute(conn)?;
+        Ok(zip)
     }
 
     /// Gets the user's zip code.
