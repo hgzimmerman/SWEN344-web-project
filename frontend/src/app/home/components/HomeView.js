@@ -60,7 +60,7 @@ export default class HomeView extends React.Component {
               </div>
 
               <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"></img>
+                    <img src="/api/advertisement" alt="advertisement"/>
               </Paper>
 
 
@@ -80,7 +80,6 @@ export default class HomeView extends React.Component {
   }
 
 }
-
 
 const styles = {
   container: {
