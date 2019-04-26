@@ -380,5 +380,22 @@ mod integration_test {
                 assert_eq!(1, r[0].transactions[0].quantity)
             });
         }
+
+
+    }
+
+    #[test]
+    fn advertisement_works() {
+        setup_warp(|_fixture: &UserFixture, pool: Pool| {
+            let secret = Secret::new("test");
+            let s = State::testing_init(pool, secret);
+            let filter = routes(&s);
+
+            let resp = warp::test::request()
+                .method("GET")
+                .path("/api/advertisement")
+                .reply(&filter);
+            assert_eq!(resp.status(), 200);
+        });
     }
 }
