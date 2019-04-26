@@ -1,6 +1,6 @@
 //! Responsible for hosting routes that deal with stock market data.
 use crate::state::State;
-use warp::{filters::BoxedFilter, path, Filter, Reply};
+use warp::{path, Filter, Reply};
 
 use crate::{
     error::Error,
@@ -48,7 +48,7 @@ pub struct StockAndPerfResponse {
 /// # Arguments
 /// s - State object reference required for accessing db connections, auth keys,
 /// and other stateful constructs.
-pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
+pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     info!("Attaching Market Api");
     let transact = path!("transact")
         .and(warp::post2())
@@ -120,7 +120,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
                             performance: net,
                         }
                     })
-                    .collect::<Vec<StockAndPerfResponse>>() // TODO make an actual type for this.
+                    .collect::<Vec<StockAndPerfResponse>>()
             },
         )
         .map(util::json);
@@ -132,7 +132,7 @@ pub fn market_api(s: &State) -> BoxedFilter<(impl Reply,)> {
             .or(portfolio_performance),
     );
 
-    path!("market").and(stock_api).boxed()
+    path!("market").and(stock_api)
 }
 
 /// Get the stock or create it if needed.
@@ -153,6 +153,7 @@ fn transact(
     user_uuid: Uuid,
     conn: PooledConn,
 ) -> Result<StockTransaction, Error> {
+    info!("Transacting stock {:?}, at current price: {}, for user: {}", request, current_price, user_uuid);
     let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
 
     let stock = stock.or_else(|e| match e {
@@ -195,6 +196,9 @@ fn get_current_price(
     stock_symbol: &str,
     client: &HttpsClient,
 ) -> impl Future<Item = f64, Error = Error> {
+    info!("Getting current price for stock: {}", stock_symbol);
+    let stock_symbol_copy = stock_symbol.to_string();
+
     let uri = format!(
         "https://api.iextrading.com/1.0/stock/{}/price",
         stock_symbol
@@ -210,7 +214,12 @@ fn get_current_price(
                 .and_then(|res| {
                     res.into_body().concat2() // Await the whole body
                 })
-                .map_err(move |_| Error::connection_failed(uri))
+                .map_err(move |_| {
+                    Error::dependent_connection_failed(
+                        uri.to_string(),
+                        format!("Could not get current price for {}.", stock_symbol_copy),
+                    )
+                })
                 .and_then(move |chunk: Chunk| -> Result<f64, Error> {
                     let v = chunk.to_vec();
                     let body = String::from_utf8_lossy(&v).to_string();
@@ -232,6 +241,7 @@ fn get_current_prices(
     stock_symbols: &[&str],
     client: &HttpsClient,
 ) -> impl Future<Item = Vec<f64>, Error = Error> {
+    info!("Getting current prices for multiple stocks: {:?}", stock_symbols);
     let uri: Uri = format!(
         "https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price",
         stock_symbols.join(",")
@@ -251,15 +261,15 @@ fn get_current_prices(
         .and_then(|res| {
             res.into_body().concat2() // Await the whole body
         })
-        .map_err(move |_| Error::DependentConnectionFailed {
-            url: uri.to_string(),
+        .map_err(move |_| {
+            Error::dependent_connection_failed(uri.to_string(), "Could not get current stocks.")
         })
         .and_then(|chunk: Chunk| {
             let v = chunk.to_vec();
             let body = String::from_utf8_lossy(&v).to_string();
             serde_json::from_str::<HashMap<String, Price>>(&body)
                 .map(|r| {
-                    info!("Get current prices: {:#?}", r);
+                    info!("Got current prices: {:#?}", r);
                     r.values().map(|v| v.price).collect()
                 })
                 .map_err(|_| {

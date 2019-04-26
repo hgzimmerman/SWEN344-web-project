@@ -9,7 +9,7 @@ export default class Home extends React.Component {
       post: '',
       weather: null,
       isLoading: true
-    }
+    };
     this.getWeather = this.getWeather.bind(this);
 
   }
