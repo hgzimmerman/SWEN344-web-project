@@ -1,80 +1,76 @@
 import React from 'react';
-import Paper from '@material-ui/core/Paper';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Loader from 'react-loader-spinner';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
+import WeatherTable from './WeatherTable.js';
 
-export default class WeatherView extends React.component {
-  constructor(props){
+export default class WeatherView extends React.Component {
+  constructor(props) {
     super(props);
     this.state = {
       weather: this.props.weather,
-      zipCode: '',
-      isLoading: this.props.isLoading
+      zipCode: this.props.zipCode,
+      isLoading: this.props.isLoading,
+      error: this.props.error
     }
     this.onSearchWeather = this.onSearchWeather.bind(this);
     this.getWeather = this.props.getWeather.bind(this);
   }
 
-    onSearchWeather(e) {
-      this.setState({
-        zipCode: e.target.value,
-        isLoading: true
-      });
-    }
+  onSearchWeather(e) {
+    this.setState({
+      zipCode: e.target.value,
+      isLoading: true
+    });
+  }
 
-    render() {
-      return {
-        <div className="App">
-          <div style={styles.searchBar}>
-            <TextField
-              id="outlined-with-placeholder"
-              label="Search"
-              placeholder="ZIP Code..."
-              margin="normal"
-              variant="outlined"
-              onChange={this.onSearchWeather}
-              style={{width: '50%'}}
-            />
-          </div>
-
-          <Button
-            onClick={() => this.getWeather(this.state.zipCode)}
-            variant="contained"
-            style={styles.button}
-          >
-            Search
-          </Button>
-          <div style={{textAlign: 'center'}} >
-
-          </div>
-          <div>
-            {
-              (!this.state.isLoading)
-                ? (this.state.error)
-                  ? <p>
-                      ZIP Code
-                      <span style={styles.bold}> "{this.state.zipCode}" </span>
-                      does not exist
-                    </p>
-                  : (this.state.weather !== undefined)
-                    ? <div>
-                        <WeatherTable
-                          weather={this.state.weather}
-
-                        />
-                      </div>
-                    : <div></div>
-                : <div></div>
-
-            }
-          </div>
+  render() {
+    return (
+      <div className="App">
+        <div style={styles.searchBar}>
+          <TextField
+            id="outlined-with-placeholder"
+            label="Search"
+            placeholder="ZIP Code..."
+            margin="normal"
+            variant="outlined"
+            onChange={this.onSearchWeather}
+            style={{width: '50%'}}
+          />
         </div>
-      );
-    }
+
+        <Button
+          onClick={() => this.getWeather(this.state.zipCode)}
+          variant="contained"
+          style={styles.button}
+        >
+          Search
+        </Button>
+        <div style={{textAlign: 'center'}} >
+
+        </div>
+        <div>
+          {
+            (!this.state.isLoading)
+              ? (this.state.error)
+                ? <p>
+                    Zip Code
+                    <span style={styles.bold}> "{this.state.zipCode}" </span>
+                    does not exist
+                  </p>
+                : (this.state.weather !== undefined)
+                  ? <div>
+                      <WeatherTable
+                        weather={this.state.weather}
+                      />
+                    </div>
+                  : <div><p>Enter a Zip Code for Weather</p></div>
+                : <div><p>Weather Loading...</p></div>
+          }
+        </div>
+      </div>
+    );
+  }
+
 }
 
 const styles = {
@@ -102,3 +98,4 @@ const styles = {
   bold: {
     fontWeight: 'bold'
   }
+}

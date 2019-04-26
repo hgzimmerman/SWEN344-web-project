@@ -5,10 +5,10 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Loader from 'react-loader-spinner';
 
 export default class WeatherTable extends React.Component {
-	getPrecip() {
+  getPrecip() {
+    console.log("Table: " + this.props.weather);
 		var prec = '';
 		var i;
 		for (i = 0; i < this.props.weather.weather.length; i++) {
@@ -60,18 +60,8 @@ export default class WeatherTable extends React.Component {
               </Table>
             </Paper>
           </div>
-        : <div style={{marginTop: 50}}>
-              <Loader
-                 type="Oval"
-                 color="#00BFFF"
-                 height="100"
-                 width="100"
-              />
-            </div>
-        }
       </div>
     );
-
   }
 
 }
