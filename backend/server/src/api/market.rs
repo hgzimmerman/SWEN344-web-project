@@ -70,7 +70,7 @@ pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
         .and(warp::path::end())
         .and(user_filter(s))
         .and(s.db())
-        .and_then(|user_uuid: Uuid, conn: PooledConn| -> Vec<UserStockResponse> {
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
                 .map(util::json)
