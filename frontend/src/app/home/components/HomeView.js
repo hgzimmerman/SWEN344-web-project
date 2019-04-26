@@ -34,34 +34,31 @@ export default class HomeView extends React.Component {
         {
           (!this.props.isLoading)
           ? <div style={styles.container}>
-              <Paper style={styles.feed}>
-                <h2>Twitter Feed</h2>
-                <Feed/>
-              </Paper>
+              <div style={styles.section}>
+                <Paper style={styles.feed}>
+                  <h2>Twitter Feed</h2>
+                  <Feed/>
+                </Paper>
+              </div>
 
-              <div style={{padding: 30}}>
+              <div style={styles.section}>
+                {renderEvents(this.props.events)}
+                <HomeStocksTable
+                  stocks={this.props.stocks}
+                />
+              </div>
+
+              <div style={styles.section}>
+                <Paper style={styles.ad}>
+                  <img src="/api/advertisement" alt="advertisement"/>
+                </Paper>
                 <Paper style={styles.weather}>
                   <h2>Temperature for {this.props.zipCode}</h2>
                   <p style={styles.temp}>
                     {this.props.weather.main.temp} F
                   </p>
                 </Paper>
-
-                <Paper style={styles.events}>
-                  <h2>Events</h2>
-                  <p style={styles.text}>No events scheduled for today</p>
-                </Paper>
-                <div>
-                  <HomeStocksTable
-                    stocks={this.props.stocks}
-                    sellStock={this.props.sellStock}
-                  />
-                </div>
               </div>
-
-              <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"/>
-              </Paper>
 
 
             </div>
@@ -81,46 +78,68 @@ export default class HomeView extends React.Component {
 
 }
 
+function renderEvents(events) {
+  return (
+  <Paper style={styles.events}>
+    <h2>Events</h2>
+    {/*TODO Actually show the event instead of stringifying them*/}
+    {
+      (events.length > 0)
+        ? <>{JSON.stringify(events)}</>
+        : <p style={styles.text}>No events scheduled for today</p>
+    }
+  </Paper>
+  )
+}
+
 const styles = {
   container: {
     display: 'flex',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    padding: 10
+  },
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    paddingLeft: "15px",
+    paddingRight: "15px",
+    marginTop: "25px",
+    minWidth: 440
   },
   stocks: {
     width: '40%',
     height: 300,
-    marginTop: 20,
     textAlign: 'center',
     color: 'black'
   },
   feed: {
     display: "flex",
     flexDirection: "column",
-    width: '40%',
-    height: 700,
-    marginTop: 20,
+    width: "600px",
+    height: "700px",
     textAlign: 'center',
     color: 'black'
   },
   weather: {
-    height: 150,
     marginTop: 20,
+    minHeight: 150,
   },
   temp: {
     color: '#00A6DD',
     fontWeight: '400',
     fontSize: 40
   },
-    ad: {
-    height: 200
+  ad: {
+    height: "400px",
+    minWidth: "300px"
+
   },
   events: {
-    height: 230
+    flexGrow: 3,
+    height: 250
   },
   text: {
     color: '#7c7c7c'
   },
 
-}
+};
