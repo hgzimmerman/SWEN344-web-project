@@ -1,5 +1,6 @@
 import React from 'react';
 import HomeView from '../components/HomeView.js';
+import {authenticatedFetchDe} from "../../../config/auth";
 
 export default class Home extends React.Component {
   constructor(props){
@@ -8,6 +9,7 @@ export default class Home extends React.Component {
       feed:[],
       post: '',
       weather: null,
+      zipCode: '14623',
       isLoading: true
     };
     this.getWeather = this.getWeather.bind(this);
@@ -15,12 +17,35 @@ export default class Home extends React.Component {
   }
 
   componentDidMount(){
-    this.getWeather().then(() => this.getStocks());
+    this.getZipCode().then(zipCode => this.getWeather(zipCode))
+      .then(() => this.getStocks());
   }
 
+   /**
+   * Gets the zip code from the backend.
+   * Will default to the rochester zip code if the user hasn't set their zip code yet.
+   */
+  getZipCode() {
+    const defaultZipCode = "14623";
+    const url = "/api/user/zip";
+    return authenticatedFetchDe(url)
+      .then(response => {
+        if (response !== null && response !== undefined) {
+          this.setState({zipCode: response})
+        } else {
+          this.setState({zipCode: defaultZipCode})
+        }
+        return response
+      })
+      .catch(() => {
+          console.error("Couldn't get zip code, defaulting to default zip code");
+          this.setState({zipCode: defaultZipCode})
+        }
+      )
+  }
 
-  getWeather(){
-    const url = 'https://api.openweathermap.org/data/2.5/weather?zip=14623,us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial';
+  getWeather(zipCode){
+    const url = `https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial`;
 
     return fetch(url, { method: 'GET' })
       .then((res) => res.json())
@@ -116,6 +141,7 @@ export default class Home extends React.Component {
         postFeed={this.postFeed}
         isLoading={this.state.isLoading}
         weather={this.state.weather}
+        zipCode={this.state.zipCode}
         stocks={this.state.stocks}
         sellStock={this.sellStock}
       />

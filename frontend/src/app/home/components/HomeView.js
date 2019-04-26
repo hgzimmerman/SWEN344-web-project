@@ -41,7 +41,7 @@ export default class HomeView extends React.Component {
 
               <div style={{padding: 30}}>
                 <Paper style={styles.weather}>
-                  <h2>RIT's Temperature</h2>
+                  <h2>Temperature for {this.props.zipCode}</h2>
                   <p style={styles.temp}>
                     {this.props.weather.main.temp} F
                   </p>
