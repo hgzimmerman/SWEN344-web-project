@@ -2,21 +2,17 @@ import React from 'react';
 import Paper from '@material-ui/core/Paper';
 import Loader from 'react-loader-spinner';
 import HomeStocksTable from '../../stocks/components/HomeStocksTable.js';
-import PostForm from '../containers/PostForm.js';
-import FeedChild from './FeedChild.js';
-import PostView from './PostView.js';
 import '../../../App.css';
+import Feed from "./Feed";
 
 export default class HomeView extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       visible: false,
-      feed: null,
       isLoading: true
     }
   }
-
 
 
   openModal(){
@@ -29,7 +25,6 @@ export default class HomeView extends React.Component {
   }
 
   componentDidMount() {
-    // todo actually get the feed :/
     this.setState({isLoading: false})
   }
 
@@ -41,17 +36,7 @@ export default class HomeView extends React.Component {
           ? <div style={styles.container}>
               <Paper style={styles.feed}>
                 <h2>Twitter Feed</h2>
-                <PostView
-                  post={this.props.post}
-                  postFeed={this.props.postFeed}
-                />
-                <br/>
-                {
-                  // TODO the state for this object should be moved to its own inner component
-                  (this.state.feed != null)
-                    ? displayFeed(this.state.feed)
-                    : <></>
-                }
+                <Feed/>
               </Paper>
 
               <div style={{padding: 30}}>
@@ -73,9 +58,11 @@ export default class HomeView extends React.Component {
                   />
                 </div>
               </div>
+
               <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"></img>
+                    <img src="/api/advertisement" alt="advertisement"/>
               </Paper>
+
 
             </div>
           : <div style={{marginTop: 50}}>
@@ -93,20 +80,6 @@ export default class HomeView extends React.Component {
   }
 
 }
-function displayFeed(feed) {
-  var tweets = [];
-  for (var i = 0; i < feed.length; i++) {
-    tweets.push(<FeedChild
-      text={feed[i].text}
-      id={feed[i].id}
-      created_at={feed[i].created_at}
-      favorited={feed[i].favorited}
-      favorite_count={feed[i].favorite_count}
-      user={feed[i].user}
-      />)
-  }
-  return <div>{tweets}</div>;
-}
 
 const styles = {
   container: {
@@ -123,6 +96,8 @@ const styles = {
     color: 'black'
   },
   feed: {
+    display: "flex",
+    flexDirection: "column",
     width: '40%',
     height: 700,
     marginTop: 20,

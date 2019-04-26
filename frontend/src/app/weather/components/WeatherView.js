@@ -11,7 +11,7 @@ export default class WeatherView extends React.Component {
       zipCode: this.props.zipCode,
       isLoading: this.props.isLoading,
       error: this.props.error
-    }
+    };
     this.onSearchWeather = this.onSearchWeather.bind(this);
     this.getWeather = this.props.getWeather.bind(this);
   }
@@ -98,4 +98,4 @@ const styles = {
   bold: {
     fontWeight: 'bold'
   }
-}
+};

@@ -29,22 +29,59 @@ export default class Stocks extends React.Component {
   }
 
   getStock(stock){
-    const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
-    return fetch(url, { method: 'GET' })
+
+    if (stock){
+      console.log(typeof stock)
+      const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
+      return fetch(url, { method: 'GET' })
+        .then((res) => res.json())
+          .then((res) => {
+            if (Object.entries(res).length === 0){
+              this.setState({
+                error: true,
+                isLoading: false
+              });
+            }
+            else {
+              this.setState({
+                stock: res,
+              });
+              this.getChart(stock);
+            }
+          });
+    }
+    else {
+      alert('Please enter a valid stock')
+    }
+
+
+  }
+
+  buyStock(stock, quantity, price){
+    const url = '/api/market/stock/transact';
+    const headers = {
+      'Authorization: ': 'bearer token'
+    }
+    const body = JSON.stringify({
+      "uuid": "temp",
+      "user_uuid": "temp",
+      "stock_uuid": "temp",
+      "quantity": quantity,
+      "price_of_stock_at_time_of_trading": price,
+      "record_time": 'date'
+    });
+
+    return fetch(url, { method: 'POST', headers, body })
       .then((res) => res.json())
         .then((res) => {
-          if (Object.entries(res).length === 0){
-            this.setState({
-              error: true,
-              isLoading: false
-            });
+          if (res === 200){
+            alert(`Bought ${quantity}x ${stock} shares!`)
           }
           else {
-            this.setState({
-              stock: res,
-            });
-            this.getChart(stock);
+            alert('There was a problem with the transaction. Try again later!')
           }
+        }).catch((error) => {
+          alert('There was a problem with the transaction. Try again later!')
         });
 
   }
