@@ -55,7 +55,11 @@ export default class HomeView extends React.Component {
                 <Paper style={styles.weather}>
                   <h2>Temperature for {this.props.zipCode}</h2>
                   <p style={styles.temp}>
-                    {this.props.weather.main.temp} F
+                    {
+                      (this.props.weather !== null && this.props.weather.main !== null)
+                        ? <>{this.props.weather.main.temp} F</>
+                        : <></>
+                    }
                   </p>
                 </Paper>
               </div>
