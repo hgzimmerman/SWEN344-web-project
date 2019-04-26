@@ -29,6 +29,7 @@ export default class HomeView extends React.Component {
   }
 
   render() {
+    const adUrl = "/api/advertisement";
     return (
       <div className="App">
         {
@@ -50,13 +51,16 @@ export default class HomeView extends React.Component {
 
               <div style={styles.section}>
                 <Paper style={styles.ad}>
-                  <img src="/api/advertisement" alt="advertisement"/>
+                  <img src={adUrl} alt="advertisement"/>
                 </Paper>
                 <Paper style={styles.weather}>
                   <h2>Temperature for {this.props.zipCode}</h2>
                   <p style={styles.temp}>
                     {
-                      (this.props.weather !== null && this.props.weather.main !== null)
+                      (this.props.weather !== null
+                        && this.props.weather !== undefined
+                        && this.props.weather.main !== null
+                        && this.props.weather.main !== undefined)
                         ? <>{this.props.weather.main.temp} F</>
                         : <></>
                     }

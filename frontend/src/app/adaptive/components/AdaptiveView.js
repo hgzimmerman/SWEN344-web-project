@@ -22,7 +22,6 @@ export default class StocksView extends React.Component {
 
   dataPoints() {
     if (this.state.data != null) {
-      const now = Date.now();
       return this.state.data.map((item) => {
           return {
             x: new Date(item.time_recorded),
@@ -66,7 +65,7 @@ export default class StocksView extends React.Component {
               ? <div> {this.state.error.message} </div>
               : (this.state.data !== undefined && this.state.data !== null)
                 ? <CanvasJSChart options = {options} />
-                : <div></div>
+                : <></>
             : <div>Loading...</div>
         }
       </div>
