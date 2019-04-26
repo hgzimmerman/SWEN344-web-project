@@ -34,26 +34,30 @@ export default class Adaptive extends React.Component {
   }
 
   postTweet() {
-    console.log("posting tweet");
-    const url = "/api/twitter_proxy/tweet";
-    let body_obj = {
-      text: this.state.newTweet
-    };
-    let body = JSON.stringify(body_obj);
-    return authenticatedFetchDe(url, {method: "POST", body})
-      .then(tweet => {
-        if (this.state.feed != null) {
-          console.log("successfully tweeted a thing");
-          this.setState(prevState => ({
-            newTweet: "",
-            feed: [tweet, ...prevState.feed.slice()], // stick the new tweet at the beginning
-            error: null
-          }))
-        }
-      })
-      .catch(error => this.setState({
-        error
-      }));
+    if (this.state.newTweet !== "") {
+      console.log("posting tweet");
+      const url = "/api/twitter_proxy/tweet";
+      let body_obj = {
+        text: this.state.newTweet
+      };
+      let body = JSON.stringify(body_obj);
+      return authenticatedFetchDe(url, {method: "POST", body})
+        .then(tweet => {
+          if (this.state.feed != null) {
+            console.log("successfully tweeted a thing");
+            this.setState(prevState => ({
+              newTweet: "",
+              feed: [tweet, ...prevState.feed.slice()], // stick the new tweet at the beginning
+              error: null
+            }))
+          }
+        })
+        .catch(error => this.setState({
+          error
+        }));
+    } else {
+      alert("Your tweet must have some content");
+    }
   }
 
 

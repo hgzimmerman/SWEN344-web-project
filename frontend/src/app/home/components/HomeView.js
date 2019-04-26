@@ -47,15 +47,11 @@ export default class HomeView extends React.Component {
                   </p>
                 </Paper>
 
-                <Paper style={styles.events}>
-                  <h2>Events</h2>
-                  <p style={styles.text}>No events scheduled for today</p>
-                </Paper>
-                <div>
-                  <HomeStocksTable
-                    stocks={this.props.stocks}
-                  />
-                </div>
+                {renderEvents(this.props.events)}
+
+                <HomeStocksTable
+                  stocks={this.props.stocks}
+                />
               </div>
 
               <Paper style={styles.ad}>
@@ -78,6 +74,20 @@ export default class HomeView extends React.Component {
 
   }
 
+}
+
+function renderEvents(events) {
+  return (
+  <Paper style={styles.events}>
+    <h2>Events</h2>
+    {/*TODO Actually show the event instead of stringifying them*/}
+    {
+      (events.length > 0)
+        ? <>{JSON.stringify(events)}</>
+        : <p style={styles.text}>No events scheduled for today</p>
+    }
+  </Paper>
+  )
 }
 
 const styles = {

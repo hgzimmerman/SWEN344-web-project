@@ -134,6 +134,7 @@ export default class Home extends React.Component {
         weather={this.state.weather}
         zipCode={this.state.zipCode}
         stocks={this.state.stocks}
+        events={this.state.events}
       />
     );
 
