@@ -14,37 +14,25 @@ export default class HomeStocksTable extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      visible: false
+      visible: false,
+      stock: null
     }
-
-  }
-
-  openModal(stock){
-    this.setState({
-      visible: true,
-      stock: stock
-    });
-
-  }
-
-  closeModal(){
-    this.setState({ visible: false });
 
   }
 
   render(){
     return(
       <div className="App">
-      {
-        this.state.visible && (
-          <SellStockModal
-            stock={this.state.stock}
-            visible={this.state.visible}
-            closeModal={() => this.closeModal()}
-            sellStock={this.props.sellStock}
-          />
-        )
-      }
+      {/*{*/}
+        {/*this.state.visible && (*/}
+          {/*<SellStockModal*/}
+            {/*stock={this.state.stock}*/}
+            {/*visible={this.state.visible}*/}
+            {/*closeModal={() => this.closeModal()}*/}
+            {/*sellStock={this.props.sellStock}*/}
+          {/*/>*/}
+        {/*)*/}
+      {/*}*/}
         <div className="tables">
           <div style={{float:'left', margin: 10}}>
             <Paper style={styles.root}>
@@ -53,7 +41,6 @@ export default class HomeStocksTable extends React.Component {
                   <TableRow>
                     <TableCell align="right">Symbol</TableCell>
                     <TableCell align="right">Price</TableCell>
-                    <TableCell align="right"></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -71,19 +58,17 @@ export default class HomeStocksTable extends React.Component {
                         }
                         {stock.quote.changePercent.toFixed(3)}%
                       </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          onClick={() => this.openModal(stock.quote.symbol)}
-                          variant="contained"
-                          style={styles.button}
-                        >
-                          Sell
-                        </Button>
-                      </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+              {
+                (this.props.stocks.length === 0)
+                  ? <span> No owned stocks </span>
+                  : <></>
+              }
+
             </Paper>
           </div>
         </div>

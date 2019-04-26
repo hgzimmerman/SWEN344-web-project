@@ -54,7 +54,6 @@ export default class HomeView extends React.Component {
                 <div>
                   <HomeStocksTable
                     stocks={this.props.stocks}
-                    sellStock={this.props.sellStock}
                   />
                 </div>
               </div>
