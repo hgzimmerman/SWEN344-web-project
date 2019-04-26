@@ -122,7 +122,7 @@ export default class Weather extends React.Component {
             variant="outlined"
             onChange={this.handleOnChangeNewZip}
             onKeyPress={this.handleKeyPressNewZip}
-            style={{width: '60%'}}
+            style={{width: '50%'}}
           />
         </div>
         <Button
