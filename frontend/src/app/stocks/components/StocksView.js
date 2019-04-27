@@ -5,6 +5,7 @@ import Button from '@material-ui/core/Button';
 import StockChart from './StockChart.js';
 import BuyStockModal from './BuyStockModal.js';
 import '../../../App.css';
+import OwnedStocksTable from "./OwnedStocksTable";
 
 export default class StocksView extends React.Component {
   constructor(props){
@@ -41,10 +42,10 @@ export default class StocksView extends React.Component {
 
   }
 
-  render(){
 
-    return(
-      <div className="App" id='stocksViewRoot'>
+  renderStockSearch() {
+    return (
+      <>
         <div style={styles.searchBar} id='stocksViewSearch'>
           <TextField
             id="outlined-with-placeholder"
@@ -106,17 +107,48 @@ export default class StocksView extends React.Component {
                     </div>
                   : <></>
               : <></>
+            }
+        </div>
+        </>
 
-          }
+    )
+  }
+
+  renderOwnedStocks() {
+    return (
+      <>
+        <h3> Owned Stocks</h3>
+        <OwnedStocksTable
+          stocks={this.props.stocks}
+        />
+      </>
+    )
+  }
+
+  render() {
+    return(
+      <div className="App">
+        <div style={styles.container}>
+          <div style={styles.segment}>
+            {this.renderOwnedStocks()}
+          </div>
+          <div style={styles.segment}>
+            {this.renderStockSearch()}
+          </div>
         </div>
       </div>
     );
-
   }
-
 }
 
 const styles = {
+  container: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  segment: {
+    flexGrow: 1
+  },
   root: {
     width: '100%',
     marginTop: 20,
@@ -149,4 +181,4 @@ const styles = {
     fontWeight: 'bold'
   }
 
-}
+};

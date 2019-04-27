@@ -78,8 +78,8 @@ const styles = {
     top: '20%',
     textAlign: 'center',
     backgroundColor: 'white',
-    width: '20%',
-    height: '30%',
+    width: '300px',
+    height: '320px',
     outline: 'none',
     boxShadow: 3,
     borderRadius: 8,
@@ -92,4 +92,4 @@ const styles = {
     width: 200,
     marginTop: 30
   },
-}
+};

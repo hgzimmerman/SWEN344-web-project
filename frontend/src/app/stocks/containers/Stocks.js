@@ -63,6 +63,11 @@ export default class Stocks extends React.Component {
 
   }
 
+  /**
+   * Buys or sells a quantity of stocks
+   * @param symbol The symbol of the stock
+   * @param quantity The number of shares to sell or buy (can be negative)
+   */
   transactStock(symbol, quantity) {
     const url = '/api/market/stock/transact';
     const body = JSON.stringify({
@@ -78,7 +83,7 @@ export default class Stocks extends React.Component {
   /**
    * Gets stocks from IEX
    * @param symbols An array of strings for stock symbols.
-   * @returns {*}
+   * @returns {*} A promise resolving to an array of iex quotes
    */
   static getStocksIEX(symbols){
     if (symbols.length > 0) {
@@ -102,6 +107,9 @@ export default class Stocks extends React.Component {
     }
   }
 
+  /**
+   * Gets the owned stocks, and then associates the owned stock data with data from IEX
+   */
   getOwnedStocks() {
     const url = '/api/market/stock/performance';
     authenticatedFetchDe(url)
@@ -114,7 +122,6 @@ export default class Stocks extends React.Component {
           .then(iexResponse => {
             const combinedStocks = backendResponse.map(stock => {
               const symbol = stock.stock.stock.symbol;
-              console.log(JSON.stringify(iexResponse));
               const iexStock = iexResponse.find(iexStock => iexStock.quote.symbol.toUpperCase() === symbol.toUpperCase());
               return {
                 backendStock: stock.stock,
@@ -132,8 +139,8 @@ export default class Stocks extends React.Component {
   render(){
     return(
       <StocksView
-        id='stocksView'
         stock={this.state.stock}
+        stocks={this.state.stocks}
         data={this.state.data}
         getStock={this.getStock}
         getChart={this.getChart}
