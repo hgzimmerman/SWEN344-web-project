@@ -16,11 +16,11 @@ export default class HomeView extends React.Component {
 
 
   openModal(){
-    this.setState({ visible: true });
+    this.setState({ buyStockModalVisible: true });
   }
 
   closeModal(){
-    this.setState({ visible: false });
+    this.setState({ buyStockModalVisible: false });
   }
 
   componentDidMount() {

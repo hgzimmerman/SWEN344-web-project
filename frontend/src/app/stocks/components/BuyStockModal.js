@@ -14,13 +14,23 @@ export default class BuyStockModal extends React.Component {
     };
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
-    this.buyStock = this.props.buyStock.bind(this);
-
+    this.transactStock = this.props.transactStock.bind(this);
+    this.buyStock = this.buyStock.bind(this);
   }
-
+  componentWillReceiveProps(nextProps) {
+    console.log("buy modal got new props");
+    this.setState({visible: nextProps.visible})
+  }
   handleChangeQuantity(e) {
     this.setState({ quantity: e.target.value });
+  }
 
+  buyStock(symbol, quantity) {
+    if (quantity < 0) {
+      alert("Must have a positive quantity");
+    } else {
+      this.transactStock(symbol, quantity)
+    }
   }
 
 
@@ -49,7 +59,7 @@ export default class BuyStockModal extends React.Component {
               onClick={() => {
                 this.closeModal();
                 this.buyStock(
-                  this.props.stock, this.state.quantity, this.props.price
+                  this.props.stock, this.state.quantity
                 )
               }}
               variant="contained"
@@ -70,8 +80,8 @@ const styles = {
     top: '20%',
     textAlign: 'center',
     backgroundColor: 'white',
-    width: '20%',
-    height: '30%',
+    width: '300px',
+    height: '320px',
     outline: 'none',
     boxShadow: 3,
     borderRadius: 8,
