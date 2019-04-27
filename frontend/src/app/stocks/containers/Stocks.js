@@ -75,8 +75,8 @@ export default class Stocks extends React.Component {
       quantity: Number(quantity)
     });
     authenticatedFetchDe(url, {method: "POST", body})
-      .then(res => {
-        return null
+      .then(() => {
+        this.getOwnedStocks() // Update the whole stock table after performing a sale or purchase.
       })
   }
 

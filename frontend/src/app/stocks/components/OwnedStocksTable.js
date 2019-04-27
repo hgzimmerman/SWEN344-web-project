@@ -5,6 +5,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Button from '@material-ui/core/Button';
 
 export default class OwnedStockSTable extends React.Component {
   
@@ -39,10 +40,20 @@ export default class OwnedStockSTable extends React.Component {
           {aggregateStock.iexStock.quote.week52Low}
         </TableCell>
         <TableCell align="right">
-          Buy
+          <Button
+            onClick={() => this.props.openBuyModal(aggregateStock.iexStock.quote.symbol)}
+            size={"small"}
+          >
+            Buy
+          </Button>
         </TableCell>
         <TableCell align="right">
-          Sell
+          <Button
+            onClick={() => this.props.openSellModal(aggregateStock.iexStock.quote.symbol)}
+            size={"small"}
+          >
+            Sell
+          </Button>
         </TableCell>
       </TableRow>
     )

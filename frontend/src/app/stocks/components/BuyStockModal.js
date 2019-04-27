@@ -17,7 +17,10 @@ export default class BuyStockModal extends React.Component {
     this.transactStock = this.props.transactStock.bind(this);
     this.buyStock = this.buyStock.bind(this);
   }
-
+  componentWillReceiveProps(nextProps) {
+    console.log("buy modal got new props");
+    this.setState({visible: nextProps.visible})
+  }
   handleChangeQuantity(e) {
     this.setState({ quantity: e.target.value });
   }

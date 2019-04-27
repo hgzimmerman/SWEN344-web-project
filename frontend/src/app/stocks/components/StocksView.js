@@ -6,6 +6,7 @@ import StockChart from './StockChart.js';
 import BuyStockModal from './BuyStockModal.js';
 import '../../../App.css';
 import OwnedStocksTable from "./OwnedStocksTable";
+import SellStockModal from "./SellStockModal";
 
 export default class StocksView extends React.Component {
   constructor(props){
@@ -17,12 +18,19 @@ export default class StocksView extends React.Component {
       data: this.props.data,
       isLoading: this.props.isLoading,
       error: this.props.error,
-      visible: false
+      buyStockModalVisible: false,
+      modalStockName: '',
+      sellStockModalVisible: false,
     };
     this.onSearchStock = this.onSearchStock.bind(this);
     this.getStock = this.props.getStock.bind(this);
     this.getChart = this.props.getChart.bind(this);
 
+    this.openBuyModal = this.openBuyModal.bind(this);
+    this.closeBuyModal = this.closeBuyModal.bind(this);
+
+    this.openSellModal = this.openSellModal.bind(this);
+    this.closeSellModal = this.closeSellModal.bind(this);
   }
 
   onSearchStock(e){
@@ -33,15 +41,32 @@ export default class StocksView extends React.Component {
 
   }
 
-  openModal(){
-    this.setState({ visible: true })
+  openBuyModal(stockName){
+    console.log("Opening buy modal");
+    this.setState({
+      buyStockModalVisible: true,
+      modalStockName: stockName
+    });
+    this.forceUpdate();
+    console.log(JSON.stringify(this.state.buyStockModalVisible));
   }
 
-  closeModal(){
-    this.setState({ visible: false })
-
+  closeBuyModal(){
+    this.setState({ buyStockModalVisible: false })
   }
 
+
+  openSellModal(stockName){
+    console.log("Opening sell modal");
+    this.setState({
+      sellStockModalVisible: true,
+      modalStockName: stockName
+    })
+  }
+
+  closeSellModal(){
+    this.setState({ sellStockModalVisible: false })
+  }
 
   renderStockSearch() {
     return (
@@ -85,7 +110,7 @@ export default class StocksView extends React.Component {
                         stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
                       />
                       <Button
-                        onClick={() => this.openModal()}
+                        onClick={() => this.openBuyModal(this.state.stockName)}
                         variant="contained"
                         style={styles.buyButton}
                       >
@@ -95,22 +120,34 @@ export default class StocksView extends React.Component {
                         stock={this.state.stockName.toUpperCase()}
                         data={this.state.data}
                       />
-                      {this.state.visible && (
-                        <BuyStockModal
-                          visible={this.state.visible}
-                          stock={this.state.stockName.toUpperCase()}
-                          price={this.state.stock[this.state.stockName.toUpperCase()].quote.latestPrice}
-                          transactStock={this.props.transactStock}
-                          closeModal={() => this.closeModal()}
-                        />
-                      )}
+
                     </div>
                   : <></>
               : <></>
             }
         </div>
-        </>
+      </>
 
+    )
+  }
+
+  renderModals() {
+    return(
+      <>
+        <BuyStockModal
+          visible={this.state.buyStockModalVisible}
+          stock={this.state.modalStockName}
+          transactStock={this.props.transactStock}
+          closeModal={this.closeBuyModal}
+        />
+
+        <SellStockModal
+          visible={this.state.sellStockModalVisible}
+          stock={this.state.modalStockName}
+          transactStock={this.props.transactStock}
+          closeModal={this.closeSellModal}
+        />
+      </>
     )
   }
 
@@ -120,6 +157,8 @@ export default class StocksView extends React.Component {
         <h3> Owned Stocks</h3>
         <OwnedStocksTable
           stocks={this.props.stocks}
+          openBuyModal={this.openBuyModal}
+          openSellModal={this.openSellModal}
         />
       </>
     )
@@ -132,6 +171,7 @@ export default class StocksView extends React.Component {
           <div style={styles.segment}>
             {this.renderOwnedStocks()}
           </div>
+          {this.renderModals()}
           <div style={styles.segment}>
             {this.renderStockSearch()}
           </div>
