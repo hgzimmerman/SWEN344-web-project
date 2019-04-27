@@ -11,18 +11,27 @@ export default class SellStockModal extends React.Component {
       visible: this.props.visible,
       stock: this.props.stock,
       quantity: ''
-    }
+    };
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
-    this.sellStock = this.props.sellStock.bind(this);
-
+    this.transactStock = this.props.transactStock.bind(this);
+    this.sellStock = this.sellStock.bind(this);
   }
 
   handleChangeQuantity(e) {
     this.setState({ quantity: e.target.value });
 
   }
-
+  sellStock(symbol, quantity) {
+    // Negate the quantity given to make this transaction a sale.
+    let negatedQuantity = 0 - Number(quantity);
+    // The negated value must be below 0.
+    if (negatedQuantity <= 0) {
+      alert("Quantity to sell must be positive");
+    } else {
+      this.transactStock(symbol, negatedQuantity)
+    }
+  }
   render(){
     return (
         <Modal
@@ -48,7 +57,7 @@ export default class SellStockModal extends React.Component {
               onClick={() => {
                 this.closeModal();
                 this.sellStock(
-                  this.props.stock, this.state.quantity, this.props.price
+                  this.props.stock, this.state.quantity
                 )
               }}
               variant="contained"

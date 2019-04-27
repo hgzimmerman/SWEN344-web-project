@@ -17,7 +17,7 @@ export default class StocksView extends React.Component {
       isLoading: this.props.isLoading,
       error: this.props.error,
       visible: false
-    }
+    };
     this.onSearchStock = this.onSearchStock.bind(this);
     this.getStock = this.props.getStock.bind(this);
     this.getChart = this.props.getChart.bind(this);
@@ -99,7 +99,7 @@ export default class StocksView extends React.Component {
                           visible={this.state.visible}
                           stock={this.state.stockName.toUpperCase()}
                           price={this.state.stock[this.state.stockName.toUpperCase()].quote.latestPrice}
-                          buyStock={this.props.buyStock}
+                          transactStock={this.props.transactStock}
                           closeModal={() => this.closeModal()}
                         />
                       )}

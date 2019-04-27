@@ -14,13 +14,20 @@ export default class BuyStockModal extends React.Component {
     };
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
-    this.buyStock = this.props.buyStock.bind(this);
-
+    this.transactStock = this.props.transactStock.bind(this);
+    this.buyStock = this.buyStock.bind(this);
   }
 
   handleChangeQuantity(e) {
     this.setState({ quantity: e.target.value });
+  }
 
+  buyStock(symbol, quantity) {
+    if (quantity < 0) {
+      alert("Must have a positive quantity");
+    } else {
+      this.transactStock(symbol, quantity)
+    }
   }
 
 
@@ -49,7 +56,7 @@ export default class BuyStockModal extends React.Component {
               onClick={() => {
                 this.closeModal();
                 this.buyStock(
-                  this.props.stock, this.state.quantity, this.props.price
+                  this.props.stock, this.state.quantity
                 )
               }}
               variant="contained"

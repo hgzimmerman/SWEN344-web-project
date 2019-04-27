@@ -1,16 +1,23 @@
 import React from 'react';
 import StocksView from '../components/StocksView.js';
+import {authenticatedFetchDe} from "../../../config/auth";
 
 export default class Stocks extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      stock: '',
-      data: '',
+      stock: '', // The string being searched for
+      data: '', // The data for the searched for stock.
+      stocks: null, // All stocks owned by the user
       isLoading: true,
       error: false
-    }
+    };
+    this.transactStock = this.transactStock.bind(this);
+    this.getOwnedStocks = this.getOwnedStocks.bind(this);
+  }
 
+  componentDidMount() {
+    this.getOwnedStocks();
   }
 
   getChart(stock){
@@ -29,9 +36,8 @@ export default class Stocks extends React.Component {
   }
 
   getStock(stock){
-
     if (stock){
-      console.log(typeof stock)
+      console.log(typeof stock);
       const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
       return fetch(url, { method: 'GET' })
         .then((res) => res.json())
@@ -57,62 +63,70 @@ export default class Stocks extends React.Component {
 
   }
 
-  buyStock(stock, quantity, price){
+  transactStock(symbol, quantity) {
     const url = '/api/market/stock/transact';
-    const headers = {
-      'Authorization: ': 'bearer token'
-    }
     const body = JSON.stringify({
-      "uuid": "temp",
-      "user_uuid": "temp",
-      "stock_uuid": "temp",
-      "quantity": quantity,
-      "price_of_stock_at_time_of_trading": price,
-      "record_time": 'date'
+      symbol,
+      quantity: Number(quantity)
     });
-
-    return fetch(url, { method: 'POST', headers, body })
-      .then((res) => res.json())
-        .then((res) => {
-          if (res === 200){
-            alert(`Bought ${quantity}x ${stock} shares!`)
-          }
-          else {
-            alert('There was a problem with the transaction. Try again later!')
-          }
-        }).catch((error) => {
-          alert('There was a problem with the transaction. Try again later!')
-        });
-
+    authenticatedFetchDe(url, {method: "POST", body})
+      .then(res => {
+        return null
+      })
   }
 
-  buyStock(stock, quantity, price){
-    const url = '/api/market/stock/transact';
-    const headers = {
-      'Authorization: ': 'bearer token'
-    }
-    const body = JSON.stringify({
-      "uuid": "temp",
-      "user_uuid": "temp",
-      "stock_uuid": "temp",
-      "quantity": quantity,
-      "price_of_stock_at_time_of_trading": price,
-      "record_time": 'date'
-    });
+  /**
+   * Gets stocks from IEX
+   * @param symbols An array of strings for stock symbols.
+   * @returns {*}
+   */
+  static getStocksIEX(symbols){
+    if (symbols.length > 0) {
+      console.log("getting iex stock data");
+      const symbolsString = symbols.join(",");
+      const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${symbolsString}&types=quote`;
 
-    return fetch(url, { method: 'POST', headers, body })
-      .then((res) => res.json())
+      return fetch(url, {method: 'GET'})
+        .then((res) => res.json())
         .then((res) => {
-          if (res === 200){
-            alert(`Bought ${quantity}x ${stock} shares!`)
+          let stocksArr = [];
+          let i = 0;
+          while (i < symbols.length) {
+            stocksArr.push(res[Object.keys(res)[i]]);
+            i++;
           }
-          else {
-            alert('There was a problem with the transaction. Try again later!')
-          }
-        }).catch((error) => {
-          alert('There was a problem with the transaction. Try again later!')
+          return stocksArr;
+        });
+    } else {
+      return Promise.resolve([]);
+    }
+  }
+
+  getOwnedStocks() {
+    const url = '/api/market/stock/performance';
+    authenticatedFetchDe(url)
+      .then(backendResponse => {
+        let symbols = backendResponse.map(stock => {
+          return stock.stock.stock.symbol;
         });
 
+        return Stocks.getStocksIEX(symbols)
+          .then(iexResponse => {
+            const combinedStocks = backendResponse.map(stock => {
+              const symbol = stock.stock.stock.symbol;
+              console.log(JSON.stringify(iexResponse));
+              const iexStock = iexResponse.find(iexStock => iexStock.quote.symbol.toUpperCase() === symbol.toUpperCase());
+              return {
+                backendStock: stock.stock,
+                currentPrice: stock.price,
+                iexStock,
+                performance: stock.performance
+              }
+            });
+            console.log(JSON.stringify(combinedStocks));
+            this.setState({stocks: combinedStocks})
+          });
+      })
   }
 
   render(){
@@ -123,7 +137,7 @@ export default class Stocks extends React.Component {
         data={this.state.data}
         getStock={this.getStock}
         getChart={this.getChart}
-        buyStock={this.buyStock}
+        transactStock={this.transactStock}
         isLoading={this.state.isLoading}
         error={this.state.error}
       />
