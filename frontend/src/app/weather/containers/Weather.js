@@ -110,9 +110,9 @@ export default class Weather extends React.Component {
     return(
 
       <div className="App">
-        <h4> Current Zip Code: {this.state.zipCode} </h4>
+        <h4 id='weatherTitle'> Current Zip Code: {this.state.zipCode} </h4>
 
-        <div style={styles.searchBar}>
+        <div style={styles.searchBar} id='weatherSearch'>
           <TextField
             value={this.state.newZipCode}
             id="outlined-with-placeholder"
@@ -126,6 +126,7 @@ export default class Weather extends React.Component {
           />
         </div>
         <Button
+          id='weatherSearch'
           onClick={() => this.setZipCode().then(() => this.getWeather(this.state.zipCode))}
           variant="contained"
           style={styles.button}
@@ -135,11 +136,11 @@ export default class Weather extends React.Component {
         <div style={{textAlign: 'center'}} >
 
         </div>
-        <div>
+        <div id='weatherDisplay'>
           {
             (!this.state.isLoading)
               ? (this.state.error)
-                ? <p>
+                ? <p id='errorMessage'>
                     Zip Code
                     <span style={styles.bold}> "{this.state.zipCode}" </span>
                     does not exist
@@ -150,8 +151,8 @@ export default class Weather extends React.Component {
                         weather={this.state.weather}
                       />
                     </div>
-                  : <div><p>Enter a Zip Code for Weather</p></div>
-                : <div><p>Weather Loading...</p></div>
+                  : <div><p id='weatherPrompt'>Enter a Zip Code for Weather</p></div>
+                : <div><p id='weatherLoading'>Weather Loading...</p></div>
           }
         </div>
       </div>

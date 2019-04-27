@@ -101,6 +101,7 @@ export function authenticatedFetchDe(url, extras) {
 export const AuthButton = withRouter(
   ({ history }) => (
       <MenuItem
+        id='signoutBtn'
         onClick={
           () => {
               signout(); // Remove the JWT from storage

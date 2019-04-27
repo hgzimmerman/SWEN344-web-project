@@ -42,8 +42,10 @@ export default class StockChart extends React.Component {
 		};
 
 		return (
-		<div>
-			<CanvasJSChart options = {options} />
+		<div id='stockChartDiv'>
+			<CanvasJSChart
+        id='stockChartCanvas'
+        options = {options} />
 		</div>
 		);
 	}

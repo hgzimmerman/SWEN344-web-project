@@ -30,43 +30,45 @@ export default class HomeView extends React.Component {
 
   render() {
     return (
-      <div className="App">
+      <div className="App" id='homeRoot'>
         {
           (!this.props.isLoading)
-          ? <div style={styles.container}>
-              <Paper style={styles.feed}>
-                <h2>Twitter Feed</h2>
-                <Feed/>
+          ? <div style={styles.container} id='homeContainer'>
+              <Paper style={styles.feed} id='homeFeedContainer'>
+                <h2 id='feedTitle'>Twitter Feed</h2>
+                <Feed id='homeFeed'/>
               </Paper>
 
-              <div style={{padding: 30}}>
-                <Paper style={styles.weather}>
-                  <h2>Temperature for {this.props.zipCode}</h2>
-                  <p style={styles.temp}>
+              <div style={{padding: 30}} id='homeWeatherContainer'>
+                <Paper style={styles.weather} id='homeWeather'>
+                  <h2 id='weatherTitle'>Temperature for {this.props.zipCode}</h2>
+                  <p style={styles.temp} id='weatherTemp'>
                     {this.props.weather.main.temp} F
                   </p>
                 </Paper>
 
-                <Paper style={styles.events}>
-                  <h2>Events</h2>
-                  <p style={styles.text}>No events scheduled for today</p>
+                <Paper style={styles.events} id='homeEvents'>
+                  <h2 id='eventsTitle'>Events</h2>
+                  <p style={styles.text} id='noEvents'>No events scheduled for today</p>
                 </Paper>
                 <div>
                   <HomeStocksTable
+                    id='homeStocksTable'
                     stocks={this.props.stocks}
                     sellStock={this.props.sellStock}
                   />
                 </div>
               </div>
 
-              <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"/>
+              <Paper style={styles.ad} id='adBanner'>
+                    <img src="/api/advertisement" alt="advertisement" id='adImg'/>
               </Paper>
 
 
             </div>
-          : <div style={{marginTop: 50}}>
+          : <div style={{marginTop: 50}} id='loaderContainer'>
               <Loader
+                 id='homeLoader'
                  type="Oval"
                  color="#00BFFF"
                  height="100"

@@ -22,8 +22,8 @@ export default class PostView extends React.Component {
 
   render() {
     return (
-      <div>
-        <div>
+      <div id='postRoot'>
+        <div id='postContainer'>
           <TextField
             id="outlined-with-placeholder"
             label="Search"
@@ -36,6 +36,7 @@ export default class PostView extends React.Component {
         </div>
 
         <Button
+          id='postBtn'
           onClick={() => this.postFeed(this.state.stockName)}
           variant="contained"
         >

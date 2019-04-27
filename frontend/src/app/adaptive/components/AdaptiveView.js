@@ -59,15 +59,15 @@ export default class StocksView extends React.Component {
 		};
 
     return (
-      <div>
+      <div id='containerDiv'>
         {
           (!this.state.isLoading)
             ? (this.state.error)
-              ? <div> {this.state.error.message} </div>
+              ? <div id='errorMsg'> {this.state.error.message} </div>
               : (this.state.data !== undefined && this.state.data !== null)
-                ? <CanvasJSChart options = {options} />
-                : <div></div>
-            : <div>Loading...</div>
+                ? <CanvasJSChart options = {options} id='canvasChart'/>
+                : <div id='emptyDiv'></div>
+            : <div id='loading'>Loading...</div>
         }
       </div>
     );

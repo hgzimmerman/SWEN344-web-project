@@ -41,9 +41,10 @@ export default class Login extends React.Component {
 
   render() {
     return (
-      <div className="App">
-        <div style={styles.container}>
+      <div className="App" id='loginRoot'>
+        <div style={styles.container} id='container'>
           <Button
+              id='loginButton'
               onClick={() => this.goToLink()}
               value="Login"
               variant="contained"

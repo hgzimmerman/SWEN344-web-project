@@ -31,44 +31,45 @@ export default class CustomNavbar extends React.Component {
       return(
         <nav>
 
-          <AppBar position="static" style={styles.navbar}>
-            <Toolbar>
-              <Link to="/" style={styles.tab}>
-                <Typography variant="h6" color="inherit">
+          <AppBar position="static" style={styles.navbar} id='navbarRoot'>
+            <Toolbar id='toolbarRoot'>
+              <Link to="/" style={styles.tab} id='homeLinkContainer'>
+                <Typography variant="h6" color="inherit" id='homeLink'>
                   Home
                 </Typography>
               </Link>
-              <Link to="/stocks" style={styles.tab}>
-                <Typography variant="h6" color="inherit">
+              <Link to="/stocks" style={styles.tab} id='stockLinkContainer'>
+                <Typography variant="h6" color="inherit" id='stockLink'>
                   Stocks
                 </Typography>
               </Link>
-              <Link to="/calendar" style={styles.tab}>
-                <Typography variant="h6" color="inherit">
+              <Link to="/calendar" style={styles.tab} id='calendarLinkContainer'>
+                <Typography variant="h6" color="inherit" id='calendarLink'>
                   Calendar
                 </Typography>
               </Link>
-              <Link to="/weather" style={styles.tab}>
-                <Typography variant="h6" color="inherit">
+              <Link to="/weather" style={styles.tab} id='weatherLinkContainer'>
+                <Typography variant="h6" color="inherit" id='weatherLink'>
                   Weather
                 </Typography>
               </Link>
 
-              <Link to="/adaptive" style={styles.tab}>
-                <Typography variant="h6" color="inherit">
+              <Link to="/adaptive" style={styles.tab} id='adaptiveLinkContainer'>
+                <Typography variant="h6" color="inherit" id='adaptiveLink'>
                   Adaptive
                 </Typography>
               </Link>
               {isAuthenticated() && (
 
-                <div style={{float: 'right'}}>
+                <div style={{float: 'right'}} id='iconButtonContainer'>
                   <IconButton
+                    id='iconButton'
                     aria-owns={open ? 'menu-appbar' : undefined}
                     aria-haspopup="true"
                     onClick={this.handleMenu}
                     color="inherit"
                   >
-                    <AccountCircle />
+                    <AccountCircle id='accountCircle' />
                   </IconButton>
                   <Menu
                     id="menu-appbar"
@@ -85,7 +86,7 @@ export default class CustomNavbar extends React.Component {
                     onClose={this.handleClose}
                     style={{marginTop: 40}}
                   >
-                    <AuthButton />
+                    <AuthButton id='authButton'/>
                   </Menu>
                 </div>
               )}
@@ -96,8 +97,8 @@ export default class CustomNavbar extends React.Component {
       );
     } else {
       return (
-        <nav>
-          <AppBar position="static" style={styles.navbar}/>
+        <nav id='navRoot'>
+          <AppBar position="static" style={styles.navbar} id='appBar'/>
         </nav>
       );
     }

@@ -34,10 +34,11 @@ export default class HomeStocksTable extends React.Component {
 
   render(){
     return(
-      <div className="App">
+      <div className="App" id='sellStockRoot'>
       {
         this.state.visible && (
           <SellStockModal
+            id='sellStockModal'
             stock={this.state.stock}
             visible={this.state.visible}
             closeModal={() => this.closeModal()}
@@ -45,24 +46,24 @@ export default class HomeStocksTable extends React.Component {
           />
         )
       }
-        <div className="tables">
-          <div style={{float:'left', margin: 10}}>
-            <Paper style={styles.root}>
-              <Table style={styles.table}>
-                <TableHead>
+        <div className="tables" id='homeStockTableRoot'>
+          <div style={{float:'left', margin: 10}} id='stockTableContainer'>
+            <Paper style={styles.root} id='stockPaperRoot'>
+              <Table style={styles.table} id='stockTable'>
+                <TableHead id='stockTableHead'>
                   <TableRow>
-                    <TableCell align="right">Symbol</TableCell>
-                    <TableCell align="right">Price</TableCell>
-                    <TableCell align="right"></TableCell>
+                    <TableCell align="right" id='stockSymbolCell'>Symbol</TableCell>
+                    <TableCell align="right" id='stockPriceCell'>Price</TableCell>
+                    <TableCell align="right" id='emptyStockCell'></TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody id='stockTableBody'>
                   {this.props.stocks.map(stock => (
                     <TableRow key={stock.quote.symbol}>
-                      <TableCell align="right">
+                      <TableCell align="right" id=`${stock.quote.symbol}-symbol`>
                         {stock.quote.symbol}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" id=`${stock.quote.symbol}-price`>
                         ${Math.round(stock.quote.open * 100) / 100}
                         {
                           (stock.quote.changePercent > 0)
@@ -71,8 +72,9 @@ export default class HomeStocksTable extends React.Component {
                         }
                         {stock.quote.changePercent.toFixed(3)}%
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" id=`${stock.quote.symbol}-buy`>
                         <Button
+                          id=`${stock.quote.symbol}-buyBtn`
                           onClick={() => this.openModal(stock.quote.symbol)}
                           variant="contained"
                           style={styles.button}

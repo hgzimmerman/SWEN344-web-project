@@ -44,8 +44,8 @@ export default class StocksView extends React.Component {
   render(){
 
     return(
-      <div className="App">
-        <div style={styles.searchBar}>
+      <div className="App" id='stocksViewRoot'>
+        <div style={styles.searchBar} id='stocksViewSearch'>
           <TextField
             id="outlined-with-placeholder"
             label="Search"
@@ -58,6 +58,7 @@ export default class StocksView extends React.Component {
         </div>
 
         <Button
+          id='stocksViewSearchBtn'
           onClick={() => this.getStock(this.state.stockName)}
           variant="contained"
           style={styles.button}
@@ -67,21 +68,23 @@ export default class StocksView extends React.Component {
         <div style={{textAlign: 'center'}} >
 
         </div>
-        <div>
+        <div id='stocksViewContainer'>
           {
             (!this.state.isLoading)
               ? (this.state.error)
-                ? <p>
+                ? <p id='stocksViewTitle'>
                     Stock
-                    <span style={styles.bold}> "{this.state.stockName}" </span>
+                    <span style={styles.bold} id='stocksTitleName' "{this.state.stockName}" </span>
                     does not exist
                   </p>
                 : (this.state.stock !== undefined)
-                  ? <div>
+                  ? <div id='stocksViewDiv'>
                       <StockTable
+                        id='stockTable'
                         stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
                       />
                       <Button
+                        id='stockTableOpenModal'
                         onClick={() => this.openModal()}
                         variant="contained"
                         style={styles.buyButton}
@@ -89,11 +92,13 @@ export default class StocksView extends React.Component {
                         {`Buy ${this.state.stockName} shares`}
                       </Button>
                       <StockChart
+                        id='stockChart'
                         stock={this.state.stockName.toUpperCase()}
                         data={this.state.data}
                       />
                       {this.state.visible && (
                         <BuyStockModal
+                          id=`${this.state.stockname}-buyStockModal`
                           visible={this.state.visible}
                           stock={this.state.stockName.toUpperCase()}
                           price={this.state.stock[this.state.stockName.toUpperCase()].quote.latestPrice}

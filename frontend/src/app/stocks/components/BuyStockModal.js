@@ -27,12 +27,13 @@ export default class BuyStockModal extends React.Component {
   render(){
     return (
         <Modal
+          id='modal'
           aria-labelledby="simple-modal-title"
           aria-describedby="simple-modal-description"
           open={this.state.visible}
           onClose={this.closeModal}
         >
-          <div style={styles.paper}>
+          <div style={styles.paper} id='stockRoot'>
             <h2 variant="h6" id="modal-title">
               {`${this.props.stock} stock`}
             </h2>
@@ -46,6 +47,7 @@ export default class BuyStockModal extends React.Component {
               style={{width: '50%'}}
             />
             <Button
+              id='buyStockButton'
               onClick={() => {
                 this.closeModal();
                 this.buyStock(

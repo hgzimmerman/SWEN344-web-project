@@ -118,6 +118,7 @@ export default class Stocks extends React.Component {
   render(){
     return(
       <StocksView
+        id='stocksView'
         stock={this.state.stock}
         data={this.state.data}
         getStock={this.getStock}

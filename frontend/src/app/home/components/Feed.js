@@ -64,16 +64,21 @@ export default class Adaptive extends React.Component {
   }
 
   displayFeed() {
+    let count = 0;
     let tweets = this.state.feed.map(tweet => {
+      let id = 'tweet-' + count;
+      let userTag = 'tag-' + count;
+      let textTag = 'text-' + count;
       return (
-        <Paper>
-          <small>{tweet.user.name} - {tweet.created_at}</small>
-          <p>{tweet.text}</p>
+        <Paper id={id}>
+          <small id={userTag}>{tweet.user.name} - {tweet.created_at}</small>
+          <p id={textTag}>{tweet.text}</p>
         </Paper>
       );
+      count++;
     });
 
-    return <div style={styles.tweet_container}>
+    return <div style={styles.tweet_container} id="feed">
       {tweets}
     </div>;
   }
@@ -82,7 +87,7 @@ export default class Adaptive extends React.Component {
     return (
         <>
           {/*New Post*/}
-          <div >
+          <div id="textContainer">
             <TextField
               id="outlined-with-placeholder"
               label="tweet"
@@ -95,6 +100,7 @@ export default class Adaptive extends React.Component {
           </div>
 
           <Button
+            id="postButton"
             onClick={() => this.postTweet()}
             variant="contained"
           >
@@ -103,15 +109,15 @@ export default class Adaptive extends React.Component {
 
 
           {/* Feed */}
-          <div style={styles.scrolling_container}>
+          <div style={styles.scrolling_container} id="feedContainer">
           {
             (!this.state.isLoading)
               ? (this.state.error != null)
-                ? <div> {this.state.error.message} </div>
+                ? <div id='errorDiv'> {this.state.error.message} </div>
                 : (this.state.feed !== undefined && this.state.feed !== null)
                   ? this.displayFeed()
-                  : <div></div>
-              : <div>Loading...</div>
+                  : <div id='emptyDiv'></div>
+              : <div id='loadingDiv'>Loading...</div>
           }
           </div>
         </>

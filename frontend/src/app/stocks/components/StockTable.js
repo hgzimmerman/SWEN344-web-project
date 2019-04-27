@@ -9,12 +9,12 @@ import TableRow from '@material-ui/core/TableRow';
 export default class StockTable extends React.Component {
   render(){
     return(
-      <div className="App">
-        <div style={styles.panel} className="tables">
-          <Paper style={styles.root}>
-            <h2>{this.props.stock.symbol}</h2>
-            <Table style={styles.table}>
-              <TableHead>
+      <div className="App" id='stockTableRoot'>
+        <div style={styles.panel} className="tables" id='stockTablePanel'>
+          <Paper style={styles.root} id='stockTablePaper'>
+            <h2 id='stockTableHeader'>{this.props.stock.symbol}</h2>
+            <Table style={styles.table} id='stockTableTable'>
+              <TableHead id='stockTableHeadRow'>
                 <TableRow>
                   <TableCell>Company</TableCell>
                   <TableCell align="right">Symbol</TableCell>
@@ -27,25 +27,25 @@ export default class StockTable extends React.Component {
               </TableHead>
               <TableBody>
                 <TableRow>
-                  <TableCell component="th" scope="row">
+                  <TableCell component="th" scope="row" id=`${this.props.stock.symbol}-name`>
                     {this.props.stock.companyName}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-symbol`>
                     {this.props.stock.symbol}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-price`>
                     {this.props.stock.latestPrice}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-high`>
                     {this.props.stock.high}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-low`>
                     {this.props.stock.low}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-weekHigh`>
                     {this.props.stock.week52High}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" id=`${this.props.stock.symbol}-weekLow`>
                     {this.props.stock.week52Low}
                   </TableCell>
                 </TableRow>
