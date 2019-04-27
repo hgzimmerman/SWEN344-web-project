@@ -63,7 +63,6 @@ export default class CustomNavbar extends React.Component {
 
                 <div style={{float: 'right'}}>
                   <IconButton
-                    id='iconButton'
                     aria-owns={open ? 'menu-appbar' : undefined}
                     aria-haspopup="true"
                     onClick={this.handleMenu}

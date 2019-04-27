@@ -78,13 +78,12 @@ export default class StocksView extends React.Component {
                     does not exist
                   </p>
                 : (this.state.stock !== undefined)
-                  ? <div id='stocksViewDiv'>
+                  ? <div>
                       <StockTable
                         id='stockTable'
                         stock={this.state.stock[this.state.stockName.toUpperCase()].quote}
                       />
                       <Button
-                        id='stockTableOpenModal'
                         onClick={() => this.openModal()}
                         variant="contained"
                         style={styles.buyButton}
@@ -92,7 +91,6 @@ export default class StocksView extends React.Component {
                         {`Buy ${this.state.stockName} shares`}
                       </Button>
                       <StockChart
-                        id='stockChart'
                         stock={this.state.stockName.toUpperCase()}
                         data={this.state.data}
                       />
@@ -106,8 +104,8 @@ export default class StocksView extends React.Component {
                         />
                       )}
                     </div>
-                  : <div></div>
-              : <div></div>
+                  : <></>
+              : <></>
 
           }
         </div>

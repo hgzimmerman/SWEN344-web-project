@@ -26,7 +26,6 @@ export default class SellStockModal extends React.Component {
   render(){
     return (
         <Modal
-          id='sellStockModalCmp'
           aria-labelledby="simple-modal-title"
           aria-describedby="simple-modal-description"
           open={this.state.visible}

@@ -9,12 +9,12 @@ import TableRow from '@material-ui/core/TableRow';
 export default class StockTable extends React.Component {
   render(){
     return(
-      <div className="App" id='stockTableRoot'>
-        <div style={styles.panel} className="tables" id='stockTablePanel'>
-          <Paper style={styles.root} id='stockTablePaper'>
+      <div className="App" id='StockTable'>
+        <div style={styles.panel} className="tables">
+          <Paper style={styles.root}>
             <h2 id='stockTableHeader'>{this.props.stock.symbol}</h2>
-            <Table style={styles.table} id='stockTableTable'>
-              <TableHead id='stockTableHeadRow'>
+            <Table style={styles.table}>
+              <TableHead>
                 <TableRow>
                   <TableCell>Company</TableCell>
                   <TableCell align="right">Symbol</TableCell>
