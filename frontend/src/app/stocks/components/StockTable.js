@@ -27,25 +27,25 @@ export default class StockTable extends React.Component {
               </TableHead>
               <TableBody>
                 <TableRow>
-                  <TableCell component="th" scope="row" id=`${this.props.stock.symbol}-name`>
+                  <TableCell component="th" scope="row">
                     {this.props.stock.companyName}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-symbol`>
+                  <TableCell align="right">
                     {this.props.stock.symbol}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-price`>
+                  <TableCell align="right">
                     {this.props.stock.latestPrice}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-high`>
+                  <TableCell align="right">
                     {this.props.stock.high}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-low`>
+                  <TableCell align="right">
                     {this.props.stock.low}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-weekHigh`>
+                  <TableCell align="right">
                     {this.props.stock.week52High}
                   </TableCell>
-                  <TableCell align="right" id=`${this.props.stock.symbol}-weekLow`>
+                  <TableCell align="right">
                     {this.props.stock.week52Low}
                   </TableCell>
                 </TableRow>

@@ -66,8 +66,11 @@ pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
         .map(transact) // Store the purchase/sale in the db
         .and_then(json_or_reject);
 
-    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db()).and_then(
-        |user_uuid: Uuid, conn: PooledConn| {
+    let owned_stocks = warp::get2()
+        .and(warp::path::end())
+        .and(user_filter(s))
+        .and(s.db())
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
                 .map(util::json)

@@ -32,8 +32,8 @@ export default class SellStockModal extends React.Component {
           open={this.state.visible}
           onClose={this.closeModal}
         >
-          <div style={styles.paper} id=`${this.props.stock}-stock`>
-            <h2 variant="h6" id="modal-title" id=`${this.props.stock}-header`>
+          <div style={styles.paper}>
+            <h2 variant="h6" id="modal-title">
               {`${this.props.stock} stock`}
             </h2>
             <TextField
@@ -46,7 +46,6 @@ export default class SellStockModal extends React.Component {
               style={{width: '50%'}}
             />
             <Button
-              id=`${this.props.stock}-sellStockBtn`
               onClick={() => {
                 this.closeModal();
                 this.sellStock(

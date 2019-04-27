@@ -74,7 +74,7 @@ export default class StocksView extends React.Component {
               ? (this.state.error)
                 ? <p id='stocksViewTitle'>
                     Stock
-                    <span style={styles.bold} id='stocksTitleName' "{this.state.stockName}" </span>
+                    <span style={styles.bold}> "{this.state.stockName}" </span>
                     does not exist
                   </p>
                 : (this.state.stock !== undefined)
@@ -98,7 +98,6 @@ export default class StocksView extends React.Component {
                       />
                       {this.state.visible && (
                         <BuyStockModal
-                          id=`${this.state.stockname}-buyStockModal`
                           visible={this.state.visible}
                           stock={this.state.stockName.toUpperCase()}
                           price={this.state.stock[this.state.stockName.toUpperCase()].quote.latestPrice}

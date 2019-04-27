@@ -17,7 +17,7 @@ export default class CalendarView extends React.Component {
 
   onChange = (date) => {
     this.setState({ date });
-  }
+  };
 
   render() {
     const localizer = BigCalendar.momentLocalizer(moment)

@@ -17,7 +17,6 @@ export default class HomeView extends React.Component {
 
   openModal(){
     this.setState({ visible: true });
-
   }
 
   closeModal(){
@@ -29,40 +28,44 @@ export default class HomeView extends React.Component {
   }
 
   render() {
+    const adUrl = "/api/advertisement";
     return (
-      <div className="App" id='homeRoot'>
+      <div className="App">
         {
           (!this.props.isLoading)
-          ? <div style={styles.container} id='homeContainer'>
-              <Paper style={styles.feed} id='homeFeedContainer'>
-                <h2 id='feedTitle'>Twitter Feed</h2>
-                <Feed id='homeFeed'/>
-              </Paper>
-
-              <div style={{padding: 30}} id='homeWeatherContainer'>
-                <Paper style={styles.weather} id='homeWeather'>
-                  <h2 id='weatherTitle'>Temperature for {this.props.zipCode}</h2>
-                  <p style={styles.temp} id='weatherTemp'>
-                    {this.props.weather.main.temp} F
-                  </p>
+          ? <div style={styles.container}>
+              <div style={styles.section}>
+                <Paper style={styles.feed} id={"TwitterCard"}>
+                  <h2>Twitter Feed</h2>
+                  <Feed/>
                 </Paper>
-
-                <Paper style={styles.events} id='homeEvents'>
-                  <h2 id='eventsTitle'>Events</h2>
-                  <p style={styles.text} id='noEvents'>No events scheduled for today</p>
-                </Paper>
-                <div>
-                  <HomeStocksTable
-                    id='homeStocksTable'
-                    stocks={this.props.stocks}
-                    sellStock={this.props.sellStock}
-                  />
-                </div>
               </div>
 
-              <Paper style={styles.ad} id='adBanner'>
-                    <img src="/api/advertisement" alt="advertisement" id='adImg'/>
-              </Paper>
+              <div style={styles.section}>
+                {renderEvents(this.props.events)}
+                <HomeStocksTable
+                  stocks={this.props.stocks}
+                />
+              </div>
+
+              <div style={styles.section}>
+                <Paper style={styles.ad} id={"AdCard"}>
+                  <img src={adUrl} alt="advertisement"/>
+                </Paper>
+                <Paper style={styles.weather}>
+                  <h2>Temperature for {this.props.zipCode}</h2>
+                  <p style={styles.temp}>
+                    {
+                      (this.props.weather !== null
+                        && this.props.weather !== undefined
+                        && this.props.weather.main !== null
+                        && this.props.weather.main !== undefined)
+                        ? <>{this.props.weather.main.temp} F</>
+                        : <></>
+                    }
+                  </p>
+                </Paper>
+              </div>
 
 
             </div>
@@ -83,46 +86,68 @@ export default class HomeView extends React.Component {
 
 }
 
+function renderEvents(events) {
+  return (
+  <Paper style={styles.events} id={"EventsCard"}>
+    <h2>Events</h2>
+    {/*TODO Actually show the event instead of stringifying them*/}
+    {
+      (events.length > 0)
+        ? <>{JSON.stringify(events)}</>
+        : <p style={styles.text}>No events scheduled for today</p>
+    }
+  </Paper>
+  )
+}
+
 const styles = {
   container: {
     display: 'flex',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    padding: 10
+  },
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    paddingLeft: "15px",
+    paddingRight: "15px",
+    marginTop: "25px",
+    minWidth: 440
   },
   stocks: {
     width: '40%',
     height: 300,
-    marginTop: 20,
     textAlign: 'center',
     color: 'black'
   },
   feed: {
     display: "flex",
     flexDirection: "column",
-    width: '40%',
-    height: 700,
-    marginTop: 20,
+    width: "600px",
+    height: "700px",
     textAlign: 'center',
     color: 'black'
   },
   weather: {
-    height: 150,
     marginTop: 20,
+    minHeight: 150,
   },
   temp: {
     color: '#00A6DD',
     fontWeight: '400',
     fontSize: 40
   },
-    ad: {
-    height: 200
+  ad: {
+    height: "400px",
+    minWidth: "300px"
+
   },
   events: {
-    height: 230
+    flexGrow: 3,
+    height: 250
   },
   text: {
     color: '#7c7c7c'
   },
 
-}
+};

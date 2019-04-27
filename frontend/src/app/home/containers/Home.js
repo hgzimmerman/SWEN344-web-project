@@ -6,27 +6,38 @@ export default class Home extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      feed:[],
-      post: '',
       weather: null,
-      zipCode: '14623',
-      isLoading: true
+      zipCode: '14623', // default to RIT
+      isLoading: true,
+      stocks: null,
+      backendStocks: null,
+      events: null
     };
     this.getWeather = this.getWeather.bind(this);
-
+    this.getZipCode = this.getZipCode.bind(this);
+    this.getBackendStocks = this.getBackendStocks.bind(this);
+    this.getStocks = this.getStocks.bind(this);
+    this.finalizeLoading = this.finalizeLoading.bind(this);
   }
 
   componentDidMount(){
-    this.getZipCode().then(zipCode => this.getWeather(zipCode))
-      .then(() => this.getStocks());
+    Promise.all([
+      this.getZipCode().then(zipCode => this.getWeather(zipCode)),
+      this.getBackendStocks().then(stocks => this.getStocks(stocks)),
+      this.getEventsToday()
+    ])
+      .then(() => this.finalizeLoading())
   }
 
+  finalizeLoading() {
+    this.setState({isLoading: false})
+  }
    /**
    * Gets the zip code from the backend.
    * Will default to the rochester zip code if the user hasn't set their zip code yet.
    */
   getZipCode() {
-    const defaultZipCode = "14623";
+    const defaultZipCode = "14623"; // RIT's zip
     const url = "/api/user/zip";
     return authenticatedFetchDe(url)
       .then(response => {
@@ -46,105 +57,84 @@ export default class Home extends React.Component {
 
   getWeather(zipCode){
     const url = `https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial`;
-
     return fetch(url, { method: 'GET' })
       .then((res) => res.json())
-        .then((res) => {
-          this.setState({
-            weather: res,
-          });
+      .then((res) => {
+        this.setState({
+          weather: res,
         });
-
+        return null;
+      })
+      .catch(() => {
+        console.error(`Could not find weather for zip code: ${zipCode}`);
+      })
   }
 
-  getStocks(){
-    const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=amzn,aapl,googl,fb&types=quote`;
-    let stocksArr = [];
-    let i = 0;
+  getEventsToday() {
+    let now = new Date();
+    let midnight = new Date();
+    midnight.setHours(24,0,0,0);
+    const url = `api/calendar/event/events?start=${encodeURIComponent(now.toISOString())}&stop=${encodeURIComponent(midnight.toISOString())}`;
+    return authenticatedFetchDe(url)
+      .then(eventsResponse => {
+        this.setState({
+          events: eventsResponse
+        })
+      })
+  }
 
-    return fetch(url, { method: 'GET' })
-      .then((res) => res.json())
+  /**
+   * Gets four stocks you own.
+   */
+  getBackendStocks() {
+    const url = "/api/market/stock";
+    return authenticatedFetchDe(url)
+      .then(stocks => {
+        let limitedStocks = stocks.slice(0, 4);
+        this.setState({backendStocks: limitedStocks});
+        return limitedStocks;
+      });
+  }
+
+  getStocks(stocks){
+    if (stocks.length > 0) {
+      console.log("getting iex stock data");
+      const stockSymbols = stocks.map(stock => {
+        return stock.stock.symbol;
+      });
+      const symbolsString = stockSymbols.join(",");
+      const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${symbolsString}&types=quote`;
+      console.log(`stock fetching url: ${url}`);
+
+
+      return fetch(url, {method: 'GET'})
+        .then((res) => res.json())
         .then((res) => {
-          while(i < 4){
+          let stocksArr = [];
+          let i = 0;
+          while (i < stockSymbols.length) {
             stocksArr.push(res[Object.keys(res)[i]]);
             i++;
           }
           this.setState({
             stocks: stocksArr,
-            isLoading: false
           });
-
+          return null;
         });
-
-  }
-
-  sellStock(stock, quantity, price){
-    let owned = 3;
-    if (quantity === ''){
-      alert("Can't sell zero shares!")
-    }
-    else if (quantity > owned){
-      alert("Can't sell more shares than you own!")
-    }
-    else {
-      alert(`Sold ${quantity}x ${stock} shares!`)
-    }
-
-  }
-
-
-  postFeed() {
-    if (this.state.post !== "") {
-      const jwt = localStorage.getItem("jwt");
-      const url = `api/twitter_proxy/tweet/`;
-      return fetch(url,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jwt: jwt,
-            text: this.state.post
-          })
-        })
-        .then((res) => res.json())
-          .then((res) =>
-            {
-              if (res === 200) {
-                alert("Tweet successfully posted");
-                this.setState({
-                  isLoading: false,
-                  error: false
-                });
-              } else {
-                alert("There was an error posting your tweet");
-                this.setState({
-                    isLoading: false,
-                    error: true
-                })
-              }
-            }
-        );
     } else {
-      alert('You most enter text to post');
+      return Promise.resolve(null).then(() => this.setState({stocks: []}))
     }
   }
-
 
   render(){
     return(
       <HomeView
-        id='homeComponent'
         feed={this.state.feed}
-        post={this.state.post}
-        postFeed={this.postFeed}
         isLoading={this.state.isLoading}
         weather={this.state.weather}
         zipCode={this.state.zipCode}
         stocks={this.state.stocks}
-        sellStock={this.sellStock}
+        events={this.state.events}
       />
     );
 

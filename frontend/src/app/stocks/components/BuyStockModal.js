@@ -11,7 +11,7 @@ export default class BuyStockModal extends React.Component {
       visible: this.props.visible,
       stock: this.props.stock,
       quantity: ''
-    }
+    };
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
     this.buyStock = this.props.buyStock.bind(this);
@@ -33,7 +33,7 @@ export default class BuyStockModal extends React.Component {
           open={this.state.visible}
           onClose={this.closeModal}
         >
-          <div style={styles.paper} id='stockRoot'>
+          <div style={styles.paper}>
             <h2 variant="h6" id="modal-title">
               {`${this.props.stock} stock`}
             </h2>
