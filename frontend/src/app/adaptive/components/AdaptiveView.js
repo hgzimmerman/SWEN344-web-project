@@ -72,7 +72,7 @@ export default class StocksView extends React.Component {
 		};
 
     return (
-      <div>
+      <div id='Adaptive'>
         {
           (!this.props.isLoading)
             ? (this.props.error)

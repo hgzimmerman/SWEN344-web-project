@@ -4,7 +4,7 @@ import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 
-export default class Adaptive extends React.Component {
+export default class Feed extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -77,7 +77,7 @@ export default class Adaptive extends React.Component {
       );
     });
 
-    return <div style={styles.tweet_container}>
+    return <div style={styles.tweet_container} id="feed">
       {tweets}
     </div>;
   }
@@ -86,9 +86,8 @@ export default class Adaptive extends React.Component {
     return (
         <>
           {/*New Post*/}
-          <div >
+          <div id="NewPost">
             <TextField
-              id="outlined-with-placeholder"
               label="tweet"
               placeholder="Write your tweet"
               margin="normal"
@@ -107,14 +106,14 @@ export default class Adaptive extends React.Component {
 
 
           {/* Feed */}
-          <div style={styles.scrolling_container}>
+          <div style={styles.scrolling_container} id="TwitterFeed">
           {
             (!this.state.isLoading)
               ? (this.state.error != null)
-                ? <div> {this.state.error.message} </div>
+                ? <div id='errorDiv'> {this.state.error.message} </div>
                 : (this.state.feed !== undefined && this.state.feed !== null)
                   ? this.displayFeed()
-                  : <div></div>
+                  : <></>
               : <div>Loading...</div>
           }
           </div>

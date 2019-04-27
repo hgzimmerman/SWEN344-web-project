@@ -22,7 +22,7 @@ export default class HomeStocksTable extends React.Component {
 
   render(){
     return(
-      <Paper style={styles.root}>
+      <Paper style={styles.root} id={"StocksCard"}>
         <Table style={styles.table}>
           <TableHead>
             <TableRow>

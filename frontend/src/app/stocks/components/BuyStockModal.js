@@ -11,7 +11,7 @@ export default class BuyStockModal extends React.Component {
       visible: this.props.visible,
       stock: this.props.stock,
       quantity: ''
-    }
+    };
     this.handleChangeQuantity = this.handleChangeQuantity.bind(this);
     this.closeModal = this.props.closeModal.bind(this);
     this.buyStock = this.props.buyStock.bind(this);
@@ -84,4 +84,4 @@ const styles = {
     width: 200,
     marginTop: 30
   },
-}
+};

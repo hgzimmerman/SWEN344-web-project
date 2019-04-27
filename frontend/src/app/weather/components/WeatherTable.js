@@ -30,12 +30,12 @@ export default class WeatherTable extends React.Component {
   render(){
     return (
       (this.props.weather !== null && this.props.weather !== undefined)
-        ? <div>
-            <div style={{float:'center', margin: 10}} className="tables">
+        ? <div id='weatherRoot'>
+            <div style={{float:'center', margin: 10}} className="tables" id='weatherContainer'>
                 <Paper style={styles.root}>
-                  <h2>{this.props.zipCode}</h2>
-                  <Table style={styles.table}>
-                    <TableHead>
+                  <h2 id='weatherZipCode'>{this.props.zipCode}</h2>
+                  <Table style={styles.table} id='weatherTableTable'>
+                    <TableHead id='weatherTableHeader'>
                       <TableRow>
                         <TableCell align="center">Current Temp</TableCell>
                         <TableCell align="center">High Temp</TableCell>
@@ -46,19 +46,19 @@ export default class WeatherTable extends React.Component {
                     </TableHead>
                     <TableBody>
                       <TableRow>
-                        <TableCell>
+                        <TableCell id='weatherTemp'>
                           {this.props.weather.main.temp} Fahr
                         </TableCell>
-                        <TableCell>
+                        <TableCell id='weatherTempMax'>
                           {this.props.weather.main.temp_max} Fahr
                         </TableCell>
-                        <TableCell>
+                        <TableCell id='weatherTempMin'>
                           {this.props.weather.main.temp_min} Fahr
                         </TableCell>
-                        <TableCell>
+                        <TableCell id='weatherPrecip'>
                           {this.getPrecip()}
                         </TableCell>
-                        <TableCell>
+                        <TableCell id='weatherWind'>
                           {this.props.weather.wind.speed} MPH
                         </TableCell>
                       </TableRow>

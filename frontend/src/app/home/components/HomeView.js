@@ -17,7 +17,6 @@ export default class HomeView extends React.Component {
 
   openModal(){
     this.setState({ visible: true });
-
   }
 
   closeModal(){
@@ -36,7 +35,7 @@ export default class HomeView extends React.Component {
           (!this.props.isLoading)
           ? <div style={styles.container}>
               <div style={styles.section}>
-                <Paper style={styles.feed}>
+                <Paper style={styles.feed} id={"TwitterCard"}>
                   <h2>Twitter Feed</h2>
                   <Feed/>
                 </Paper>
@@ -50,7 +49,7 @@ export default class HomeView extends React.Component {
               </div>
 
               <div style={styles.section}>
-                <Paper style={styles.ad}>
+                <Paper style={styles.ad} id={"AdCard"}>
                   <img src={adUrl} alt="advertisement"/>
                 </Paper>
                 <Paper style={styles.weather}>
@@ -70,8 +69,9 @@ export default class HomeView extends React.Component {
 
 
             </div>
-          : <div style={{marginTop: 50}}>
+          : <div style={{marginTop: 50}} id='loaderContainer'>
               <Loader
+                 id='homeLoader'
                  type="Oval"
                  color="#00BFFF"
                  height="100"
@@ -88,7 +88,7 @@ export default class HomeView extends React.Component {
 
 function renderEvents(events) {
   return (
-  <Paper style={styles.events}>
+  <Paper style={styles.events} id={"EventsCard"}>
     <h2>Events</h2>
     {/*TODO Actually show the event instead of stringifying them*/}
     {
