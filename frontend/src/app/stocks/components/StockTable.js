@@ -17,7 +17,6 @@ export default class StockTable extends React.Component {
               <TableHead>
                 <TableRow>
                   <TableCell>Company</TableCell>
-                  <TableCell align="right">Symbol</TableCell>
                   <TableCell align="right">Current price</TableCell>
                   <TableCell align="right">Day's high</TableCell>
                   <TableCell align="right">Day's low</TableCell>
@@ -29,9 +28,6 @@ export default class StockTable extends React.Component {
                 <TableRow>
                   <TableCell component="th" scope="row">
                     {this.props.stock.companyName}
-                  </TableCell>
-                  <TableCell align="right">
-                    {this.props.stock.symbol}
                   </TableCell>
                   <TableCell align="right">
                     {this.props.stock.latestPrice}
