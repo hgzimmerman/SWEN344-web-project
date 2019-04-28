@@ -7,11 +7,16 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Loader from 'react-loader-spinner';
 
+/**
+ * A pure component that just displays weather info.
+ */
 export default class WeatherTable extends React.Component {
-	getPrecip() {
-		var prec = '';
-		var i;
-		for (i = 0; i < this.props.weather.weather.length; i++) {
+  // Parses precipitation for the day's weather.
+  getPrecip() {
+    console.log("Weather Table data: " + this.props.weather);
+    let prec = '';
+    let i;
+    for (i = 0; i < this.props.weather.weather.length; i++) {
 			if (i === this.props.weather.weather.length-1) {
 				prec += this.props.weather.weather[i].main;
 			}
@@ -24,43 +29,45 @@ export default class WeatherTable extends React.Component {
 
   render(){
     return (
-      <div className="App">
-        <div style={{float:'center', margin: 10}} className="tables">
-            <Paper style={styles.root}>
-							<h2>{this.props.zipCode}</h2>
-              <Table style={styles.table}>
-                <TableHead>
-                  <TableRow>
-    								<TableCell align="center">Current Temp</TableCell>
-                    <TableCell align="center">High Temp</TableCell>
-    								<TableCell align="center">Low Temp</TableCell>
-    								<TableCell align="center">Precipitation</TableCell>
-    								<TableCell align="center">Winds</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-    							<TableRow>
-    								<TableCell>
-    									{this.props.weather.main.temp} Fahr
-    								</TableCell>
-    								<TableCell>
-    									{this.props.weather.main.temp_max} Fahr
-    								</TableCell>
-    								<TableCell>
-    									{this.props.weather.main.temp_min} Fahr
-    								</TableCell>
-    								<TableCell>
-    									{this.getPrecip()}
-    								</TableCell>
-    								<TableCell>
-    									{this.props.weather.wind.speed} MPH
-    								</TableCell>
-    							</TableRow>
-                </TableBody>
-              </Table>
-            </Paper>
-          </div>
-        : <div style={{marginTop: 50}}>
+      (this.props.weather !== null && this.props.weather !== undefined)
+        ? <div id='weatherRoot'>
+            <div style={{float:'center', margin: 10}} className="tables" id='weatherContainer'>
+                <Paper style={styles.root}>
+                  <h2 id='weatherZipCode'>{this.props.zipCode}</h2>
+                  <Table style={styles.table} id='weatherTableTable'>
+                    <TableHead id='weatherTableHeader'>
+                      <TableRow>
+                        <TableCell align="center">Current Temp</TableCell>
+                        <TableCell align="center">High Temp</TableCell>
+                        <TableCell align="center">Low Temp</TableCell>
+                        <TableCell align="center">Precipitation</TableCell>
+                        <TableCell align="center">Winds</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell id='weatherTemp'>
+                          {this.props.weather.main.temp} Fahr
+                        </TableCell>
+                        <TableCell id='weatherTempMax'>
+                          {this.props.weather.main.temp_max} Fahr
+                        </TableCell>
+                        <TableCell id='weatherTempMin'>
+                          {this.props.weather.main.temp_min} Fahr
+                        </TableCell>
+                        <TableCell id='weatherPrecip'>
+                          {this.getPrecip()}
+                        </TableCell>
+                        <TableCell id='weatherWind'>
+                          {this.props.weather.wind.speed} MPH
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </div>
+            </div>
+          : <div style={{marginTop: 50}}>
               <Loader
                  type="Oval"
                  color="#00BFFF"
@@ -68,8 +75,6 @@ export default class WeatherTable extends React.Component {
                  width="100"
               />
             </div>
-        }
-      </div>
     );
 
   }
@@ -89,4 +94,4 @@ const styles = {
   panel: {
     padding: 30
   }
-}
+};

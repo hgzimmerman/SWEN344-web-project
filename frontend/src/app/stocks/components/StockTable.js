@@ -9,15 +9,14 @@ import TableRow from '@material-ui/core/TableRow';
 export default class StockTable extends React.Component {
   render(){
     return(
-      <div className="App">
+      <div className="App" id='StockTable'>
         <div style={styles.panel} className="tables">
           <Paper style={styles.root}>
-            <h2>{this.props.stock.symbol}</h2>
+            <h2 id='stockTableHeader'>{this.props.stock.symbol}</h2>
             <Table style={styles.table}>
               <TableHead>
                 <TableRow>
                   <TableCell>Company</TableCell>
-                  <TableCell align="right">Symbol</TableCell>
                   <TableCell align="right">Current price</TableCell>
                   <TableCell align="right">Day's high</TableCell>
                   <TableCell align="right">Day's low</TableCell>
@@ -29,9 +28,6 @@ export default class StockTable extends React.Component {
                 <TableRow>
                   <TableCell component="th" scope="row">
                     {this.props.stock.companyName}
-                  </TableCell>
-                  <TableCell align="right">
-                    {this.props.stock.symbol}
                   </TableCell>
                   <TableCell align="right">
                     {this.props.stock.latestPrice}
