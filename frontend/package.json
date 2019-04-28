@@ -15,6 +15,7 @@
     "react-big-calendar": "^0.20.4",
     "react-calendar": "^2.18.1",
     "react-charts": "^2.0.0-alpha.12",
+    "react-datetime": "^2.16.3",
     "react-dom": "^16.7.0",
     "react-facebook-login": "^4.1.1",
     "react-loader-spinner": "^2.3.0",
