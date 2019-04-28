@@ -160,12 +160,13 @@ fn transact(
     conn: PooledConn,
 ) -> Result<StockTransaction, Error> {
     info!("Transacting stock {:?}, at current price: {}, for user: {}", request, current_price, user_uuid);
-    let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(request.symbol.clone(), &conn);
+    let symbol = request.symbol.to_uppercase(); // Normalize to a all caps symbol
+    let stock: QueryResult<Stock> = Stock::get_stock_by_symbol(symbol.clone(), &conn);
 
     let stock = stock.or_else(|e| match e {
         DieselError::NotFound => {
             let new_stock = NewStock {
-                symbol: request.symbol.clone(),
+                symbol: symbol.clone(),
                 stock_name: "VOID - This field is slated for removal".to_string(),
             };
             Stock::create_stock(new_stock, &conn).map_err(Error::from)
