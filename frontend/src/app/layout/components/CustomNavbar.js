@@ -32,6 +32,7 @@ export default class CustomNavbar extends React.Component {
         <nav id={"NavBar"}>
 
           <AppBar position="static" style={styles.navbar} >
+
             <Toolbar>
               <Link to="/" style={styles.tab}>
                 <Typography variant="h6" color="inherit">

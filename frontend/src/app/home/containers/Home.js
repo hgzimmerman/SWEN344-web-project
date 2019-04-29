@@ -121,10 +121,10 @@ export default class Home extends React.Component {
           });
           return null;
         });
-    } else {
-      return Promise.resolve(null).then(() => this.setState({stocks: []}))
-    }
+
+
   }
+
 
   render(){
     return(

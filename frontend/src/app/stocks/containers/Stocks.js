@@ -37,7 +37,9 @@ export default class Stocks extends React.Component {
 
   getStock(stock){
     if (stock){
-      console.log(typeof stock);
+
+      console.log(typeof stock)
+
       const url = `https://api.iextrading.com/1.0/stock/market/batch?symbols=${stock}&types=quote`;
       return fetch(url, { method: 'GET' })
         .then((res) => res.json())
@@ -61,7 +63,9 @@ export default class Stocks extends React.Component {
     }
 
 
+
   }
+
 
   /**
    * Buys or sells a quantity of stocks
@@ -135,6 +139,7 @@ export default class Stocks extends React.Component {
           });
       })
   }
+
 
   render(){
     return(
