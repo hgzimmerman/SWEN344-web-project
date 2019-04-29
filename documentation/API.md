@@ -67,8 +67,8 @@ Deprecated indicates that it should not be used, or if documentation falls behin
 | `/api/user/`                        | GET    | User               |                     | yes           | Gets the user                         | |
 | `/api/user/zip`                     | GET    | String             |                     | yes           | Gets the user's zip code              | |
 | `/api/user/zip`                     | PUT    | String             | String              | yes           | Sets the user's zip code              | |
-| `/api/calendar/event/export`        | GET    | \[NewEventRequest\]|                     | yes           | Gets all events for user              | |
-| `/api/calendar/event/import`        | POST   |                    | \[NewEventRequest\] | yes           | Imports all the events in the provided list for this user | |
+| `/api/calendar/event/export`        | GET    | \[ImportExportEvent\]|                     | yes           | Gets all events for user              | |
+| `/api/calendar/event/import`        | POST   |                    | \[ImportExportEvent\] | yes           | Imports all the events in the provided list for this user | |
 | `/api/calendar/event/events?start=:datetime,stop=:datetime`  | GET| \[Event\]|          | yes           | Gets events for user within the time bounds| |
 | `/api/calendar/event/events/today`  | GET    | \[Event\]          |                     | yes           | Gets events today for user            | Removed |
 | `/api/calendar/event/events/month`  | GET    | \[Event\]          |                     | yes           | Gets events this month for user       | Removed |

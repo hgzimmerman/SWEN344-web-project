@@ -54,25 +54,18 @@ export default class HomeView extends React.Component {
                 </Paper>
                 <Paper style={styles.weather}>
                   <h2>Temperature for {this.props.zipCode}</h2>
-                  <p style={styles.temp}>
                     {
                       (this.props.weather !== null
                         && this.props.weather !== undefined
                         && this.props.weather.main !== null
                         && this.props.weather.main !== undefined)
-                        ? <>{this.props.weather.main.temp} F</>
-                        : <></>
+                        ? <p style={styles.temp}>
+                            {this.props.weather.main.temp} F
+                          </p>
+                        : <>Weather could not be retrieved.</>
                     }
-                  </p>
                 </Paper>
               </div>
-
-              <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"></img>
-              </Paper>
-
-
-
             </div>
           : <div style={{marginTop: 50}} id='loaderContainer'>
               <Loader
