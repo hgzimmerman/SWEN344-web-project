@@ -30,15 +30,21 @@ export default class Weather extends React.Component {
    */
   getZipCode() {
     const url = "/api/user/zip";
+    const defaultZipCode = "14623";
+
     return authenticatedFetchDe(url)
       .then(response => {
-        const defaultZipCode = "14623";
         if (response !== null && response !== undefined) {
           this.setState({zipCode: response, error: null})
         } else {
+          console.warn("User has not set their zip code. Using default instead.");
           this.setState({zipCode: defaultZipCode})
         }
-      });
+      })
+      .catch(() => {
+        console.error("There was an error getting the zip code, using default instead.");
+        this.setState({zipCode: defaultZipCode})
+      })
   }
 
   getWeather(zipCode) {
@@ -47,33 +53,39 @@ export default class Weather extends React.Component {
     });
     const url = `https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&APPID=4c442afc1ade3bc91a9bb48fb1fd0e02&units=imperial`;
     return fetch(url, { method: 'GET' })
-      .then((res) => res.json())
-        .then((res) => {
-          if (Object.entries(res).length === 0) {
-            console.log("Error, could not get weather");
-            this.setState({
-              error: true,
-              isLoading: false
-            });
-          }
-          else {
-            console.log("Weather retrieved " + res);
-            console.log(res.weather);
-            this.setState({
-              weather: res,
-              isLoading: false
-            });
-          }
+      .then(response => {
+        let json = response.json();
+        if (response.ok) {
+          return json;
+        } else {
+          return json.then(err => {throw err;});
+        }
+      })
+      .then((json) => {
+        console.log("Weather retrieved " + json);
+        console.log(json.weather);
+        this.setState({
+          error: false,
+          weather: json,
+          isLoading: false
         });
+      })
+      .catch( error => {
+        console.log(`Error, could not get weather: ${JSON.stringify(error)}`);
+        this.setState({
+          error: true,
+          isLoading: false
+        });
+      })
   }
 
   /**
    * Handle changing text for the new zip text field
    */
   handleOnChangeNewZip(event) {
-      this.setState({
-        newZipCode: event.target.value,
-      });
+    this.setState({
+      newZipCode: event.target.value,
+    });
   }
   /**
    * Handle the Enter handling for the new zip text field
