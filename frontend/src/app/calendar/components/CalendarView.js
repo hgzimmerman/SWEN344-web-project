@@ -55,6 +55,7 @@ export default class CalendarView extends React.Component {
       .then(() => {
         this.getEvents() // Update the whole stock table after performing a sale or purchase.
       })
+    
   }
 
   render() {

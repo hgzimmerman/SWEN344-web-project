@@ -29,9 +29,10 @@ export default class CustomNavbar extends React.Component {
 
     if (isAuthenticated()) {
       return(
-        <nav>
+        <nav id={"NavBar"}>
 
-          <AppBar position="static" style={styles.navbar}>
+          <AppBar position="static" style={styles.navbar} >
+
             <Toolbar>
               <Link to="/" style={styles.tab}>
                 <Typography variant="h6" color="inherit">
@@ -85,7 +86,7 @@ export default class CustomNavbar extends React.Component {
                     onClose={this.handleClose}
                     style={{marginTop: 40}}
                   >
-                    <AuthButton />
+                    <AuthButton/>
                   </Menu>
                 </div>
               )}
@@ -96,7 +97,7 @@ export default class CustomNavbar extends React.Component {
       );
     } else {
       return (
-        <nav>
+        <nav id={"NavBar"}>
           <AppBar position="static" style={styles.navbar}/>
         </nav>
       );

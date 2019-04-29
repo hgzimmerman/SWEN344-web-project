@@ -22,6 +22,7 @@ export default class StockChart extends React.Component {
   render() {
     const dataPoints = this.feedData();
 		const options = {
+			// width: 400,
 			animationEnabled: true,
 			title: {
 				text: `${this.props.stock} Interactive Chart (Month)`
@@ -42,8 +43,10 @@ export default class StockChart extends React.Component {
 		};
 
 		return (
-		<div>
-			<CanvasJSChart options = {options} />
+		<div id='stockChartDiv'>
+			<CanvasJSChart
+        id='stockChartCanvas'
+        options = {options} />
 		</div>
 		);
 	}

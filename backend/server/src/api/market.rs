@@ -41,6 +41,8 @@ pub struct StockAndPerfResponse {
     pub stock: UserStockResponse,
     /// Net loss or gain.
     pub performance: f64,
+    /// Current price
+    pub price: f64
 }
 
 /// The Filter for the market API.
@@ -66,8 +68,11 @@ pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
         .map(transact) // Store the purchase/sale in the db
         .and_then(json_or_reject);
 
-    let owned_stocks = warp::get2().and(user_filter(s)).and(s.db()).and_then(
-        |user_uuid: Uuid, conn: PooledConn| {
+    let owned_stocks = warp::get2()
+        .and(warp::path::end())
+        .and(user_filter(s))
+        .and(s.db())
+        .and_then(|user_uuid: Uuid, conn: PooledConn| {
             Stock::get_stocks_belonging_to_user(user_uuid, &conn)
                 .map_err(Error::from_reject)
                 .map(util::json)
@@ -118,6 +123,7 @@ pub fn market_api(s: &State) -> impl Filter<Extract = (impl Reply,), Error = Rej
                         StockAndPerfResponse {
                             stock,
                             performance: net,
+                            price
                         }
                     })
                     .collect::<Vec<StockAndPerfResponse>>()
@@ -240,44 +246,53 @@ fn get_current_price(
 fn get_current_prices(
     stock_symbols: &[&str],
     client: &HttpsClient,
-) -> impl Future<Item = Vec<f64>, Error = Error> {
-    info!("Getting current prices for multiple stocks: {:?}", stock_symbols);
-    let uri: Uri = format!(
-        "https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price",
-        stock_symbols.join(",")
-    )
-    .parse()
-    .unwrap();
-    info!("Getting current prices for: {}", uri);
+) -> Either<
+    impl Future<Item = Vec<f64>, Error = Error>,
+    impl Future<Item = Vec<f64>, Error = Error>
+    >
+{
+    if stock_symbols.len() == 0 {
+        info!("Can't get stock prices, because no stocks were provided");
+        future::ok::<Vec<f64>, Error>(vec![]).apply(future::Either::A)
+    } else {
+        info!("Getting current prices for multiple stocks: {:?}", stock_symbols);
+        let uri: Uri = format!(
+            "https://api.iextrading.com/1.0/stock/market/batch?symbols={}&types=price",
+            stock_symbols.join(",")
+        )
+            .parse()
+            .unwrap();
+        info!("Getting current prices for: {}", uri);
 
-    // handle json in the form: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
-    #[derive(Serialize, Deserialize, Debug)]
-    struct Price {
-        price: f64,
+        // handle json in the form: {"AAPL":{"price":170.67},"FB":{"price":165.465}}
+        #[derive(Serialize, Deserialize, Debug)]
+        struct Price {
+            price: f64,
+        }
+        client
+            .get(uri.clone())
+            .and_then(|res| {
+                res.into_body().concat2() // Await the whole body
+            })
+            .map_err(move |_| {
+                Error::dependent_connection_failed(uri.to_string(), "Could not get current stocks.")
+            })
+            .and_then(|chunk: Chunk| {
+                let v = chunk.to_vec();
+                let body = String::from_utf8_lossy(&v).to_string();
+                serde_json::from_str::<HashMap<String, Price>>(&body)
+                    .map(|r| {
+                        info!("Got current prices: {:#?}", r);
+                        r.values().map(|v| v.price).collect()
+                    })
+                    .map_err(|_| {
+                        crate::error::Error::internal_server_error(
+                            "Could not get current prices"
+                        )
+                    })
+            })
+            .apply(Either::B)
     }
-
-    client
-        .get(uri.clone())
-        .and_then(|res| {
-            res.into_body().concat2() // Await the whole body
-        })
-        .map_err(move |_| {
-            Error::dependent_connection_failed(uri.to_string(), "Could not get current stocks.")
-        })
-        .and_then(|chunk: Chunk| {
-            let v = chunk.to_vec();
-            let body = String::from_utf8_lossy(&v).to_string();
-            serde_json::from_str::<HashMap<String, Price>>(&body)
-                .map(|r| {
-                    info!("Got current prices: {:#?}", r);
-                    r.values().map(|v| v.price).collect()
-                })
-                .map_err(|_| {
-                    crate::error::Error::internal_server_error(
-                        "Could not get current prices".to_string(),
-                    )
-                })
-        })
 }
 
 #[cfg(test)]

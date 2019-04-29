@@ -42,6 +42,7 @@ pub fn user_api(state: &State) -> impl Filter<Extract = (impl Reply,), Error = R
         .and_then(util::json_or_reject);
 
     let get_user = warp::get2()
+        .and(warp::path::end())
         .and(user_filter(state))
         .and(state.db())
         .map(|user_uuid: Uuid, conn: PooledConn| -> QueryResult<User> {
