@@ -126,8 +126,6 @@ export default class Home extends React.Component {
           stocks: []
       })
     }
-
-
   }
 
 
@@ -137,6 +135,7 @@ export default class Home extends React.Component {
         feed={this.state.feed}
         isLoading={this.state.isLoading}
         weather={this.state.weather}
+        weatherError={this.state.weatherError}
         zipCode={this.state.zipCode}
         stocks={this.state.stocks}
         events={this.state.events}
