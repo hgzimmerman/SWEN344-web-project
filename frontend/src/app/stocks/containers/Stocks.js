@@ -66,37 +66,6 @@ export default class Stocks extends React.Component {
 
   }
 
-<<<<<<< HEAD
-=======
-  buyStock(stock, quantity, price){
-    const url = '/api/market/stock/transact';
-    const headers = {
-      'Authorization: ': window.localstorage.getItem('jwt')
-    }
-    const body = JSON.stringify({
-      "uuid": "temp",
-      "user_uuid": "temp",
-      "stock_uuid": "temp",
-      "quantity": quantity,
-      "price_of_stock_at_time_of_trading": price,
-      "record_time": 'date'
-    });
-
-    return fetch(url, { method: 'POST', headers, body })
-      .then((res) => res.json())
-        .then((res) => {
-          if (res === 200){
-            alert(`Bought ${quantity}x ${stock} shares!`)
-          }
-          else {
-            alert('There was a problem with the transaction. Try again later!')
-          }
-        }).catch((error) => {
-          alert('There was a problem with the transaction. Try again later!')
-        });
-
-
-  }
 
   /**
    * Buys or sells a quantity of stocks
@@ -171,7 +140,7 @@ export default class Stocks extends React.Component {
       })
   }
 
->>>>>>> a8b614cd224b0a618406e22ca514f607133a7e3e
+
   render(){
     return(
       <StocksView
