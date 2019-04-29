@@ -66,13 +66,6 @@ export default class HomeView extends React.Component {
                   </p>
                 </Paper>
               </div>
-
-              <Paper style={styles.ad}>
-                    <img src="/api/advertisement" alt="advertisement"></img>
-              </Paper>
-
-
-
             </div>
           : <div style={{marginTop: 50}} id='loaderContainer'>
               <Loader

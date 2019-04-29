@@ -121,6 +121,11 @@ export default class Home extends React.Component {
           });
           return null;
         });
+    } else {
+      this.setState({
+          stocks: []
+      })
+    }
 
 
   }
