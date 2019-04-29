@@ -76,59 +76,6 @@ export default class Home extends React.Component {
 
   }
 
-  sellStock(stock, quantity, price){
-    let owned = 3;
-    if (quantity === ''){
-      alert("Can't sell zero shares!")
-    }
-    else if (quantity > owned){
-      alert("Can't sell more shares than you own!")
-    }
-    else {
-      alert(`Sold ${quantity}x ${stock} shares!`)
-    }
-
-  }
-
-
-  postFeed() {
-    if (this.state.post !== "") {
-      const jwt = localStorage.getItem("jwt");
-      const url = `api/twitter_proxy/tweet/`;
-      return fetch(url,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jwt: jwt,
-            text: this.state.post
-          })
-        })
-        .then((res) => res.json())
-          .then((res) =>
-            {
-              if (res === 200) {
-                alert("Tweet successfully posted");
-                this.setState({
-                  isLoading: false,
-                  error: false
-                });
-              } else {
-                alert("There was an error posting your tweet");
-                this.setState({
-                    isLoading: false,
-                    error: true
-                })
-              }
-            }
-        );
-    } else {
-      alert('You most enter text to post');
-    }
-  }
 
 
   render(){
