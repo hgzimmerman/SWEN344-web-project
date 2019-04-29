@@ -1,11 +1,18 @@
 title Authentication Flow
 
-WebApp->OauthSource: Log in
-OauthSource-->WebApp: Return Oauth Token
-WebApp->ProjectApi: Log in using Oauth Token
-ProjectApi->OauthSource: Request unique identifier from OauthSource for user.
-OauthSource-->ProjectApi: Return user id
-ProjectApi->ProjectDB: Look up User in DB using Id
-ProjectDB-->ProjectApi: Return User row.
-ProjectApi->ProjectApi: Create JWT using User UUID
-ProjectApi-->WebApp: Return JWT
+WebApp->ProjectApi: Get Authentication Link
+ProjectApi->Twitter: Create Authentication Link
+Twitter-->ProjectApi: Return Authentication Link
+ProjectApi-->WebApp: Return Authentication Link
+WebApp->Twitter: Click Login
+Twitter->Twitter: Authenticate
+Twitter->ProjectApi: Return OAuth Token verifier
+ProjectApi->Twitter: Request OAuth Access Token
+Twitter-->ProjectApi: Return Access Token and user info.
+ProjectApi->ProjectDB: Associate user ID with user account
+ProjectDB-->ProjectApi: Return user account.
+
+ProjectApi->ProjectApi: Create JWT using User UUID and OAuth token
+ProjectApi->ProjectApi: Template HTML page to store JWT in localhost
+ProjectApi-->WebApp: Return Template
+WebApp->WebApp: Redirect to main application
