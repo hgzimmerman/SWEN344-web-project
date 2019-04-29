@@ -42,6 +42,8 @@ It was small and uncoupled enough to be broken into its own library.
 The `pool` crate is responsible for configuring the database connection pool used both by the server and testing common crates.
 `pool` is its own crate instead of being in `db` to avoid a circular dependencies when `db` needs to rely on `testing_common` when integration testing.
 
+The `bf` crate contains a Brainf*ck parser and interpreter, which is used to calculate if the adaptive component should be displayed or not.
+
 The multi-library arrangement is good for separating code into distinct, manageable sections.
 `db` ends up being responsible for database calls, while `server` is responsible for business logic, error handling, and request routing.
 
@@ -66,4 +68,4 @@ The multi-library arrangement is good for separating code into distinct, managea
   * All tests must pass in order to merge a branch into master.
     * This is enforced socially, we are too lazy to set up a CI suite.
 * Likely no CI service, devs are expected to test locally before merging to master.
-* Unit and webdriver tests on the frontend.
+* ~~Unit~~ and webdriver tests on the frontend.
