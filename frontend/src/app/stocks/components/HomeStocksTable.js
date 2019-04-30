@@ -32,21 +32,21 @@ export default class HomeStocksTable extends React.Component {
           </TableHead>
           <TableBody>
             {this.props.stocks.map(stock => (
-              <TableRow key={stock.quote.symbol}>
-                <TableCell align="right">
-                  {stock.quote.symbol}
-                </TableCell>
-                <TableCell align="right">
-                  ${Math.round(stock.quote.open * 100) / 100}
-                  {
-                    (stock.quote.changePercent > 0)
-                    ? <ArrowDropUp style={{color: '#45f442'}} />
-                    : <ArrowDropDown style={{color: 'red'}} />
-                  }
-                  {stock.quote.changePercent.toFixed(3)}%
-                </TableCell>
-
-              </TableRow>
+              (stock !== null && stock!== undefined && stock.quote !== null && stock.quote !== undefined)
+              &&  <TableRow key={stock.quote.symbol}>
+                    <TableCell align="right">
+                      {stock.quote.symbol}
+                    </TableCell>
+                    <TableCell align="right">
+                      ${Math.round(stock.quote.open * 100) / 100}
+                      {
+                        (stock.quote.changePercent > 0)
+                        ? <ArrowDropUp style={{color: '#45f442'}} />
+                        : <ArrowDropDown style={{color: 'red'}} />
+                      }
+                      {stock.quote.changePercent.toFixed(3)}%
+                    </TableCell>
+                  </TableRow>
             ))}
           </TableBody>
         </Table>
